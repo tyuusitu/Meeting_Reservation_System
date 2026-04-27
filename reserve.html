@@ -435,19 +435,12 @@
     </div>
   </div>
 
+  <script src="config.js"></script>
   <script>
     // ============================================================
     // 設定
     // ============================================================
-    const CONFIG = {
-      SPREADSHEET_ID: '1gY801SSdzx6UqaVPhC90Gp4zot7hHyB9xQaZgzY-MS4',
-      GAS_API_URL: 'https://script.google.com/macros/s/AKfycbyuklc-3W8N9J_pXZ9ockQnwkf_xxAF8WpwY6bvLYqC8HIQeXFLrnU6PCNpQAr0p-0Nkg/exec',
-      SHEET_GID: {
-        reservations: '929838420',
-        rooms: '1209500136',
-        settings: '1074437390',
-      },
-    };
+    const CONFIG = window.APP_CONFIG;
 
     // ============================================================
     // 状態
@@ -470,6 +463,11 @@
       });
     });
 
+    /**
+     * 今日の日付を yyyy-MM-dd 形式で返します。
+     *
+     * @return {string} 今日の日付。
+     */
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
@@ -477,6 +475,11 @@
     // ============================================================
     // GAS から設定取得
     // ============================================================
+    /**
+     * GAS から予約画面の表示設定と会議室一覧を読み込みます。
+     *
+     * @return {Promise<void>} 読み込み完了。
+     */
     async function loadConfig() {
       try {
         const url = CONFIG.GAS_API_URL + '?action=get_config';
@@ -493,6 +496,11 @@
       }
     }
 
+    /**
+     * GAS 設定取得に失敗した場合に使う既定設定を返します。
+     *
+     * @return {Object} 予約画面の既定設定。
+     */
     function defaultConfig() {
       return {
         ok: true,
@@ -510,6 +518,11 @@
       };
     }
 
+    /**
+     * 読み込んだ設定値を画面タイトル、ラベル、表示フィールドへ反映します。
+     *
+     * @param {Object} cfg GAS から取得した画面設定。
+     */
     function applyConfig(cfg) {
       const s = cfg.settings;
       document.getElementById('system-name').textContent = s.systemName + ' - 予約';
@@ -527,13 +540,16 @@
     // ============================================================
     // スプレッドシートCSV取得
     // ============================================================
+    /**
+     * 予約シートの CSV を読み込み、既存予約一覧を更新します。
+     *
+     * @param {boolean} bustCache true の場合はキャッシュ回避します。
+     * @return {Promise<void>} 読み込み完了。
+     */
     async function loadReservations(bustCache = false) {
-      const gid = CONFIG.SHEET_GID.reservations;
-      const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/export?format=csv&gid=${gid}`
-        + (bustCache ? `&t=${Date.now()}` : '');
+      const url = CONFIG.buildSheetCsvUrl('reservations', bustCache);
       try {
-        const res = await fetch(url);
-        const text = await res.text();
+        const text = CONFIG.fetchSheetCsvText ? await CONFIG.fetchSheetCsvText('reservations', bustCache) : await fetch(url).then((res) => res.text());
         allReservations = parseCSV(text).filter(r =>
           r.reservation_id && (r.status === '有効' || r.status === 'キャンセル依頼')
         );
@@ -556,6 +572,12 @@
       '開始時間': 'start_time', '終了時間': 'end_time', 'ステータス': 'status',
     };
 
+    /**
+     * 予約 CSV を画面用オブジェクト配列へ変換します。
+     *
+     * @param {string} text CSV 文字列。
+     * @return {Array<Object>} 予約一覧。
+     */
     function parseCSV(text) {
       const lines = text.trim().split('\n');
       if (lines.length < 2) return [];
@@ -577,6 +599,12 @@
       return result;
     }
 
+    /**
+     * CSV 1行を、クォート内カンマを考慮して列配列へ変換します。
+     *
+     * @param {string} line CSV 1行。
+     * @return {Array<string>} 列値配列。
+     */
     function parseCSVRow(line) {
       const result = [];
       let cur = '', inQ = false;
@@ -595,6 +623,9 @@
     // ============================================================
     // 予約フォーム
     // ============================================================
+    /**
+     * 予約入力カードを1件追加します。
+     */
     function addReserveCard() {
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
       if (reserveCards.length >= cfg.maxReservationsPerSubmit) {
@@ -606,12 +637,20 @@
       renderReserveCards();
     }
 
+    /**
+     * 指定IDの予約入力カードを削除します。
+     *
+     * @param {number} id カードID。
+     */
     function removeReserveCard(id) {
       reserveCards = reserveCards.filter(c => c !== id);
       if (reserveCards.length === 0) addReserveCard();
       else renderReserveCards();
     }
 
+    /**
+     * 現在の予約入力カード一覧をフォームへ描画します。
+     */
     function renderReserveCards() {
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
       const container = document.getElementById('reserve-cards');
@@ -655,6 +694,12 @@
   `).join('');
     }
 
+    /**
+     * 入力された日付・時間から空き会議室を検索し、選択肢へ反映します。
+     *
+     * @param {number} id 対象カードID。
+     * @return {Promise<void>} 検索完了。
+     */
     async function searchAvailable(id) {
       const date = document.getElementById(`card-date-${id}`).value;
       const start = document.getElementById(`card-start-${id}`).value;
@@ -691,6 +736,9 @@
     // ============================================================
     // 確認画面
     // ============================================================
+    /**
+     * 入力内容を検証し、予約確認モーダルを表示します。
+     */
     function goToConfirm() {
       clearErrors();
       const { ok, common, reservations, errors } = collectFormData();
@@ -718,10 +766,18 @@
       document.getElementById('confirm-modal').classList.add('open');
     }
 
+    /**
+     * 予約確認モーダルを閉じます。
+     */
     function closeConfirm() {
       document.getElementById('confirm-modal').classList.remove('open');
     }
 
+    /**
+     * 確認済みの予約内容を GAS API へ送信します。
+     *
+     * @return {Promise<void>} 登録処理完了。
+     */
     async function submitReservations() {
       const btn = document.getElementById('btn-submit');
       btn.disabled = true;
@@ -764,6 +820,11 @@
       btn.textContent = '予約確定';
     }
 
+    /**
+     * 予約完了画面に登録済み予約一覧を表示します。
+     *
+     * @param {Array<Object>} reservations 登録された予約一覧。
+     */
     function showDone(reservations) {
       document.getElementById('screen-reserve').classList.add('hidden');
       const done = document.getElementById('screen-done');
@@ -775,6 +836,9 @@
       ).join('');
     }
 
+    /**
+     * 予約フォームを初期状態へ戻します。
+     */
     function resetReserveForm() {
       document.getElementById('screen-done').classList.add('hidden');
       document.getElementById('screen-reserve').classList.remove('hidden');
@@ -788,6 +852,11 @@
     // ============================================================
     // バリデーション
     // ============================================================
+    /**
+     * フォーム入力値を収集し、画面側でできる入力チェックを行います。
+     *
+     * @return {Object} 検証結果、共通情報、予約配列、エラー一覧。
+     */
     function collectFormData() {
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
       const errors = [];
@@ -826,6 +895,12 @@
       };
     }
 
+    /**
+     * 最新の既存予約と比較して、会議室・日付・時間の重複を検出します。
+     *
+     * @param {Array<Object>} reservations 登録予定の予約配列。
+     * @return {Array<Object>} エラー一覧。
+     */
     function checkDuplicates(reservations) {
       const errors = [];
       reservations.forEach((r, idx) => {
@@ -842,11 +917,19 @@
       return errors;
     }
 
+    /**
+     * 画面上の入力エラー表示を消します。
+     */
     function clearErrors() {
       document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.classList.add('hidden'); });
       document.getElementById('global-error').classList.add('hidden');
     }
 
+    /**
+     * 入力エラーを各フィールドと全体メッセージへ表示します。
+     *
+     * @param {Array<Object>} errors エラー一覧。
+     */
     function showErrors(errors) {
       errors.forEach(e => {
         const el = document.getElementById(`err-${e.field}`) || document.getElementById(`card-err-${e.field}`);
@@ -863,16 +946,37 @@
     // ============================================================
     // ユーティリティ
     // ============================================================
+    /**
+     * HH:mm 形式の時刻を分数へ変換します。
+     *
+     * @param {string} t 時刻文字列。
+     * @return {number} 0:00 からの分数。
+     */
     function toMin(t) {
       if (!t) return 0;
       const [h, m] = t.split(':').map(Number);
       return h * 60 + m;
     }
 
+    /**
+     * 2つの時間帯が重複しているか判定します。
+     *
+     * @param {string} s1 1つ目の開始時刻。
+     * @param {string} e1 1つ目の終了時刻。
+     * @param {string} s2 2つ目の開始時刻。
+     * @param {string} e2 2つ目の終了時刻。
+     * @return {boolean} 重複する場合は true。
+     */
     function timeOverlap(s1, e1, s2, e2) {
       return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1);
     }
 
+    /**
+     * 日付を画面表示用の短いラベルに変換します。
+     *
+     * @param {string} d yyyy-MM-dd 形式の日付。
+     * @return {string} 表示用日付。
+     */
     function fmtDate(d) {
       if (!d) return '';
       const dt = new Date(d + 'T00:00:00');
@@ -880,10 +984,22 @@
       return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
     }
 
+    /**
+     * HTML へ埋め込む文字列をエスケープします。
+     *
+     * @param {*} s 対象値。
+     * @return {string} エスケープ済み文字列。
+     */
     function esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    /**
+     * ラベルクリック時に date/time 入力のネイティブピッカーを開きます。
+     *
+     * @param {string} id 入力要素ID。
+     * @param {Event} event クリックイベント。
+     */
     function openInputPicker(id, event) {
       if (event && event.target && /input/i.test(event.target.tagName)) return;
       const input = document.getElementById(id);

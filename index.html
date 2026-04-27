@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>会議室予約システム</title>
+  <title>会議室予約・出欠管理システム</title>
   <style>
     :root {
       --primary: #1d6fd6;
@@ -119,8 +119,8 @@
 <body>
   <main class="shell">
     <section class="hero">
-      <h1>会議室予約システム</h1>
-      <p>予約登録と利用状況確認を、用途ごとに別ページへ分けています。</p>
+      <h1>会議室予約・出欠管理システム</h1>
+      <p>会議室予約と会議出欠管理を、静的フロントと Google スプレッドシートでまとめて運用できます。</p>
     </section>
 
     <section class="links">
@@ -131,8 +131,18 @@
       </a>
       <a href="status.html" class="link-card">
         <div class="link-accent">Status</div>
-        <strong>利用状況を見る</strong>
+        <strong>予約確認画面</strong>
         <span>現在の予約一覧やタイムライン、キャンセル依頼を確認できます。</span>
+      </a>
+      <a href="attendance.html" class="link-card">
+        <div class="link-accent">Attendance</div>
+        <strong>出欠登録画面</strong>
+        <span>名前を選び、募集中の会議に対して出席・欠席を登録できます。</span>
+      </a>
+      <a href="admin.html" class="link-card">
+        <div class="link-accent">Admin</div>
+        <strong>管理画面</strong>
+        <span>会議管理、出欠集計、設定更新、会議室予約管理をまとめて行います。</span>
       </a>
     </section>
   </main>

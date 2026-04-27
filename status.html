@@ -485,19 +485,12 @@
     </div>
   </div>
 
+  <script src="config.js"></script>
   <script>
     // ============================================================
     // 設定
     // ============================================================
-    const CONFIG = {
-      SPREADSHEET_ID: '1gY801SSdzx6UqaVPhC90Gp4zot7hHyB9xQaZgzY-MS4',
-      GAS_API_URL: 'https://script.google.com/macros/s/AKfycbyuklc-3W8N9J_pXZ9ockQnwkf_xxAF8WpwY6bvLYqC8HIQeXFLrnU6PCNpQAr0p-0Nkg/exec',
-      SHEET_GID: {
-        reservations: '929838420',
-        rooms: '1209500136',
-        settings: '1074437390',
-      },
-    };
+    const CONFIG = window.APP_CONFIG;
 
     // ============================================================
     // 状態
@@ -522,6 +515,11 @@
       });
     });
 
+    /**
+     * 今日の日付を yyyy-MM-dd 形式で返します。
+     *
+     * @return {string} 今日の日付。
+     */
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
@@ -529,6 +527,11 @@
     // ============================================================
     // GAS から設定取得
     // ============================================================
+    /**
+     * GAS から表示設定と会議室一覧を読み込みます。
+     *
+     * @return {Promise<void>} 読み込み完了。
+     */
     async function loadConfig() {
       try {
         const url = CONFIG.GAS_API_URL + '?action=get_config';
@@ -545,6 +548,11 @@
       }
     }
 
+    /**
+     * GAS 設定取得に失敗した場合に使う既定設定を返します。
+     *
+     * @return {Object} 予約確認画面の既定設定。
+     */
     function defaultConfig() {
       return {
         ok: true,
@@ -559,6 +567,11 @@
       };
     }
 
+    /**
+     * 読み込んだ設定値を画面タイトル、ラベル、フィルターへ反映します。
+     *
+     * @param {Object} cfg GAS から取得した設定。
+     */
     function applyConfig(cfg) {
       const s = cfg.settings;
       document.getElementById('system-name').textContent = s.systemName;
@@ -577,13 +590,16 @@
     // ============================================================
     // スプレッドシートCSV取得
     // ============================================================
+    /**
+     * 予約シート CSV を読み込み、画面の予約一覧を更新します。
+     *
+     * @param {boolean} bustCache true の場合はキャッシュ回避します。
+     * @return {Promise<void>} 読み込み完了。
+     */
     async function loadReservations(bustCache = false) {
-      const gid = CONFIG.SHEET_GID.reservations;
-      const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/export?format=csv&gid=${gid}`
-        + (bustCache ? `&t=${Date.now()}` : '');
+      const url = CONFIG.buildSheetCsvUrl('reservations', bustCache);
       try {
-        const res = await fetch(url);
-        const text = await res.text();
+        const text = CONFIG.fetchSheetCsvText ? await CONFIG.fetchSheetCsvText('reservations', bustCache) : await fetch(url).then((res) => res.text());
         allReservations = parseCSV(text).filter(r =>
           r.reservation_id && (r.status === '有効' || r.status === 'キャンセル依頼')
         );
@@ -605,6 +621,12 @@
       '開始時間': 'start_time', '終了時間': 'end_time', 'ステータス': 'status',
     };
 
+    /**
+     * 予約 CSV を画面用オブジェクト配列へ変換します。
+     *
+     * @param {string} text CSV 文字列。
+     * @return {Array<Object>} 予約一覧。
+     */
     function parseCSV(text) {
       const lines = text.trim().split('\n');
       if (lines.length < 2) return [];
@@ -626,6 +648,12 @@
       return result;
     }
 
+    /**
+     * CSV 1行を、クォート内カンマを考慮して列配列へ変換します。
+     *
+     * @param {string} line CSV 1行。
+     * @return {Array<string>} 列値配列。
+     */
     function parseCSVRow(line) {
       const result = [];
       let cur = '', inQ = false;
@@ -644,6 +672,9 @@
     // ============================================================
     // フィルター・表示
     // ============================================================
+    /**
+     * フィルター入力を初期化します。
+     */
     function resetFilters() {
       document.getElementById('filter-date').value = appConfig ? appConfig.today : todayStr();
       document.getElementById('filter-room').value = '';
@@ -654,6 +685,9 @@
       applyFilters();
     }
 
+    /**
+     * フィルター条件を予約一覧へ適用し、現在表示を再描画します。
+     */
     function applyFilters() {
       const date = document.getElementById('filter-date').value;
       const room = document.getElementById('filter-room').value;
@@ -680,6 +714,11 @@
       renderCurrentView();
     }
 
+    /**
+     * 一覧表示とタイムライン表示を切り替えます。
+     *
+     * @param {string} v 表示モード。
+     */
     function setView(v) {
       currentView = v;
       document.getElementById('view-list-btn').classList.toggle('active', v === 'list');
@@ -689,12 +728,18 @@
       renderCurrentView();
     }
 
+    /**
+     * 現在選択中の表示モードに合わせて一覧またはタイムラインを描画します。
+     */
     function renderCurrentView() {
       if (currentView === 'list') renderList();
       else renderTimeline();
     }
 
     // ---- 一覧 ----
+    /**
+     * 予約一覧カードを描画します。
+     */
     function renderList() {
       const container = document.getElementById('res-list-container');
       if (filteredReservations.length === 0) {
@@ -723,6 +768,9 @@
     }
 
     // ---- タイムライン ----
+    /**
+     * 日付別・会議室別のタイムラインを描画します。
+     */
     function renderTimeline() {
       const container = document.getElementById('timeline-container');
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
@@ -775,16 +823,29 @@
     // ============================================================
     // キャンセル依頼
     // ============================================================
+    /**
+     * キャンセル依頼モーダルを開きます。
+     *
+     * @param {string} reservationId 予約ID。
+     */
     function openCancelModal(reservationId) {
       document.getElementById('cancel-res-id').value = reservationId;
       document.getElementById('cancel-reason').value = '';
       document.getElementById('cancel-modal').classList.add('open');
     }
 
+    /**
+     * キャンセル依頼モーダルを閉じます。
+     */
     function closeCancelModal() {
       document.getElementById('cancel-modal').classList.remove('open');
     }
 
+    /**
+     * キャンセル依頼を GAS API へ送信します。
+     *
+     * @return {Promise<void>} 送信完了。
+     */
     async function submitCancelRequest() {
       const reservationId = document.getElementById('cancel-res-id').value;
       const reason = document.getElementById('cancel-reason').value;
@@ -814,6 +875,12 @@
       btn.textContent = '依頼を送信';
     }
 
+    /**
+     * LINE 共有 URL を開いてキャンセル依頼文を送信しやすくします。
+     *
+     * @param {string} reservationId 予約ID。
+     * @param {string} reason キャンセル理由。
+     */
     function sendLineNotification(reservationId, reason) {
       const spreadsheetUrl = appConfig && appConfig.settings && appConfig.settings.spreadsheetUrl
         ? appConfig.settings.spreadsheetUrl : '';
@@ -825,16 +892,37 @@
     // ============================================================
     // ユーティリティ
     // ============================================================
+    /**
+     * HH:mm 形式の時刻を分数へ変換します。
+     *
+     * @param {string} t 時刻文字列。
+     * @return {number} 0:00 からの分数。
+     */
     function toMin(t) {
       if (!t) return 0;
       const [h, m] = t.split(':').map(Number);
       return h * 60 + m;
     }
 
+    /**
+     * 2つの時間帯が重複しているか判定します。
+     *
+     * @param {string} s1 1つ目の開始時刻。
+     * @param {string} e1 1つ目の終了時刻。
+     * @param {string} s2 2つ目の開始時刻。
+     * @param {string} e2 2つ目の終了時刻。
+     * @return {boolean} 重複する場合は true。
+     */
     function timeOverlap(s1, e1, s2, e2) {
       return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1);
     }
 
+    /**
+     * 日付を画面表示用の短いラベルに変換します。
+     *
+     * @param {string} d yyyy-MM-dd 形式の日付。
+     * @return {string} 表示用日付。
+     */
     function fmtDate(d) {
       if (!d) return '';
       const dt = new Date(d + 'T00:00:00');
@@ -842,6 +930,12 @@
       return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
     }
 
+    /**
+     * HTML へ埋め込む文字列をエスケープします。
+     *
+     * @param {*} s 対象値。
+     * @return {string} エスケープ済み文字列。
+     */
     function esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }

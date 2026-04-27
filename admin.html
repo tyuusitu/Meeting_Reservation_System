@@ -4,938 +4,1504 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>管理者画面 | 会議室予約システム</title>
+  <title>管理画面</title>
   <style>
     :root {
       --primary: #1d6fd6;
       --primary-dark: #1559ae;
+      --accent: #0f8f68;
       --danger: #c73d3d;
+      --warning: #9a6b00;
       --surface: #ffffff;
-      --background: #f6f8fb;
+      --background: #f5f7fb;
       --border: #d7e0ec;
       --text: #172033;
       --muted: #647085;
       --soft-blue: #eaf2ff;
       --soft-green: #eaf8f2;
       --soft-red: #fff0f0;
-      --shadow: 0 2px 12px rgba(20, 36, 64, 0.07);
+      --soft-yellow: #fff8e1;
+      --shadow: 0 8px 28px rgba(20, 36, 64, 0.08);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
-      padding: 0
+      padding: 0;
     }
 
     body {
-      background: var(--background);
+      background:
+        radial-gradient(circle at top left, rgba(29, 111, 214, .11), transparent 25%),
+        linear-gradient(180deg, #fbfcfe 0%, #edf2f9 100%);
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 16px;
-      line-height: 1.5
+      min-height: 100vh;
     }
 
     button,
     input,
     select,
     textarea {
-      font: inherit
+      font: inherit;
     }
 
-    button {
-      min-height: 44px;
+    button,
+    .button-link {
+      min-height: 42px;
       border: 0;
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 10px 16px;
       cursor: pointer;
       font-weight: 700;
-      transition: background .15s
-    }
-
-    button:disabled {
-      opacity: .5;
-      cursor: not-allowed
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     input,
-    select {
+    select,
+    textarea {
       width: 100%;
-      min-height: 46px;
+      min-height: 44px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       background: #fff;
       color: var(--text);
-      padding: 10px 12px
+      padding: 10px 12px;
+    }
+
+    textarea {
+      min-height: 88px;
+      resize: vertical;
     }
 
     label {
       display: grid;
-      gap: 5px;
-      color: var(--muted);
+      gap: 6px;
       font-size: 13px;
-      font-weight: 700
+      color: var(--muted);
+      font-weight: 700;
     }
 
-    a {
-      color: var(--primary)
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f8fbff;
+      font-weight: 800;
+      color: var(--muted);
+      position: sticky;
+      top: 0;
+    }
+
+    .hidden {
+      display: none !important;
     }
 
     .app {
-      width: min(100%, 780px);
+      width: min(100%, 1240px);
       margin: 0 auto;
-      padding: 16px
+      padding: 18px 16px 40px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .95);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .login-card {
+      max-width: 480px;
+      margin: 56px auto;
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .title {
+      font-size: clamp(26px, 4vw, 34px);
+      line-height: 1.15;
+      font-weight: 900;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
     }
 
     .header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      margin: -16px -16px 16px;
-      padding: 12px 16px;
-      background: rgba(246, 248, 251, .96);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border);
+      padding: 18px 20px;
       display: flex;
-      align-items: center;
       gap: 12px;
-      flex-wrap: wrap
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .header h1 {
-      font-size: 18px;
-      font-weight: 700
+      font-size: 26px;
     }
 
-    .header a {
-      font-size: 13px;
-      color: var(--muted);
-      margin-left: auto
-    }
-
-    .screen {
-      display: grid;
-      gap: 14px
-    }
-
-    .panel {
-      padding: 16px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 12px
-    }
-
-    .panel-title {
-      font-size: 17px;
-      font-weight: 700
-    }
-
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px
-    }
-
-    .grid3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px
-    }
-
-    .actions {
+    .header-actions,
+    .tab-nav,
+    .row-actions {
       display: flex;
+      gap: 10px;
       flex-wrap: wrap;
-      gap: 8px
-    }
-
-    .actions>button {
-      flex: 1 1 140px
+      align-items: center;
     }
 
     .btn-primary {
       background: var(--primary);
-      color: #fff
+      color: #fff;
     }
 
     .btn-primary:hover:not(:disabled) {
-      background: var(--primary-dark)
+      background: var(--primary-dark);
     }
 
     .btn-secondary {
       background: #fff;
       color: var(--primary);
-      border: 1.5px solid var(--primary)
-    }
-
-    .btn-ghost {
-      background: #eef3f9;
-      color: var(--text)
+      border: 1.5px solid var(--primary);
     }
 
     .btn-danger {
       background: var(--danger);
-      color: #fff
+      color: #fff;
     }
 
-    .btn-danger:hover:not(:disabled) {
-      background: #a82e2e
+    .btn-ghost {
+      background: #eef3f9;
+      color: var(--text);
     }
 
     .btn-sm {
-      min-height: 36px;
+      min-height: 34px;
       padding: 6px 12px;
-      font-size: 14px
+      font-size: 13px;
+    }
+
+    .tab-nav {
+      padding: 0 20px 18px;
+    }
+
+    .tab-button {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .tab-button.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .section {
+      padding: 0 20px 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat-box {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .split2,
+    .split3 {
+      display: grid;
+      gap: 14px;
+    }
+
+    .split2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .split3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .panel {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .message {
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .message-success {
+      background: var(--soft-green);
+      border: 1px solid #9ad7b7;
+      color: var(--accent);
+    }
+
+    .message-error {
+      background: var(--soft-red);
+      border: 1px solid #f1c0c0;
+      color: var(--danger);
+    }
+
+    .notice {
+      background: var(--soft-yellow);
+      border: 1px solid #ead18a;
+      color: var(--warning);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.6;
     }
 
     .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
       font-size: 12px;
-      font-weight: 700
+      font-weight: 900;
     }
 
-    .badge-active {
+    .badge-ok {
       background: var(--soft-green);
-      color: #0f8f68
+      color: var(--accent);
     }
 
-    .badge-cancel {
+    .badge-warn {
+      background: var(--soft-yellow);
+      color: var(--warning);
+    }
+
+    .badge-danger {
       background: var(--soft-red);
-      color: var(--danger)
-    }
-
-    .badge-request {
-      background: #fff8e1;
-      color: #7a5800
-    }
-
-    .res-list {
-      display: grid;
-      gap: 8px
-    }
-
-    .res-card {
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 6px;
-      cursor: pointer;
-      transition: border-color .15s
-    }
-
-    .res-card:hover {
-      border-color: var(--primary)
-    }
-
-    .res-card.selected {
-      border-color: var(--primary);
-      background: var(--soft-blue)
-    }
-
-    .res-card-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap
-    }
-
-    .res-card-title {
-      font-weight: 700;
-      font-size: 15px
-    }
-
-    .res-card-meta {
-      font-size: 13px;
-      color: var(--muted)
-    }
-
-    .checkbox-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px
-    }
-
-    .checkbox-wrap input[type=checkbox] {
-      width: 18px;
-      min-height: 18px;
-      cursor: pointer
-    }
-
-    .loading {
-      text-align: center;
-      padding: 24px;
-      color: var(--muted)
-    }
-
-    .empty {
-      text-align: center;
-      padding: 24px;
-      color: var(--muted)
-    }
-
-    .error-msg {
       color: var(--danger);
-      font-size: 13px
     }
 
-    .success-msg {
-      color: #0f8f68;
-      font-size: 14px;
-      background: var(--soft-green);
-      padding: 8px 12px;
-      border-radius: 6px
-    }
-
-    .global-error {
-      background: var(--soft-red);
-      border: 1px solid #fccaca;
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: var(--danger);
-      font-size: 14px
-    }
-
-    .login-card {
-      max-width: 360px;
-      margin: 60px auto;
-      padding: 24px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: var(--shadow);
+    .filters {
       display: grid;
-      gap: 16px
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
     }
 
-    .login-card h2 {
-      font-size: 20px;
-      text-align: center
-    }
-
-    /* calendar filter */
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-      margin-top: 4px
-    }
-
-    .cal-day {
-      text-align: center;
-      padding: 6px 2px;
-      font-size: 13px;
-      border-radius: 4px;
-      cursor: pointer;
-      border: 1px solid transparent
-    }
-
-    .cal-day:hover {
-      background: var(--soft-blue)
-    }
-
-    .cal-day.selected {
-      background: var(--primary);
-      color: #fff
-    }
-
-    .cal-day.has-res {
-      font-weight: 700;
-      color: var(--primary)
-    }
-
-    .cal-day.today {
-      border-color: var(--primary)
-    }
-
-    .cal-day.other-month {
-      color: #ccc
-    }
-
-    .cal-header {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px
-    }
-
-    .cal-weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-      margin-bottom: 4px
-    }
-
-    .cal-weekday {
-      text-align: center;
-      font-size: 11px;
+    .muted {
       color: var(--muted);
-      font-weight: 700;
-      padding: 2px
+      font-size: 13px;
     }
 
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .45);
-      z-index: 100;
-      align-items: center;
-      justify-content: center
+    @media (max-width: 980px) {
+      .stats-grid,
+      .split2,
+      .split3,
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
-    .modal-overlay.open {
-      display: flex
-    }
+    @media (max-width: 720px) {
+      .stats-grid,
+      .split2,
+      .split3,
+      .filters {
+        grid-template-columns: 1fr;
+      }
 
-    .modal {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      width: min(90%, 440px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, .18);
-      display: grid;
-      gap: 14px
-    }
-
-    .modal h2 {
-      font-size: 18px
-    }
-
-    .hidden {
-      display: none !important
-    }
-
-    @media(max-width:480px) {
-
-      .grid2,
-      .grid3 {
-        grid-template-columns: 1fr
+      .header {
+        align-items: flex-start;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="app">
-    <div class="header">
-      <h1>🔧 管理者画面</h1>
-      <a href="index.html">← メニューへ戻る</a>
-    </div>
-
-    <!-- ログイン画面 -->
-    <div id="login-screen">
-      <div class="login-card">
-        <h2>管理者ログイン</h2>
-        <label>パスワード
-          <input type="password" id="input-password" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')login()">
-          <span class="error-msg hidden" id="err-password"></span>
-        </label>
+  <main class="app">
+    <section id="login-screen" class="card login-card">
+      <div class="title" id="login-title">管理画面</div>
+      <div class="sub">会議室予約管理と会議出欠管理を同じ画面で扱います。認証状態はこのブラウザのセッションにだけ保持します。</div>
+      <label>
+        管理者パスワード
+        <input id="login-password" type="password" placeholder="設定シートのパスワード">
+      </label>
+      <div class="row-actions">
         <button class="btn-primary" onclick="login()">ログイン</button>
+        <a class="button-link btn-secondary" href="index.html">トップへ戻る</a>
       </div>
-    </div>
+      <div id="login-message" class="hidden"></div>
+    </section>
 
-    <!-- 管理画面 -->
-    <div id="admin-screen" class="hidden">
-      <div class="screen">
-
-        <!-- ステータスメッセージ -->
-        <div id="status-msg" class="hidden"></div>
-
-        <!-- フィルター -->
-        <div class="panel">
-          <div class="panel-title">予約検索・絞り込み</div>
-          <div class="grid3">
-            <label>会議名
-              <input type="text" id="filter-meeting" placeholder="キーワード" oninput="applyFilters()">
-            </label>
-            <label>担当者名
-              <input type="text" id="filter-name" placeholder="キーワード" oninput="applyFilters()">
-            </label>
-            <label>団体名
-              <input type="text" id="filter-org" placeholder="キーワード" oninput="applyFilters()">
-            </label>
-          </div>
-          <div class="grid2">
-            <label>会議室
-              <select id="filter-room" onchange="applyFilters()">
-                <option value="">すべて</option>
-              </select>
-            </label>
-            <label>ステータス
-              <select id="filter-status" onchange="applyFilters()">
-                <option value="">すべて</option>
-                <option value="有効">有効</option>
-                <option value="キャンセル依頼">キャンセル依頼</option>
-                <option value="取消">取消済み</option>
-              </select>
-            </label>
-          </div>
-
-          <!-- カレンダー -->
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px">日付で絞り込み</div>
-            <div class="cal-header">
-              <button class="btn-ghost btn-sm" onclick="prevMonth()">‹</button>
-              <span id="cal-month-label" style="text-align:center;font-weight:700"></span>
-              <button class="btn-ghost btn-sm" onclick="nextMonth()">›</button>
-            </div>
-            <div class="cal-weekdays">
-              <div class="cal-weekday" style="color:#c73d3d">日</div>
-              <div class="cal-weekday">月</div>
-              <div class="cal-weekday">火</div>
-              <div class="cal-weekday">水</div>
-              <div class="cal-weekday">木</div>
-              <div class="cal-weekday">金</div>
-              <div class="cal-weekday" style="color:#1d6fd6">土</div>
-            </div>
-            <div class="calendar-grid" id="calendar-grid"></div>
-            <div style="margin-top:6px;display:flex;gap:8px">
-              <button class="btn-ghost btn-sm" onclick="clearDateFilter()">日付指定を解除</button>
-            </div>
-          </div>
-
-          <button class="btn-ghost btn-sm" onclick="resetFilters()" style="width:fit-content">すべてリセット</button>
+    <section id="admin-screen" class="card hidden">
+      <div class="header">
+        <div>
+          <h1 id="system-name">管理画面</h1>
+          <div class="sub">CSV 直接読み込みで一覧を表示し、更新系だけ GAS API に送信します。</div>
         </div>
-
-        <!-- 一括操作 -->
-        <div class="panel">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div class="panel-title">予約一覧</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn-ghost btn-sm" onclick="selectAll()">全選択</button>
-              <button class="btn-ghost btn-sm" onclick="deselectAll()">選択解除</button>
-              <button class="btn-danger btn-sm" id="bulk-delete-btn" onclick="bulkDelete()" disabled>
-                選択した予約を削除 (<span id="selected-count">0</span>件)
-              </button>
-            </div>
-          </div>
-          <div id="res-list" class="res-list">
-            <div class="loading">読み込み中...</div>
-          </div>
-          <div id="pagination" style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap">
-          </div>
+        <div class="header-actions">
+          <button class="btn-secondary" onclick="reloadAll(true)">最新化</button>
+          <button class="btn-ghost" onclick="logout()">ログアウト</button>
         </div>
-
       </div>
-    </div>
-  </div>
-
-  <!-- 削除確認モーダル -->
-  <div class="modal-overlay" id="delete-modal">
-    <div class="modal">
-      <h2>予約の削除確認</h2>
-      <p id="delete-confirm-text" style="font-size:14px;color:var(--muted)"></p>
-      <div class="actions">
-        <button class="btn-ghost" onclick="closeDeleteModal()">キャンセル</button>
-        <button class="btn-danger" id="btn-delete-confirm" onclick="executeDelete()">削除する</button>
+      <div class="tab-nav" id="tab-nav"></div>
+      <div class="section">
+        <div id="global-message" class="hidden"></div>
+        <div id="tab-dashboard" class="tab-content"></div>
+        <div id="tab-meetings" class="tab-content hidden"></div>
+        <div id="tab-attendance" class="tab-content hidden"></div>
+        <div id="tab-members" class="tab-content hidden"></div>
+        <div id="tab-departments" class="tab-content hidden"></div>
+        <div id="tab-streaks" class="tab-content hidden"></div>
+        <div id="tab-reasons" class="tab-content hidden"></div>
+        <div id="tab-settings" class="tab-content hidden"></div>
+        <div id="tab-reservations" class="tab-content hidden"></div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
+  <script src="config.js"></script>
   <script>
-    // ============================================================
-    // 設定
-    // ============================================================
-    const CONFIG = {
-      SPREADSHEET_ID: '1gY801SSdzx6UqaVPhC90Gp4zot7hHyB9xQaZgzY-MS4',
-      GAS_API_URL: 'https://script.google.com/macros/s/AKfycbyuklc-3W8N9J_pXZ9ockQnwkf_xxAF8WpwY6bvLYqC8HIQeXFLrnU6PCNpQAr0p-0Nkg/exec',
-      SHEET_GID: {
-        reservations: '929838420',
-        rooms: '1209500136',
-        settings: '1074437390',
-      },
+    const CONFIG = window.APP_CONFIG;
+    const TABS = [
+      ['dashboard', 'ダッシュボード'],
+      ['meetings', '会議管理'],
+      ['attendance', '出欠一覧'],
+      ['members', '個人別集計'],
+      ['departments', '部局別集計'],
+      ['streaks', '連続欠席'],
+      ['reasons', '欠席理由'],
+      ['settings', '設定'],
+      ['reservations', '予約管理'],
+    ];
+    const AUTH_KEY = 'meeting-system-admin-auth';
+    const PASSWORD_KEY = 'meeting-system-admin-password';
+
+    let state = {
+      systemName: '会議室予約・出欠管理システム',
+      reservations: [],
+      rooms: [],
+      settings: [],
+      members: [],
+      meetings: [],
+      attendanceResponses: [],
+      meetingAggregations: [],
+      memberAggregations: [],
+      departmentAggregations: [],
+      streaks: [],
+      activeTab: 'dashboard',
+      selectedReservationIds: new Set(),
     };
 
-    // ============================================================
-    // 状態
-    // ============================================================
-    let adminPassword = '';
-    let allReservations = [];
-    let filteredReservations = [];
-    let selectedIds = new Set();
-    let appConfig = null;
-    let calYear = new Date().getFullYear();
-    let calMonth = new Date().getMonth(); // 0-indexed
-    let filterDate = '';
-    const PAGE_SIZE = 30;
-    let currentPage = 0;
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadPublicSettings();
+      if (sessionStorage.getItem(AUTH_KEY) === '1' && sessionStorage.getItem(PASSWORD_KEY)) {
+        showAdmin();
+        await reloadAll(false);
+      }
+    });
 
-    // ============================================================
-    // ログイン
-    // ============================================================
-    function login() {
-      const pw = document.getElementById('input-password').value;
-      if (!pw) {
-        showFieldError('err-password', 'パスワードを入力してください。');
+    /**
+     * 管理画面のタイトル表示に使う公開設定を読み込みます。
+     *
+     * @return {Promise<void>} 読み込み完了。
+     */
+    async function loadPublicSettings() {
+      try {
+        const res = await fetch(`${CONFIG.GAS_API_URL}?action=get_public_settings`);
+        const data = await res.json();
+        if (data.ok && data.systemName) {
+          state.systemName = data.systemName;
+        }
+      } catch (_) {
+      }
+      document.title = `${state.systemName} - 管理画面`;
+      document.getElementById('system-name').textContent = `${state.systemName} - 管理画面`;
+      document.getElementById('login-title').textContent = `${state.systemName} - 管理画面`;
+    }
+
+    /**
+     * 入力された管理者パスワードを GAS で検証し、成功時に管理画面を表示します。
+     *
+     * @return {Promise<void>} ログイン処理完了。
+     */
+    async function login() {
+      const password = document.getElementById('login-password').value;
+      if (!password) {
+        showMessage('login-message', 'パスワードを入力してください。', 'error');
         return;
       }
-      // パスワードはGAS側で検証するのでここでは保持するだけ
-      adminPassword = pw;
+      try {
+        const res = await fetch(CONFIG.GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'verifyAdminPassword', payload: { adminPassword: password } }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showMessage('login-message', data.error || 'ログインできません。', 'error');
+          return;
+        }
+        sessionStorage.setItem(AUTH_KEY, '1');
+        sessionStorage.setItem(PASSWORD_KEY, password);
+        showAdmin();
+        await reloadAll(false);
+      } catch (_) {
+        showMessage('login-message', '通信エラーが発生しました。', 'error');
+      }
+    }
+
+    /**
+     * セッション上の認証情報を削除してログイン画面に戻します。
+     */
+    function logout() {
+      sessionStorage.removeItem(AUTH_KEY);
+      sessionStorage.removeItem(PASSWORD_KEY);
+      state.selectedReservationIds = new Set();
+      document.getElementById('admin-screen').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('login-password').value = '';
+    }
+
+    /**
+     * 管理画面本体を表示し、タブナビゲーションを描画します。
+     */
+    function showAdmin() {
       document.getElementById('login-screen').classList.add('hidden');
       document.getElementById('admin-screen').classList.remove('hidden');
-      init();
+      renderTabs();
     }
 
-    // ============================================================
-    // 初期化
-    // ============================================================
-    async function init() {
-      // GAS設定取得とCSV取得を並列実行
-      await Promise.all([loadConfig(), loadReservations()]);
-      renderCalendar();
+    /**
+     * 管理画面上部のタブボタンを描画します。
+     */
+    function renderTabs() {
+      const nav = document.getElementById('tab-nav');
+      nav.innerHTML = TABS.map(([key, label]) => `<button class="tab-button ${state.activeTab === key ? 'active' : ''}" onclick="switchTab('${key}')">${label}</button>`).join('');
     }
 
-    async function loadConfig() {
+    /**
+     * 表示する管理タブを切り替えます。
+     *
+     * @param {string} tabKey 表示するタブキー。
+     */
+    function switchTab(tabKey) {
+      state.activeTab = tabKey;
+      renderTabs();
+      document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabKey}`).classList.remove('hidden');
+    }
+
+    /**
+     * 管理画面で使う全シートの CSV を並列読み込みし、全タブを再描画します。
+     *
+     * @param {boolean} showToast true の場合は読み込み完了メッセージを表示します。
+     * @return {Promise<void>} 読み込み完了。
+     */
+    async function reloadAll(showToast) {
+      const results = await Promise.all([
+        fetchSheetCsv('reservations', reservationMapper),
+        fetchSheetCsv('rooms', roomMapper),
+        fetchSheetCsv('settings', settingMapper),
+        fetchSheetCsv('members', memberMapper),
+        fetchSheetCsv('meetings', meetingMapper),
+        fetchSheetCsv('attendanceResponses', attendanceMapper),
+        fetchSheetCsv('meetingAggregations', meetingAggregationMapper),
+        fetchSheetCsv('memberAggregations', memberAggregationMapper),
+        fetchSheetCsv('departmentAggregations', departmentAggregationMapper),
+        fetchSheetCsv('streaks', streakMapper),
+      ]);
+      [
+        state.reservations,
+        state.rooms,
+        state.settings,
+        state.members,
+        state.meetings,
+        state.attendanceResponses,
+        state.meetingAggregations,
+        state.memberAggregations,
+        state.departmentAggregations,
+        state.streaks,
+      ] = results;
+      renderAll();
+      if (showToast) {
+        showGlobal('最新データを再読み込みしました。', 'success');
+      }
+    }
+
+    /**
+     * config.js の設定を使って指定シートの CSV を取得し、画面用オブジェクトへ変換します。
+     *
+     * @param {string} key config.js の SHEET_GID / SHEET_NAME に対応するキー。
+     * @param {Function} mapper CSV 行オブジェクトを画面用データへ変換する関数。
+     * @return {Promise<Array<Object>>} 変換済みデータ配列。
+     */
+    async function fetchSheetCsv(key, mapper) {
+      const url = CONFIG.buildSheetCsvUrl(key, true);
+      if (!url) return [];
       try {
-        const res = await fetch(CONFIG.GAS_API_URL + '?action=get_config');
-        const data = await res.json();
-        if (data.ok) {
-          appConfig = data;
-          const sel = document.getElementById('filter-room');
-          sel.innerHTML = '<option value="">すべて</option>';
-          (data.rooms || []).forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = r.room_id;
-            opt.textContent = r.room_name;
-            sel.appendChild(opt);
-          });
+        const text = CONFIG.fetchSheetCsvText ? await CONFIG.fetchSheetCsvText(key, true) : await fetch(url).then((res) => res.text());
+        return parseCsv(text, mapper);
+      } catch (_) {
+        return [];
+      }
+    }
+
+    /**
+     * CSV 文字列をヘッダー付き行オブジェクトへ変換し、mapper を通します。
+     *
+     * @param {string} text CSV 文字列。
+     * @param {Function} mapper 行変換関数。
+     * @return {Array<Object>} 変換済みデータ配列。
+     */
+    function parseCsv(text, mapper) {
+      const rows = parseCsvRows(text);
+      if (rows.length < 2) return [];
+      const headers = rows[0];
+      return rows.slice(1)
+        .filter((row) => row.some((cell) => String(cell || '').trim() !== ''))
+        .map((row) => mapper(rowToObject(headers, row)))
+        .filter(Boolean);
+    }
+
+    /**
+     * ダブルクォート内のカンマや改行を考慮して CSV を2次元配列へ分解します。
+     *
+     * @param {string} text CSV 文字列。
+     * @return {Array<Array<string>>} CSV 行配列。
+     */
+    function parseCsvRows(text) {
+      const rows = [];
+      let row = [];
+      let value = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        if (char === '"') {
+          if (inQuotes && text[i + 1] === '"') {
+            value += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          row.push(value);
+          value = '';
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (char === '\r' && text[i + 1] === '\n') i += 1;
+          row.push(value);
+          rows.push(row);
+          row = [];
+          value = '';
+        } else {
+          value += char;
         }
-      } catch (e) {
-        console.warn('設定取得失敗', e);
       }
-    }
-
-    async function loadReservations(bustCache = false) {
-      const gid = CONFIG.SHEET_GID.reservations;
-      const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/export?format=csv&gid=${gid}`
-        + (bustCache ? `&t=${Date.now()}` : '');
-      try {
-        const res = await fetch(url);
-        const text = await res.text();
-        allReservations = parseCSV(text);
-      } catch (e) {
-        allReservations = [];
-        showStatus('データの読み込みに失敗しました。', 'error');
+      if (value.length || row.length) {
+        row.push(value);
+        rows.push(row);
       }
-      applyFilters();
+      return rows;
     }
 
-    // ============================================================
-    // CSV パーサー
-    // ============================================================
-    function parseCSV(text) {
-      const lines = text.trim().split('\n');
-      if (lines.length < 2) return [];
-      const headers = parseCSVRow(lines[0]);
-      const KEYS = {
-        '予約ID': 'reservation_id', '利用者ID': 'line_user_id',
-        '団体名': 'organization_name', '会議名': 'meeting_name', 'お名前': 'user_name',
-        '会議室ID': 'room_id', '会議室名': 'room_name', '利用日': 'usage_date',
-        '開始時間': 'start_time', '終了時間': 'end_time', 'カレンダー予定ID': 'calendar_event_id',
-        'ステータス': 'status', '作成日時': 'created_at',
-      };
-      return lines.slice(1).map(line => {
-        const vals = parseCSVRow(line);
-        const obj = {};
-        headers.forEach((h, i) => { obj[KEYS[h] || h] = (vals[i] || '').trim(); });
-        return obj;
-      }).filter(r => r.reservation_id);
-    }
-
-    function parseCSVRow(line) {
-      const result = [];
-      let cur = '', inQ = false;
-      for (let i = 0; i < line.length; i++) {
-        const c = line[i];
-        if (c === '"') {
-          if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
-          else inQ = !inQ;
-        } else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
-        else cur += c;
-      }
-      result.push(cur);
-      return result;
-    }
-
-    // ============================================================
-    // フィルター
-    // ============================================================
-    function resetFilters() {
-      document.getElementById('filter-meeting').value = '';
-      document.getElementById('filter-name').value = '';
-      document.getElementById('filter-org').value = '';
-      document.getElementById('filter-room').value = '';
-      document.getElementById('filter-status').value = '';
-      filterDate = '';
-      currentPage = 0;
-      renderCalendar();
-      applyFilters();
-    }
-
-    function clearDateFilter() {
-      filterDate = '';
-      renderCalendar();
-      applyFilters();
-    }
-
-    function applyFilters() {
-      const meeting = document.getElementById('filter-meeting').value.toLowerCase();
-      const name = document.getElementById('filter-name').value.toLowerCase();
-      const org = document.getElementById('filter-org').value.toLowerCase();
-      const room = document.getElementById('filter-room').value;
-      const status = document.getElementById('filter-status').value;
-
-      filteredReservations = allReservations.filter(r => {
-        if (meeting && !r.meeting_name.toLowerCase().includes(meeting)) return false;
-        if (name && !(r.user_name || '').toLowerCase().includes(name)) return false;
-        if (org && !(r.organization_name || '').toLowerCase().includes(org)) return false;
-        if (room && r.room_id !== room) return false;
-        if (status && r.status !== status) return false;
-        if (filterDate && r.usage_date !== filterDate) return false;
-        return true;
+    /**
+     * ヘッダー配列と値配列から、列名をキーにしたオブジェクトを作ります。
+     *
+     * @param {Array<string>} headers CSV ヘッダー。
+     * @param {Array<string>} row CSV 1行分の値。
+     * @return {Object} 行オブジェクト。
+     */
+    function rowToObject(headers, row) {
+      const obj = {};
+      headers.forEach((header, index) => {
+        obj[String(header || '').trim()] = String(row[index] || '').trim();
       });
-
-      filteredReservations.sort((a, b) =>
-        (a.usage_date + a.start_time + a.room_name).localeCompare(b.usage_date + b.start_time + b.room_name)
-      );
-
-      currentPage = 0;
-      selectedIds = new Set();
-      updateBulkBtn();
-      renderList();
-      renderCalendar();
+      return obj;
     }
 
-    // ============================================================
-    // カレンダー
-    // ============================================================
-    function renderCalendar() {
-      const label = document.getElementById('cal-month-label');
-      label.textContent = `${calYear}年${calMonth + 1}月`;
+    /**
+     * 予約 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 予約情報。
+     */
+    function reservationMapper(row) {
+      if (!row['予約ID']) return null;
+      return {
+        reservationId: row['予約ID'],
+        organizationName: row['団体名'],
+        meetingName: row['会議名'],
+        userName: row['お名前'],
+        roomId: row['会議室ID'],
+        roomName: row['会議室名'],
+        usageDate: normalizeDate(row['利用日']),
+        startTime: normalizeTime(row['開始時間']),
+        endTime: normalizeTime(row['終了時間']),
+        status: row['ステータス'],
+      };
+    }
 
-      // 予約がある日付セット
-      const reservedDates = new Set(allReservations.map(r => r.usage_date));
+    /**
+     * 会議室 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 会議室情報。
+     */
+    function roomMapper(row) {
+      if (!row['会議室ID']) return null;
+      return {
+        roomId: row['会議室ID'],
+        roomName: row['会議室名'],
+      };
+    }
 
-      const firstDay = new Date(calYear, calMonth, 1).getDay();
-      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-      const todayStr = new Date().toISOString().slice(0, 10);
+    /**
+     * 設定 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 設定情報。
+     */
+    function settingMapper(row) {
+      if (!row['設定キー']) return null;
+      return {
+        settingKey: row['設定キー'],
+        settingValue: row['設定値'],
+        description: row['説明'],
+        updatedAt: row['更新日時'],
+      };
+    }
 
-      let html = '';
-      // 前月の空白
-      for (let i = 0; i < firstDay; i++) {
-        html += '<div class="cal-day other-month"></div>';
+    /**
+     * メンバー一覧 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} メンバー情報。
+     */
+    function memberMapper(row) {
+      if (!row['メンバーID']) return null;
+      return {
+        memberId: row['メンバーID'],
+        name: row['名前'],
+        department: row['部局'],
+        grade: row['学年'],
+        role: row['役職'],
+        displayOrder: Number(row['表示順'] || 0),
+        status: row['有効状態'],
+      };
+    }
+
+    /**
+     * 会議一覧 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 会議情報。
+     */
+    function meetingMapper(row) {
+      if (!row['会議ID']) return null;
+      return {
+        meetingId: row['会議ID'],
+        meetingName: row['会議名'],
+        meetingDate: normalizeDate(row['会議日']),
+        startTime: normalizeTime(row['開始時間']),
+        endTime: normalizeTime(row['終了時間']),
+        recruitStartAt: normalizeDateTime(row['募集開始日時']),
+        recruitEndAt: normalizeDateTime(row['募集終了日時']),
+        answerDeadlineAt: normalizeDateTime(row['回答締切日時']),
+        note: row['備考'],
+        status: row['有効状態'],
+      };
+    }
+
+    /**
+     * 出欠回答 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 出欠回答。
+     */
+    function attendanceMapper(row) {
+      if (!row['回答ID']) return null;
+      return {
+        answerId: row['回答ID'],
+        meetingId: row['会議ID'],
+        memberId: row['メンバーID'],
+        name: row['名前'],
+        department: row['部局'],
+        grade: row['学年'],
+        role: row['役職'],
+        attendance: row['出欠'],
+        absenceReason: row['欠席理由'],
+        absenceDetail: row['欠席理由詳細'],
+        answeredAt: row['回答日時'],
+        updatedAt: row['更新日時'],
+      };
+    }
+
+    /**
+     * 会議別集計 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 会議別集計。
+     */
+    function meetingAggregationMapper(row) {
+      if (!row['会議ID']) return null;
+      return {
+        meetingId: row['会議ID'],
+        meetingName: row['会議名'],
+        meetingDate: normalizeDate(row['会議日']),
+        targetCount: Number(row['対象人数'] || 0),
+        attendCount: Number(row['出席回答数'] || 0),
+        absenceCount: Number(row['欠席回答数'] || 0),
+        unansweredCount: Number(row['未提出数'] || 0),
+        effectiveAttendCount: Number(row['出席扱い人数'] || 0),
+        attendanceRate: toRatio(row['参加率']),
+        absenceRate: toRatio(row['欠席率']),
+      };
+    }
+
+    /**
+     * 個人別集計 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 個人別集計。
+     */
+    function memberAggregationMapper(row) {
+      if (!row['メンバーID']) return null;
+      return {
+        memberId: row['メンバーID'],
+        name: row['名前'],
+        department: row['部局'],
+        grade: row['学年'],
+        role: row['役職'],
+        targetMeetingCount: Number(row['対象会議数'] || 0),
+        attendCount: Number(row['出席回答数'] || 0),
+        absenceCount: Number(row['欠席回答数'] || 0),
+        unansweredCount: Number(row['未提出数'] || 0),
+        effectiveAttendCount: Number(row['出席扱い回数'] || 0),
+        attendanceRate: toRatio(row['参加率']),
+        absenceStreak: Number(row['連続欠席回数'] || 0),
+        lastAnsweredAt: row['最終回答日時'],
+      };
+    }
+
+    /**
+     * 部局別集計 CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 部局別集計。
+     */
+    function departmentAggregationMapper(row) {
+      if (!row['部局']) return null;
+      return {
+        department: row['部局'],
+        memberCount: Number(row['所属人数'] || 0),
+        targetMeetingCount: Number(row['対象会議数'] || 0),
+        attendCount: Number(row['出席回答数'] || 0),
+        absenceCount: Number(row['欠席回答数'] || 0),
+        unansweredCount: Number(row['未提出数'] || 0),
+        effectiveAttendCount: Number(row['出席扱い回数'] || 0),
+        attendanceRate: toRatio(row['参加率']),
+        absenceRate: toRatio(row['欠席率']),
+      };
+    }
+
+    /**
+     * 連続欠席チェック CSV の日本語列名を画面用キーへ変換します。
+     *
+     * @param {Object} row CSV 行オブジェクト。
+     * @return {Object|null} 連続欠席情報。
+     */
+    function streakMapper(row) {
+      if (!row['メンバーID']) return null;
+      return {
+        memberId: row['メンバーID'],
+        name: row['名前'],
+        department: row['部局'],
+        grade: row['学年'],
+        role: row['役職'],
+        streak: Number(row['連続欠席回数'] || 0),
+        alertLevel: row['注意レベル'],
+        latestMeeting: row['直近欠席会議'],
+        latestReason: row['直近欠席理由'],
+      };
+    }
+
+    /**
+     * すべてのタブ内容を現在の state から再描画します。
+     */
+    function renderAll() {
+      renderDashboard();
+      renderMeetingsTab();
+      renderAttendanceTab();
+      renderMembersTab();
+      renderDepartmentsTab();
+      renderStreaksTab();
+      renderReasonsTab();
+      renderSettingsTab();
+      renderReservationsTab();
+      switchTab(state.activeTab);
+    }
+
+    /**
+     * ダッシュボードタブを描画します。
+     */
+    function renderDashboard() {
+      const openMeetings = state.meetings.filter((meeting) => meeting.status === '有効' && isRecruiting(meeting));
+      const upcomingMeetings = state.meetings
+        .filter((meeting) => meeting.status === '有効')
+        .sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`))
+        .slice(0, 5);
+      const overallRate = state.meetingAggregations.length
+        ? state.meetingAggregations.reduce((sum, item) => sum + item.attendanceRate, 0) / state.meetingAggregations.length
+        : 0;
+      const warnings = state.streaks.filter((item) => item.alertLevel === '注意' || item.alertLevel === '要確認');
+      const topDepartments = state.departmentAggregations.slice().sort((a, b) => b.attendanceRate - a.attendanceRate).slice(0, 4);
+
+      document.getElementById('tab-dashboard').innerHTML = `
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-label">現在募集中の会議</div><div class="stat-value">${openMeetings.length}</div></div>
+          <div class="stat-box"><div class="stat-label">有効メンバー</div><div class="stat-value">${state.members.filter((m) => m.status === '有効').length}</div></div>
+          <div class="stat-box"><div class="stat-label">全体参加率</div><div class="stat-value">${formatPercent(overallRate)}</div></div>
+          <div class="stat-box"><div class="stat-label">注意が必要なメンバー</div><div class="stat-value">${warnings.length}</div></div>
+        </div>
+        <div class="split2">
+          <div class="panel">
+            <div class="panel-title">直近の会議</div>
+            ${upcomingMeetings.length ? upcomingMeetings.map((meeting) => `<div class="sub">${escapeHtml(meeting.meetingName)} / ${escapeHtml(formatDateLabel(meeting.meetingDate))} ${escapeHtml(meeting.startTime)}〜${escapeHtml(meeting.endTime)}</div>`).join('') : '<div class="muted">会議データがありません。</div>'}
+          </div>
+          <div class="panel">
+            <div class="panel-title">部局別参加率</div>
+            ${topDepartments.length ? topDepartments.map((item) => `<div class="sub">${escapeHtml(item.department)}: ${formatPercent(item.attendanceRate)}</div>`).join('') : '<div class="muted">集計データがありません。</div>'}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">会議ごとの出欠状況</div>
+          <div class="table-wrap">${renderSimpleTable(['会議名', '会議日', '出席', '欠席', '未提出', '参加率'], state.meetingAggregations.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.attendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate)]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 会議登録フォームと会議一覧タブを描画します。
+     */
+    function renderMeetingsTab() {
+      document.getElementById('tab-meetings').innerHTML = `
+        <div class="panel">
+          <div class="panel-title">会議登録・更新</div>
+          <div class="split3">
+            <label>会議ID<input id="meeting-id" placeholder="未入力なら自動採番"></label>
+            <label>会議名<input id="meeting-name"></label>
+            <label>会議日<input id="meeting-date" type="date"></label>
+            <label>開始時間<input id="meeting-start" type="time"></label>
+            <label>終了時間<input id="meeting-end" type="time"></label>
+            <label>有効状態<select id="meeting-status"><option value="有効">有効</option><option value="無効">無効</option></select></label>
+            <label>募集開始日時<input id="meeting-recruit-start" type="datetime-local"></label>
+            <label>募集終了日時<input id="meeting-recruit-end" type="datetime-local"></label>
+            <label>回答締切日時<input id="meeting-deadline" type="datetime-local"></label>
+          </div>
+          <label>備考<textarea id="meeting-note"></textarea></label>
+          <div class="row-actions">
+            <button class="btn-primary" onclick="saveMeeting()">保存する</button>
+            <button class="btn-ghost" onclick="clearMeetingForm()">フォームをクリア</button>
+            <button class="btn-secondary" onclick="refreshAggregations()">集計を再計算</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">会議一覧</div>
+          <div class="table-wrap">${renderSimpleTable(['会議ID', '会議名', '会議日', '時間', '募集期間', '回答締切', '状態', '操作'], state.meetings.map((meeting) => [meeting.meetingId, meeting.meetingName, formatDateLabel(meeting.meetingDate), `${meeting.startTime}〜${meeting.endTime}`, `${formatDateTimeLabel(meeting.recruitStartAt)}〜${formatDateTimeLabel(meeting.recruitEndAt)}`, formatDateTimeLabel(meeting.answerDeadlineAt), meeting.status, `<button class="btn-secondary btn-sm" onclick="fillMeetingForm('${escapeJs(meeting.meetingId)}')">編集</button>`]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 会議と有効メンバーを掛け合わせ、未提出者も含む出欠一覧を描画します。
+     */
+    function renderAttendanceTab() {
+      const rows = buildAttendanceRows();
+      document.getElementById('tab-attendance').innerHTML = `
+        <div class="panel">
+          <div class="panel-title">出欠一覧</div>
+          <div class="notice">未提出者も一覧に出し、集計上の扱いは「出席扱い」として表示します。</div>
+          <div class="table-wrap">${renderSimpleTable(['会議名', '会議日', '名前', '部局', '学年', '役職', '回答状態', '集計上の扱い', '欠席理由', '欠席理由詳細', '回答日時', '更新日時'], rows.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.answerState, item.aggregateStatus, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt), formatDateTimeLabel(item.updatedAt)]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 個人別集計タブを描画します。
+     */
+    function renderMembersTab() {
+      document.getElementById('tab-members').innerHTML = `
+        <div class="panel">
+          <div class="panel-title">個人別集計</div>
+          <div class="table-wrap">${renderSimpleTable(['名前', '部局', '学年', '役職', '対象会議数', '出席扱い回数', '欠席回数', '未提出回数', '参加率', '連続欠席回数', '最終回答日時'], state.memberAggregations.map((item) => [item.name, item.department, item.grade, item.role, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), item.absenceStreak, formatDateTimeLabel(item.lastAnsweredAt)]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 部局別集計タブを描画します。
+     */
+    function renderDepartmentsTab() {
+      document.getElementById('tab-departments').innerHTML = `
+        <div class="panel">
+          <div class="panel-title">部局別集計</div>
+          <div class="table-wrap">${renderSimpleTable(['部局', '所属人数', '対象会議数', '出席扱い回数', '欠席回数', '未提出回数', '参加率', '欠席率'], state.departmentAggregations.map((item) => [item.department, item.memberCount, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), formatPercent(item.absenceRate)]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 連続欠席チェックタブを描画します。
+     */
+    function renderStreaksTab() {
+      document.getElementById('tab-streaks').innerHTML = `
+        <div class="panel">
+          <div class="panel-title">連続欠席チェック</div>
+          <div class="table-wrap">${renderSimpleTable(['名前', '部局', '学年', '役職', '連続欠席回数', '注意レベル', '直近欠席会議', '直近欠席理由'], state.streaks.map((item) => [item.name, item.department, item.grade, item.role, item.streak, renderLevelBadge(item.alertLevel), item.latestMeeting, item.latestReason]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 欠席回答だけを抽出し、欠席理由一覧タブを描画します。
+     */
+    function renderReasonsTab() {
+      const reasons = state.attendanceResponses
+        .filter((item) => item.attendance === '欠席')
+        .map((item) => {
+          const meeting = state.meetings.find((m) => m.meetingId === item.meetingId);
+          return {
+            meetingName: meeting ? meeting.meetingName : item.meetingId,
+            meetingDate: meeting ? meeting.meetingDate : '',
+            name: item.name,
+            department: item.department,
+            grade: item.grade,
+            role: item.role,
+            absenceReason: item.absenceReason,
+            absenceDetail: item.absenceDetail,
+            answeredAt: item.answeredAt,
+          };
+        });
+      document.getElementById('tab-reasons').innerHTML = `
+        <div class="panel">
+          <div class="panel-title">欠席理由一覧</div>
+          <div class="table-wrap">${renderSimpleTable(['会議名', '会議日', '名前', '部局', '学年', '役職', '欠席理由', '欠席理由詳細', '回答日時'], reasons.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt)]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 管理画面から更新可能な設定だけを表示します。
+     */
+    function renderSettingsTab() {
+      const editableKeys = ['管理者パスワード', 'その他理由詳細必須', '欠席詳細常時必須', '注意連続欠席回数', '要確認連続欠席回数', 'システム名'];
+      const rows = state.settings.filter((item) => editableKeys.includes(item.settingKey));
+      document.getElementById('tab-settings').innerHTML = `
+        <div class="panel">
+          <div class="panel-title">設定確認・更新</div>
+          <div class="table-wrap">${renderSimpleTable(['設定キー', '現在値', '説明', '更新日時', '操作'], rows.map((item) => [item.settingKey, `<input id="setting-${escapeAttr(item.settingKey)}" value="${escapeAttr(item.settingValue)}">`, item.description, formatDateTimeLabel(item.updatedAt), `<button class="btn-primary btn-sm" onclick="saveSetting('${escapeJs(item.settingKey)}')">保存</button>`]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 会議室予約管理タブを描画します。
+     */
+    function renderReservationsTab() {
+      const activeRows = state.reservations
+        .slice()
+        .sort((a, b) => `${a.usageDate}${a.startTime}${a.roomName}`.localeCompare(`${b.usageDate}${b.startTime}${b.roomName}`));
+      document.getElementById('tab-reservations').innerHTML = `
+        <div class="panel">
+          <div class="panel-title">会議室予約管理</div>
+          <div class="row-actions">
+            <button class="btn-secondary btn-sm" onclick="selectAllReservations()">全選択</button>
+            <button class="btn-ghost btn-sm" onclick="clearReservationSelection()">選択解除</button>
+            <button class="btn-danger btn-sm" onclick="deleteSelectedReservations()">選択した予約を削除</button>
+          </div>
+          <div class="table-wrap">${renderSimpleTable(['選択', '会議名', '利用日', '時間', '会議室', '団体名', '申請者', '状態'], activeRows.map((item) => [`<input type="checkbox" ${state.selectedReservationIds.has(item.reservationId) ? 'checked' : ''} onchange="toggleReservationSelection('${escapeJs(item.reservationId)}')">`, item.meetingName, formatDateLabel(item.usageDate), `${item.startTime}〜${item.endTime}`, item.roomName, item.organizationName, item.userName, item.status]))}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * 会議一覧と有効メンバー、回答済みデータから出欠一覧行を作成します。
+     *
+     * @return {Array<Object>} 出欠一覧用の行データ。
+     */
+    function buildAttendanceRows() {
+      const activeMembers = state.members.filter((member) => member.status === '有効').sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name, 'ja'));
+      const activeMeetings = state.meetings.filter((meeting) => meeting.status === '有効').sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`));
+      const responseMap = new Map(state.attendanceResponses.map((item) => [`${item.meetingId}__${item.memberId}`, item]));
+      const rows = [];
+      activeMeetings.forEach((meeting) => {
+        activeMembers.forEach((member) => {
+          const response = responseMap.get(`${meeting.meetingId}__${member.memberId}`);
+          rows.push({
+            meetingName: meeting.meetingName,
+            meetingDate: meeting.meetingDate,
+            name: member.name,
+            department: member.department,
+            grade: member.grade,
+            role: member.role,
+            answerState: response ? response.attendance : '未提出',
+            aggregateStatus: response && response.attendance === '欠席' ? '欠席扱い' : '出席扱い',
+            absenceReason: response ? response.absenceReason : '',
+            absenceDetail: response ? response.absenceDetail : '',
+            answeredAt: response ? response.answeredAt : '',
+            updatedAt: response ? response.updatedAt : '',
+          });
+        });
+      });
+      return rows;
+    }
+
+    /**
+     * 2次元配列をシンプルな HTML テーブルに変換します。
+     *
+     * @param {Array<string>} headers 表ヘッダー。
+     * @param {Array<Array<*>>} rows 表示行。
+     * @return {string} テーブル HTML。
+     */
+    function renderSimpleTable(headers, rows) {
+      return `<table><thead><tr>${headers.map((header) => `<th>${header}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map((row) => `<tr>${row.map((cell) => `<td>${cell === 0 ? '0' : (cell || '')}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}" class="muted">データがありません。</td></tr>`}</tbody></table>`;
+    }
+
+    /**
+     * 選択した会議の値を会議編集フォームへ流し込みます。
+     *
+     * @param {string} meetingId 編集対象の会議ID。
+     */
+    function fillMeetingForm(meetingId) {
+      const meeting = state.meetings.find((item) => item.meetingId === meetingId);
+      if (!meeting) return;
+      document.getElementById('meeting-id').value = meeting.meetingId;
+      document.getElementById('meeting-name').value = meeting.meetingName;
+      document.getElementById('meeting-date').value = meeting.meetingDate;
+      document.getElementById('meeting-start').value = meeting.startTime;
+      document.getElementById('meeting-end').value = meeting.endTime;
+      document.getElementById('meeting-status').value = meeting.status;
+      document.getElementById('meeting-recruit-start').value = toDateTimeLocal(meeting.recruitStartAt);
+      document.getElementById('meeting-recruit-end').value = toDateTimeLocal(meeting.recruitEndAt);
+      document.getElementById('meeting-deadline').value = toDateTimeLocal(meeting.answerDeadlineAt);
+      document.getElementById('meeting-note').value = meeting.note;
+      switchTab('meetings');
+    }
+
+    /**
+     * 会議編集フォームを初期状態へ戻します。
+     */
+    function clearMeetingForm() {
+      ['meeting-id', 'meeting-name', 'meeting-date', 'meeting-start', 'meeting-end', 'meeting-recruit-start', 'meeting-recruit-end', 'meeting-deadline', 'meeting-note'].forEach((id) => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('meeting-status').value = '有効';
+    }
+
+    /**
+     * 会議編集フォームの内容を GAS API へ送信して保存します。
+     *
+     * @return {Promise<void>} 保存処理完了。
+     */
+    async function saveMeeting() {
+      try {
+        const res = await fetch(CONFIG.GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'saveMeeting',
+            payload: {
+              adminPassword: getAdminPassword(),
+              meetingId: document.getElementById('meeting-id').value.trim(),
+              meetingName: document.getElementById('meeting-name').value.trim(),
+              meetingDate: document.getElementById('meeting-date').value,
+              startTime: document.getElementById('meeting-start').value,
+              endTime: document.getElementById('meeting-end').value,
+              recruitStartAt: document.getElementById('meeting-recruit-start').value,
+              recruitEndAt: document.getElementById('meeting-recruit-end').value,
+              answerDeadlineAt: document.getElementById('meeting-deadline').value,
+              note: document.getElementById('meeting-note').value.trim(),
+              status: document.getElementById('meeting-status').value,
+            },
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showGlobal(data.error || '会議を保存できません。', 'error');
+          return;
+        }
+        await reloadAll(false);
+        clearMeetingForm();
+        showGlobal('会議を保存しました。', 'success');
+      } catch (_) {
+        showGlobal('通信エラーが発生しました。', 'error');
       }
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        let cls = 'cal-day';
-        if (reservedDates.has(dateStr)) cls += ' has-res';
-        if (dateStr === todayStr) cls += ' today';
-        if (dateStr === filterDate) cls += ' selected';
-        html += `<div class="${cls}" onclick="selectDate('${dateStr}')">${d}</div>`;
+    }
+
+    /**
+     * GAS API へ集計再計算を依頼し、完了後に全データを再読み込みします。
+     *
+     * @return {Promise<void>} 集計更新完了。
+     */
+    async function refreshAggregations() {
+      try {
+        const res = await fetch(CONFIG.GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'refreshAggregations', payload: { adminPassword: getAdminPassword() } }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showGlobal(data.error || '集計更新に失敗しました。', 'error');
+          return;
+        }
+        await reloadAll(false);
+        showGlobal('集計を更新しました。', 'success');
+      } catch (_) {
+        showGlobal('通信エラーが発生しました。', 'error');
       }
-
-      document.getElementById('calendar-grid').innerHTML = html;
     }
 
-    function prevMonth() {
-      calMonth--;
-      if (calMonth < 0) { calMonth = 11; calYear--; }
-      renderCalendar();
+    /**
+     * 指定された設定キーの入力値を GAS API へ送信して保存します。
+     *
+     * @param {string} settingKey 更新対象の設定キー。
+     * @return {Promise<void>} 設定更新完了。
+     */
+    async function saveSetting(settingKey) {
+      const input = document.getElementById(`setting-${settingKey}`);
+      try {
+        const res = await fetch(CONFIG.GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateSetting',
+            payload: {
+              adminPassword: getAdminPassword(),
+              settingKey,
+              settingValue: input.value.trim(),
+            },
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showGlobal(data.error || '設定更新に失敗しました。', 'error');
+          return;
+        }
+        await loadPublicSettings();
+        await reloadAll(false);
+        showGlobal(`${settingKey} を更新しました。`, 'success');
+      } catch (_) {
+        showGlobal('通信エラーが発生しました。', 'error');
+      }
     }
 
-    function nextMonth() {
-      calMonth++;
-      if (calMonth > 11) { calMonth = 0; calYear++; }
-      renderCalendar();
+    /**
+     * 予約IDの選択状態を切り替えます。
+     *
+     * @param {string} reservationId 予約ID。
+     */
+    function toggleReservationSelection(reservationId) {
+      if (state.selectedReservationIds.has(reservationId)) {
+        state.selectedReservationIds.delete(reservationId);
+      } else {
+        state.selectedReservationIds.add(reservationId);
+      }
+      renderReservationsTab();
     }
 
-    function selectDate(date) {
-      filterDate = filterDate === date ? '' : date;
-      renderCalendar();
-      applyFilters();
+    /**
+     * 取消済み以外の予約をすべて選択します。
+     */
+    function selectAllReservations() {
+      state.reservations.forEach((item) => {
+        if (item.status !== '取消') state.selectedReservationIds.add(item.reservationId);
+      });
+      renderReservationsTab();
     }
 
-    // ============================================================
-    // 一覧表示
-    // ============================================================
-    function renderList() {
-      const container = document.getElementById('res-list');
-      const start = currentPage * PAGE_SIZE;
-      const page = filteredReservations.slice(start, start + PAGE_SIZE);
+    /**
+     * 予約の選択状態をすべて解除します。
+     */
+    function clearReservationSelection() {
+      state.selectedReservationIds = new Set();
+      renderReservationsTab();
+    }
 
-      if (filteredReservations.length === 0) {
-        container.innerHTML = '<div class="empty">該当する予約はありません</div>';
-        renderPagination();
+    /**
+     * 選択された予約を GAS API 経由で取消状態に更新します。
+     *
+     * @return {Promise<void>} 取消処理完了。
+     */
+    async function deleteSelectedReservations() {
+      const ids = Array.from(state.selectedReservationIds);
+      if (!ids.length) {
+        showGlobal('削除する予約を選択してください。', 'error');
         return;
       }
-
-      container.innerHTML = page.map(r => {
-        const checked = selectedIds.has(r.reservation_id);
-        const statusBadge = statusBadgeHtml(r.status);
-        return `
-      <div class="res-card ${checked ? 'selected' : ''}" id="card-${esc(r.reservation_id)}" onclick="toggleSelect('${esc(r.reservation_id)}')">
-        <div class="res-card-header">
-          <label class="checkbox-wrap" onclick="event.stopPropagation()">
-            <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSelect('${esc(r.reservation_id)}')">
-          </label>
-          <span class="res-card-title">${esc(r.meeting_name)}</span>
-          ${statusBadge}
-        </div>
-        <div class="res-card-meta">
-          ${fmtDate(r.usage_date)}　${esc(r.start_time)}〜${esc(r.end_time)}　${esc(r.room_name)}
-        </div>
-        <div class="res-card-meta">
-          ${esc(r.organization_name)}　${esc(r.user_name)}
-        </div>
-        <div class="res-card-meta" style="font-size:11px;color:#aaa">ID: ${esc(r.reservation_id)}</div>
-      </div>`;
-      }).join('');
-
-      renderPagination();
-    }
-
-    function renderPagination() {
-      const total = filteredReservations.length;
-      const pages = Math.ceil(total / PAGE_SIZE);
-      const pg = document.getElementById('pagination');
-      if (pages <= 1) { pg.innerHTML = `<span style="font-size:13px;color:var(--muted)">${total}件</span>`; return; }
-      let html = `<span style="font-size:13px;color:var(--muted)">${total}件 / `;
-      for (let i = 0; i < pages; i++) {
-        html += `<button class="btn-ghost btn-sm ${i === currentPage ? 'btn-primary' : ''}" onclick="goPage(${i})" style="min-width:36px">${i + 1}</button>`;
+      if (!window.confirm(`${ids.length}件の予約を取消に更新します。続けますか。`)) {
+        return;
       }
-      html += '</span>';
-      pg.innerHTML = html;
-    }
-
-    function goPage(p) {
-      currentPage = p;
-      renderList();
-    }
-
-    function statusBadgeHtml(status) {
-      if (status === '有効') return '<span class="badge badge-active">有効</span>';
-      if (status === 'キャンセル依頼') return '<span class="badge badge-request">キャンセル依頼中</span>';
-      return '<span class="badge badge-cancel">取消済み</span>';
-    }
-
-    // ============================================================
-    // 選択
-    // ============================================================
-    function toggleSelect(id) {
-      if (selectedIds.has(id)) selectedIds.delete(id);
-      else selectedIds.add(id);
-      updateBulkBtn();
-      renderList();
-    }
-
-    function selectAll() {
-      filteredReservations
-        .filter(r => r.status !== '取消')
-        .forEach(r => selectedIds.add(r.reservation_id));
-      updateBulkBtn();
-      renderList();
-    }
-
-    function deselectAll() {
-      selectedIds.clear();
-      updateBulkBtn();
-      renderList();
-    }
-
-    function updateBulkBtn() {
-      const btn = document.getElementById('bulk-delete-btn');
-      const count = selectedIds.size;
-      btn.disabled = count === 0;
-      document.getElementById('selected-count').textContent = count;
-    }
-
-    // ============================================================
-    // 削除
-    // ============================================================
-    function bulkDelete() {
-      if (selectedIds.size === 0) return;
-      document.getElementById('delete-confirm-text').textContent =
-        `選択した ${selectedIds.size} 件の予約を削除します。この操作は取り消せません。`;
-      document.getElementById('delete-modal').classList.add('open');
-    }
-
-    function closeDeleteModal() {
-      document.getElementById('delete-modal').classList.remove('open');
-    }
-
-    async function executeDelete() {
-      const btn = document.getElementById('btn-delete-confirm');
-      btn.disabled = true;
-      btn.textContent = '削除中...';
-
-      const ids = Array.from(selectedIds);
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'admin_delete',
-            payload: { admin_password: adminPassword, reservation_ids: ids },
+            payload: { adminPassword: getAdminPassword(), reservation_ids: ids },
           }),
         });
         const data = await res.json();
-        if (data.ok) {
-          closeDeleteModal();
-          selectedIds.clear();
-          updateBulkBtn();
-          showStatus(`${data.deleted.length}件の予約を削除しました。`, 'success');
-          await loadReservations(true);
-        } else {
-          closeDeleteModal();
-          if (data.error && data.error.includes('パスワード')) {
-            // パスワードエラー → ログアウト
-            adminPassword = '';
-            document.getElementById('admin-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-            showFieldError('err-password', 'パスワードが違います。再度入力してください。');
-          } else {
-            showStatus(data.error || '削除に失敗しました。', 'error');
-          }
+        if (!data.ok) {
+          showGlobal(data.error || '予約削除に失敗しました。', 'error');
+          return;
         }
-      } catch (e) {
-        closeDeleteModal();
-        showStatus('通信エラーが発生しました。', 'error');
+        state.selectedReservationIds = new Set();
+        await reloadAll(false);
+        showGlobal(`${data.deleted.length}件の予約を取消に更新しました。`, 'success');
+      } catch (_) {
+        showGlobal('通信エラーが発生しました。', 'error');
       }
-      btn.disabled = false;
-      btn.textContent = '削除する';
     }
 
-    // ============================================================
-    // ユーティリティ
-    // ============================================================
-    function showStatus(msg, type) {
-      const el = document.getElementById('status-msg');
-      el.className = type === 'error' ? 'global-error' : 'success-msg';
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      setTimeout(() => el.classList.add('hidden'), 5000);
+    /**
+     * sessionStorage から管理者パスワードを取得します。
+     *
+     * @return {string} 管理者パスワード。
+     */
+    function getAdminPassword() {
+      return sessionStorage.getItem(PASSWORD_KEY) || '';
     }
 
-    function showFieldError(id, msg) {
+    /**
+     * 会議が現在募集中かどうかを判定します。
+     *
+     * @param {Object} meeting 会議情報。
+     * @return {boolean} 募集中の場合は true。
+     */
+    function isRecruiting(meeting) {
+      const now = new Date();
+      const start = new Date(meeting.recruitStartAt);
+      const end = new Date(meeting.recruitEndAt);
+      return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= now && now <= end;
+    }
+
+    /**
+     * 指定要素にメッセージを表示します。
+     *
+     * @param {string} id 表示先要素ID。
+     * @param {string} text 表示文。
+     * @param {string} type success または error。
+     */
+    function showMessage(id, text, type) {
       const el = document.getElementById(id);
-      if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+      el.className = type === 'error' ? 'message message-error' : 'message message-success';
+      el.textContent = text;
+      el.classList.remove('hidden');
     }
 
-    function fmtDate(d) {
-      if (!d) return '';
-      const dt = new Date(d + 'T00:00:00');
+    /**
+     * 管理画面全体用のメッセージを表示します。
+     *
+     * @param {string} text 表示文。
+     * @param {string} type success または error。
+     */
+    function showGlobal(text, type) {
+      const el = document.getElementById('global-message');
+      el.className = type === 'error' ? 'message message-error' : 'message message-success';
+      el.textContent = text;
+      el.classList.remove('hidden');
+      clearTimeout(showGlobal.timer);
+      showGlobal.timer = setTimeout(() => el.classList.add('hidden'), 5000);
+    }
+
+    /**
+     * 連続欠席の注意レベルをバッジ HTML に変換します。
+     *
+     * @param {string} level 注意レベル。
+     * @return {string} バッジ HTML。
+     */
+    function renderLevelBadge(level) {
+      const cls = level === '要確認' ? 'badge-danger' : level === '注意' ? 'badge-warn' : 'badge-ok';
+      return `<span class="badge ${cls}">${escapeHtml(level || '通常')}</span>`;
+    }
+
+    /**
+     * 日付文字列を yyyy-MM-dd に近い形式へ整えます。
+     *
+     * @param {*} value 対象値。
+     * @return {string} 正規化済み日付。
+     */
+    function normalizeDate(value) {
+      return String(value || '').replace(/\//g, '-').slice(0, 10);
+    }
+
+    /**
+     * 時刻文字列を HH:mm 形式へ整えます。
+     *
+     * @param {*} value 対象値。
+     * @return {string} 正規化済み時刻。
+     */
+    function normalizeTime(value) {
+      const match = String(value || '').trim().match(/^(\d{1,2}):(\d{1,2})/);
+      return match ? `${String(match[1]).padStart(2, '0')}:${String(match[2]).padStart(2, '0')}` : String(value || '').trim();
+    }
+
+    /**
+     * 日時文字列を Date で解釈しやすい ISO 風表記へ整えます。
+     *
+     * @param {*} value 対象値。
+     * @return {string} 正規化済み日時。
+     */
+    function normalizeDateTime(value) {
+      return String(value || '').trim().replace(/\//g, '-').replace(' ', 'T');
+    }
+
+    /**
+     * 日付を画面表示用ラベルに変換します。
+     *
+     * @param {string} value yyyy-MM-dd 形式の日付。
+     * @return {string} 表示用日付。
+     */
+    function formatDateLabel(value) {
+      if (!value) return '';
+      const date = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return value;
       const days = ['日', '月', '火', '水', '木', '金', '土'];
-      return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
+      return `${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]})`;
     }
 
-    function esc(s) {
-      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    /**
+     * 日時を画面表示用ラベルに変換します。
+     *
+     * @param {string} value 日時文字列。
+     * @return {string} 表示用日時。
+     */
+    function formatDateTimeLabel(value) {
+      if (!value) return '';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      const days = ['日', '月', '火', '水', '木', '金', '土'];
+      return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    /**
+     * Date で解釈できる日時を datetime-local 入力値へ変換します。
+     *
+     * @param {string} value 日時文字列。
+     * @return {string} datetime-local 用の値。
+     */
+    function toDateTimeLocal(value) {
+      if (!value) return '';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    /**
+     * シートから取得した割合表記を 0 から 1 の数値へ変換します。
+     *
+     * @param {*} value 割合値またはパーセント文字列。
+     * @return {number} 0 から 1 の割合。
+     */
+    function toRatio(value) {
+      const text = String(value || '').trim();
+      if (!text) return 0;
+      if (text.endsWith('%')) return Number(text.replace('%', '')) / 100;
+      const numeric = Number(text);
+      return numeric > 1 ? numeric / 100 : numeric;
+    }
+
+    /**
+     * 0 から 1 の割合をパーセント表記へ変換します。
+     *
+     * @param {*} value 割合値。
+     * @return {string} パーセント表示。
+     */
+    function formatPercent(value) {
+      return `${(Number(value || 0) * 100).toFixed(1)}%`;
+    }
+
+    /**
+     * HTML へ埋め込む文字列をエスケープします。
+     *
+     * @param {*} text 対象値。
+     * @return {string} エスケープ済み文字列。
+     */
+    function escapeHtml(text) {
+      return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /**
+     * HTML 属性へ埋め込む文字列をエスケープします。
+     *
+     * @param {*} text 対象値。
+     * @return {string} エスケープ済み文字列。
+     */
+    function escapeAttr(text) {
+      return escapeHtml(text).replace(/'/g, '&#39;');
+    }
+
+    /**
+     * JavaScript 文字列リテラルへ埋め込む値をエスケープします。
+     *
+     * @param {*} text 対象値。
+     * @return {string} エスケープ済み文字列。
+     */
+    function escapeJs(text) {
+      return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
   </script>
 </body>
