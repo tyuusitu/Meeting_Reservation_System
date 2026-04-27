@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>会議室予約</title>
+  <style>
+    :root {
+      --primary: #1d6fd6;
+      --primary-dark: #1559ae;
+      --accent: #0f8f68;
+      --danger: #c73d3d;
+      --surface: #ffffff;
+      --background: #f6f8fb;
+      --border: #d7e0ec;
+      --text: #172033;
+      --muted: #647085;
+      --soft-blue: #eaf2ff;
+      --soft-green: #eaf8f2;
+      --soft-red: #fff0f0;
+      --shadow: 0 2px 12px rgba(20, 36, 64, 0.07);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: var(--background);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit
+    }
+
+    button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background .15s
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      padding: 10px 12px
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700
+    }
+
+    a {
+      color: var(--primary)
+    }
+
+    /* layout */
+    .app {
+      width: min(100%, 780px);
+      margin: 0 auto;
+      padding: 16px
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: -16px -16px 16px;
+      padding: 12px 16px;
+      background: rgba(246, 248, 251, .96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border)
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px
+    }
+
+    .header-top h1 {
+      font-size: 20px;
+      line-height: 1.2
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center
+    }
+
+    /* cards */
+    .screen {
+      display: grid;
+      gap: 14px
+    }
+
+    .panel {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px
+    }
+
+    .panel-title {
+      font-size: 17px;
+      font-weight: 700
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px
+    }
+
+    .actions>button {
+      flex: 1 1 140px
+    }
+
+    /* buttons */
+    .btn-primary {
+      background: var(--primary);
+      color: #fff
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-dark)
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--primary);
+      border: 1.5px solid var(--primary)
+    }
+
+    .btn-ghost {
+      background: #eef3f9;
+      color: var(--text)
+    }
+
+    .btn-sm {
+      min-height: 36px;
+      padding: 6px 12px;
+      font-size: 14px
+    }
+
+    /* admin button */
+    .admin-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px
+    }
+
+    .admin-link:hover {
+      color: var(--primary)
+    }
+
+    .back-link {
+      font-size: 13px;
+      color: var(--primary);
+      text-decoration: none;
+      padding: 6px 10px;
+      border: 1px solid var(--primary);
+      border-radius: 6px
+    }
+
+    .back-link:hover {
+      background: var(--soft-blue)
+    }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 13px;
+      padding: 4px 0
+    }
+
+    .global-error {
+      background: var(--soft-red);
+      border: 1px solid #fccaca;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--danger);
+      font-size: 14px
+    }
+
+    .success-box {
+      background: var(--soft-green);
+      border: 1px solid #a3e6cb;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: grid;
+      gap: 6px
+    }
+
+    .success-box h3 {
+      color: var(--accent)
+    }
+
+    /* form */
+    .reserve-card {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+      position: relative
+    }
+
+    .reserve-card-num {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700
+    }
+
+    /* 日時入力エリアのタップ範囲拡大 */
+    .date-time-label {
+      display: grid;
+      gap: 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 12px;
+      transition: border-color .15s, box-shadow .15s
+    }
+
+    .date-time-label .label-text {
+      padding: 0 0 8px 0
+    }
+
+    .date-time-label input {
+      cursor: pointer;
+      padding: 0;
+      min-height: 32px;
+      border: 0;
+      border-radius: 0
+    }
+
+    .date-time-label:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(29, 111, 214, 0.12)
+    }
+
+    /* confirm modal */
+    .confirm-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px
+    }
+
+    .confirm-table th,
+    .confirm-table td {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      text-align: left
+    }
+
+    .confirm-table th {
+      background: #f0f4fa;
+      font-weight: 700;
+      width: 35%
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center
+    }
+
+    .modal-overlay.open {
+      display: flex
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      width: min(90%, 420px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .18);
+      display: grid;
+      gap: 14px
+    }
+
+    .modal h2 {
+      font-size: 18px
+    }
+
+    .loading {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 14px
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    @media(max-width:480px) {
+      .grid2 {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-top">
+        <h1 id="system-name">会議室予約</h1>
+        <div class="header-nav">
+          <a href="index.html" class="back-link">メニュー</a>
+          <a href="status.html" class="back-link">利用状況</a>
+          <a href="admin.html" class="admin-link">管理者</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 読み込み中 -->
+    <div id="loading-msg" class="loading">読み込み中...</div>
+
+    <!-- 予約フォーム -->
+    <div id="screen-reserve" class="screen hidden">
+      <!-- 予約者情報 -->
+      <div class="panel" id="common-panel">
+        <div class="panel-title">予約者情報</div>
+        <div id="common-fields">
+          <div id="field-org-wrap">
+            <label id="label-org">団体名 <span style="color:var(--danger)">*</span>
+              <input type="text" id="input-org" autocomplete="organization">
+              <span class="error-msg hidden" id="err-org"></span>
+            </label>
+          </div>
+          <div id="field-name-wrap" style="margin-top:10px">
+            <label id="label-name">お名前 <span style="color:var(--danger)">*</span>
+              <input type="text" id="input-name" autocomplete="name">
+              <span class="error-msg hidden" id="err-name"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- グローバルエラー -->
+      <div id="global-error" class="global-error hidden"></div>
+
+      <!-- 予約カード一覧 -->
+      <div id="reserve-cards"></div>
+
+      <!-- 追加・送信 -->
+      <div class="actions">
+        <button class="btn-ghost" onclick="addReserveCard()">＋ 予約を追加</button>
+        <button class="btn-primary" id="btn-confirm" onclick="goToConfirm()">確認へ進む</button>
+      </div>
+    </div>
+
+    <!-- 完了画面 -->
+    <div id="screen-done" class="hidden">
+      <div class="success-box">
+        <h3>予約が完了しました</h3>
+        <div id="done-list"></div>
+        <div class="actions" style="margin-top:8px">
+          <a href="status.html" class="btn-secondary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;border-radius:8px;font-weight:700">利用状況を確認</a>
+          <button class="btn-ghost" onclick="resetReserveForm()">続けて予約</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 確認モーダル -->
+    <div class="modal-overlay" id="confirm-modal">
+      <div class="modal" style="width:min(95%,600px);max-height:90vh;overflow-y:auto">
+        <h2>予約内容の確認</h2>
+        <div id="confirm-content"></div>
+        <div class="actions">
+          <button class="btn-ghost" onclick="closeConfirm()">戻る</button>
+          <button class="btn-primary" id="btn-submit" onclick="submitReservations()">予約確定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // 設定
+    // ============================================================
+    const CONFIG = {
+      SPREADSHEET_ID: '1gY801SSdzx6UqaVPhC90Gp4zot7hHyB9xQaZgzY-MS4',
+      GAS_API_URL: 'https://script.google.com/macros/s/AKfycbyuklc-3W8N9J_pXZ9ockQnwkf_xxAF8WpwY6bvLYqC8HIQeXFLrnU6PCNpQAr0p-0Nkg/exec',
+      SHEET_GID: {
+        reservations: '929838420',
+        rooms: '1209500136',
+        settings: '1074437390',
+      },
+    };
+
+    // ============================================================
+    // 状態
+    // ============================================================
+    let appConfig = null;
+    let allReservations = [];
+    let reserveCards = [];
+    let cardIdCounter = 0;
+    let reservationsLoaded = false;
+
+    // ============================================================
+    // 初期化
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      applyConfig(defaultConfig());
+      document.getElementById('loading-msg').classList.add('hidden');
+      document.getElementById('screen-reserve').classList.remove('hidden');
+      Promise.allSettled([loadConfig(), loadReservations()]).then(() => {
+        reservationsLoaded = true;
+      });
+    });
+
+    function todayStr() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    // ============================================================
+    // GAS から設定取得
+    // ============================================================
+    async function loadConfig() {
+      try {
+        const url = CONFIG.GAS_API_URL + '?action=get_config';
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.ok) {
+          appConfig = data;
+          applyConfig(data);
+        }
+      } catch (e) {
+        console.warn('設定の取得に失敗しました（デフォルト値を使用）', e);
+        appConfig = defaultConfig();
+        applyConfig(appConfig);
+      }
+    }
+
+    function defaultConfig() {
+      return {
+        ok: true,
+        today: todayStr(),
+        settings: {
+          systemName: '会議室予約システム',
+          businessStartTime: '09:00',
+          businessEndTime: '22:00',
+          timeSlotMinutes: 5,
+          maxReservationsPerSubmit: 10,
+          labels: { organizationName: '団体名', userName: 'お名前', meetingName: '会議名', room: '会議室' },
+          fieldConfig: { organizationName: true, userName: true },
+        },
+        rooms: [],
+      };
+    }
+
+    function applyConfig(cfg) {
+      const s = cfg.settings;
+      document.getElementById('system-name').textContent = s.systemName + ' - 予約';
+      document.title = s.systemName + ' - 予約';
+
+      document.getElementById('label-org').childNodes[0].textContent = s.labels.organizationName + ' ';
+      document.getElementById('label-name').childNodes[0].textContent = s.labels.userName + ' ';
+
+      if (!s.fieldConfig.organizationName) document.getElementById('field-org-wrap').classList.add('hidden');
+      if (!s.fieldConfig.userName) document.getElementById('field-name-wrap').classList.add('hidden');
+
+      if (reserveCards.length === 0) addReserveCard();
+    }
+
+    // ============================================================
+    // スプレッドシートCSV取得
+    // ============================================================
+    async function loadReservations(bustCache = false) {
+      const gid = CONFIG.SHEET_GID.reservations;
+      const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/export?format=csv&gid=${gid}`
+        + (bustCache ? `&t=${Date.now()}` : '');
+      try {
+        const res = await fetch(url);
+        const text = await res.text();
+        allReservations = parseCSV(text).filter(r =>
+          r.reservation_id && (r.status === '有効' || r.status === 'キャンセル依頼')
+        );
+        reservationsLoaded = true;
+      } catch (e) {
+        console.warn('予約データの取得に失敗しました', e);
+        allReservations = [];
+        reservationsLoaded = true;
+      }
+    }
+
+    // ============================================================
+    // CSV パーサー
+    // ============================================================
+    const CSV_NEEDED = new Set(['予約ID', '団体名', '会議名', 'お名前', '会議室ID', '会議室名', '利用日', '開始時間', '終了時間', 'ステータス']);
+    const CSV_KEY_MAP = {
+      '予約ID': 'reservation_id',
+      '団体名': 'organization_name', '会議名': 'meeting_name', 'お名前': 'user_name',
+      '会議室ID': 'room_id', '会議室名': 'room_name', '利用日': 'usage_date',
+      '開始時間': 'start_time', '終了時間': 'end_time', 'ステータス': 'status',
+    };
+
+    function parseCSV(text) {
+      const lines = text.trim().split('\n');
+      if (lines.length < 2) return [];
+      const headers = parseCSVRow(lines[0]);
+      const colMap = [];
+      headers.forEach((h, i) => {
+        if (CSV_NEEDED.has(h)) colMap.push({ i, key: CSV_KEY_MAP[h] });
+      });
+      const result = [];
+      for (let li = 1; li < lines.length; li++) {
+        if (!lines[li].trim()) continue;
+        const vals = parseCSVRow(lines[li]);
+        const obj = {};
+        for (let ci = 0; ci < colMap.length; ci++) {
+          obj[colMap[ci].key] = (vals[colMap[ci].i] || '').trim();
+        }
+        if (obj.reservation_id) result.push(obj);
+      }
+      return result;
+    }
+
+    function parseCSVRow(line) {
+      const result = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') {
+          if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+        else cur += c;
+      }
+      result.push(cur);
+      return result;
+    }
+
+    // ============================================================
+    // 予約フォーム
+    // ============================================================
+    function addReserveCard() {
+      const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
+      if (reserveCards.length >= cfg.maxReservationsPerSubmit) {
+        alert(`一度に登録できる予約は${cfg.maxReservationsPerSubmit}件までです。`);
+        return;
+      }
+      const id = ++cardIdCounter;
+      reserveCards.push(id);
+      renderReserveCards();
+    }
+
+    function removeReserveCard(id) {
+      reserveCards = reserveCards.filter(c => c !== id);
+      if (reserveCards.length === 0) addReserveCard();
+      else renderReserveCards();
+    }
+
+    function renderReserveCards() {
+      const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
+      const container = document.getElementById('reserve-cards');
+      container.innerHTML = reserveCards.map((id, idx) => `
+    <div class="reserve-card" id="card-${id}" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="reserve-card-num">${idx + 1}件目</span>
+        ${reserveCards.length > 1 ? `<button class="btn-ghost btn-sm" onclick="removeReserveCard(${id})">削除</button>` : ''}
+      </div>
+      <div class="grid2">
+        <label class="date-time-label" for="card-date-${id}" onclick="openInputPicker('card-date-${id}', event)">
+          <span class="label-text">利用日 <span style="color:var(--danger)">*</span></span>
+          <input type="date" id="card-date-${id}" onchange="searchAvailable(${id})">
+          <span class="error-msg hidden" id="card-err-date-${id}"></span>
+        </label>
+        <div></div>
+      </div>
+      <div class="grid2">
+        <label class="date-time-label" for="card-start-${id}" onclick="openInputPicker('card-start-${id}', event)">
+          <span class="label-text">開始時間 <span style="color:var(--danger)">*</span></span>
+          <input type="time" id="card-start-${id}" step="300" onchange="searchAvailable(${id})">
+          <span class="error-msg hidden" id="card-err-start-${id}"></span>
+        </label>
+        <label class="date-time-label" for="card-end-${id}" onclick="openInputPicker('card-end-${id}', event)">
+          <span class="label-text">終了時間 <span style="color:var(--danger)">*</span></span>
+          <input type="time" id="card-end-${id}" step="300" onchange="searchAvailable(${id})">
+          <span class="error-msg hidden" id="card-err-end-${id}"></span>
+        </label>
+      </div>
+      <label>${esc(cfg.labels.room)} <span style="color:var(--danger)">*</span>
+        <select id="card-room-${id}">
+          <option value="">日付・時間を先に入力してください</option>
+        </select>
+        <span class="error-msg hidden" id="card-err-room-${id}"></span>
+      </label>
+      <label>${esc(cfg.labels.meetingName)} <span style="color:var(--danger)">*</span>
+        <input type="text" id="card-meeting-${id}" placeholder="${esc(cfg.labels.meetingName)}を入力">
+        <span class="error-msg hidden" id="card-err-meeting-${id}"></span>
+      </label>
+    </div>
+  `).join('');
+    }
+
+    async function searchAvailable(id) {
+      const date = document.getElementById(`card-date-${id}`).value;
+      const start = document.getElementById(`card-start-${id}`).value;
+      const end = document.getElementById(`card-end-${id}`).value;
+      const sel = document.getElementById(`card-room-${id}`);
+      if (!date || !start || !end) return;
+      if (toMin(start) >= toMin(end)) return;
+      if (!reservationsLoaded) {
+        sel.innerHTML = '<option value="">予約情報を読み込み中です...</option>';
+        sel.disabled = true;
+        return;
+      }
+
+      sel.innerHTML = '<option value="">検索中...</option>';
+      sel.disabled = true;
+
+      const rooms = appConfig ? appConfig.rooms : [];
+      const busy = new Set(
+        allReservations.filter(r =>
+          r.usage_date === date && r.status === '有効' &&
+          timeOverlap(r.start_time, r.end_time, start, end)
+        ).map(r => r.room_id)
+      );
+
+      const available = rooms.filter(r => !busy.has(r.room_id));
+      sel.disabled = false;
+      sel.innerHTML = available.length === 0
+        ? '<option value="">空き会議室なし</option>'
+        : '<option value="">会議室を選択</option>' + available.map(r =>
+          `<option value="${esc(r.room_id)}">${esc(r.room_name)}</option>`
+        ).join('');
+    }
+
+    // ============================================================
+    // 確認画面
+    // ============================================================
+    function goToConfirm() {
+      clearErrors();
+      const { ok, common, reservations, errors } = collectFormData();
+      if (!ok) {
+        showErrors(errors);
+        return;
+      }
+
+      const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
+      let html = '<h3 style="font-size:15px;margin-bottom:8px">予約者情報</h3><table class="confirm-table"><tbody>';
+      if (cfg.fieldConfig.organizationName) html += `<tr><th>${esc(cfg.labels.organizationName)}</th><td>${esc(common.organization_name)}</td></tr>`;
+      if (cfg.fieldConfig.userName) html += `<tr><th>${esc(cfg.labels.userName)}</th><td>${esc(common.user_name)}</td></tr>`;
+      html += '</tbody></table>';
+
+      reservations.forEach((r, i) => {
+        html += `<h3 style="font-size:15px;margin:12px 0 6px">${i + 1}件目</h3><table class="confirm-table"><tbody>
+      <tr><th>${esc(cfg.labels.meetingName)}</th><td>${esc(r.meeting_name)}</td></tr>
+      <tr><th>利用日</th><td>${fmtDate(r.usage_date)}</td></tr>
+      <tr><th>時間</th><td>${esc(r.start_time)}〜${esc(r.end_time)}</td></tr>
+      <tr><th>${esc(cfg.labels.room)}</th><td>${esc(r.room_name)}</td></tr>
+    </tbody></table>`;
+      });
+
+      document.getElementById('confirm-content').innerHTML = html;
+      document.getElementById('confirm-modal').classList.add('open');
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirm-modal').classList.remove('open');
+    }
+
+    async function submitReservations() {
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.textContent = '送信中...';
+
+      const { common, reservations } = collectFormData();
+
+      await loadReservations(true);
+      const dupErrors = checkDuplicates(reservations);
+      if (dupErrors.length > 0) {
+        closeConfirm();
+        btn.disabled = false;
+        btn.textContent = '予約確定';
+        showErrors(dupErrors);
+        return;
+      }
+
+      try {
+        const res = await fetch(CONFIG.GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'insert_reservations', payload: { common, reservations } }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          closeConfirm();
+          showDone(data.reservations);
+          await loadReservations(true);
+        } else {
+          closeConfirm();
+          document.getElementById('global-error').textContent = data.error || '登録に失敗しました。';
+          document.getElementById('global-error').classList.remove('hidden');
+        }
+      } catch (e) {
+        closeConfirm();
+        document.getElementById('global-error').textContent = '通信エラーが発生しました。';
+        document.getElementById('global-error').classList.remove('hidden');
+      }
+      btn.disabled = false;
+      btn.textContent = '予約確定';
+    }
+
+    function showDone(reservations) {
+      document.getElementById('screen-reserve').classList.add('hidden');
+      const done = document.getElementById('screen-done');
+      done.classList.remove('hidden');
+      document.getElementById('done-list').innerHTML = (reservations || []).map(r =>
+        `<div style="font-size:14px;padding:4px 0;border-bottom:1px solid var(--border)">
+      ${esc(r.meeting_name)} / ${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)} / ${esc(r.room_name)}
+    </div>`
+      ).join('');
+    }
+
+    function resetReserveForm() {
+      document.getElementById('screen-done').classList.add('hidden');
+      document.getElementById('screen-reserve').classList.remove('hidden');
+      document.getElementById('input-org').value = '';
+      document.getElementById('input-name').value = '';
+      reserveCards = [];
+      cardIdCounter = 0;
+      addReserveCard();
+    }
+
+    // ============================================================
+    // バリデーション
+    // ============================================================
+    function collectFormData() {
+      const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
+      const errors = [];
+
+      const org = document.getElementById('input-org').value.trim();
+      const name = document.getElementById('input-name').value.trim();
+
+      if (cfg.fieldConfig.organizationName && !org) errors.push({ field: 'org', message: `${cfg.labels.organizationName}を入力してください。` });
+      if (cfg.fieldConfig.userName && !name) errors.push({ field: 'name', message: `${cfg.labels.userName}を入力してください。` });
+
+      const rooms = appConfig ? appConfig.rooms : [];
+      const roomMap = Object.fromEntries(rooms.map(r => [r.room_id, r]));
+
+      const reservations = reserveCards.map((id, idx) => {
+        const date = document.getElementById(`card-date-${id}`).value;
+        const start = document.getElementById(`card-start-${id}`).value;
+        const end = document.getElementById(`card-end-${id}`).value;
+        const roomId = document.getElementById(`card-room-${id}`).value;
+        const meeting = document.getElementById(`card-meeting-${id}`).value.trim();
+
+        if (!date) errors.push({ index: idx, field: `date-${id}`, message: '利用日を入力してください。' });
+        if (!start) errors.push({ index: idx, field: `start-${id}`, message: '開始時間を入力してください。' });
+        if (!end) errors.push({ index: idx, field: `end-${id}`, message: '終了時間を入力してください。' });
+        if (start && end && toMin(start) >= toMin(end)) errors.push({ index: idx, field: `end-${id}`, message: '終了時間は開始時間より後にしてください。' });
+        if (!roomId) errors.push({ index: idx, field: `room-${id}`, message: '会議室を選択してください。' });
+        if (!meeting) errors.push({ index: idx, field: `meeting-${id}`, message: `${cfg.labels.meetingName}を入力してください。` });
+
+        return { meeting_name: meeting, usage_date: date, start_time: start, end_time: end, room_id: roomId, room_name: roomMap[roomId] ? roomMap[roomId].room_name : '' };
+      });
+
+      return {
+        ok: errors.length === 0,
+        common: { organization_name: org, user_name: name },
+        reservations,
+        errors,
+      };
+    }
+
+    function checkDuplicates(reservations) {
+      const errors = [];
+      reservations.forEach((r, idx) => {
+        const dup = allReservations.find(existing =>
+          existing.room_id === r.room_id &&
+          existing.usage_date === r.usage_date &&
+          existing.status === '有効' &&
+          timeOverlap(existing.start_time, existing.end_time, r.start_time, r.end_time)
+        );
+        if (dup) {
+          errors.push({ index: idx, field: `room-${reserveCards[idx]}`, message: `${r.room_name}は${r.start_time}〜${r.end_time}に予約が入っています。` });
+        }
+      });
+      return errors;
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.classList.add('hidden'); });
+      document.getElementById('global-error').classList.add('hidden');
+    }
+
+    function showErrors(errors) {
+      errors.forEach(e => {
+        const el = document.getElementById(`err-${e.field}`) || document.getElementById(`card-err-${e.field}`);
+        if (el) { el.textContent = e.message; el.classList.remove('hidden'); }
+      });
+      if (errors.length > 0) {
+        document.getElementById('global-error').textContent = '入力内容を確認してください。';
+        document.getElementById('global-error').classList.remove('hidden');
+      }
+      const first = document.querySelector('.error-msg:not(.hidden)');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // ============================================================
+    // ユーティリティ
+    // ============================================================
+    function toMin(t) {
+      if (!t) return 0;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function timeOverlap(s1, e1, s2, e2) {
+      return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1);
+    }
+
+    function fmtDate(d) {
+      if (!d) return '';
+      const dt = new Date(d + 'T00:00:00');
+      const days = ['日', '月', '火', '水', '木', '金', '土'];
+      return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function openInputPicker(id, event) {
+      if (event && event.target && /input/i.test(event.target.tagName)) return;
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.focus();
+      if (typeof input.showPicker === 'function') input.showPicker();
+    }
+  </script>
+</body>
+
+</html>

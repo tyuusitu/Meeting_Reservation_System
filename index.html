@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>会議室予約システム</title>
+  <style>
+    :root {
+      --primary: #1d6fd6;
+      --primary-dark: #1559ae;
+      --surface: #ffffff;
+      --background: #f6f8fb;
+      --border: #d7e0ec;
+      --text: #172033;
+      --muted: #647085;
+      --soft-blue: #eaf2ff;
+      --shadow: 0 8px 28px rgba(20, 36, 64, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at top right, #dceaff 0, transparent 34%),
+        linear-gradient(180deg, #f8fbff 0%, #eef3fa 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell {
+      width: min(100%, 720px);
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 10px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.1;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .link-card {
+      display: grid;
+      gap: 10px;
+      padding: 24px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      color: inherit;
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .link-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 28px rgba(20, 36, 64, 0.12);
+    }
+
+    .link-card strong {
+      font-size: 20px;
+    }
+
+    .link-card span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .link-accent {
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 640px) {
+      .links {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .link-card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="shell">
+    <section class="hero">
+      <h1>会議室予約システム</h1>
+      <p>予約登録と利用状況確認を、用途ごとに別ページへ分けています。</p>
+    </section>
+
+    <section class="links">
+      <a href="reserve.html" class="link-card">
+        <div class="link-accent">Reservation</div>
+        <strong>予約する</strong>
+        <span>会議室・利用日・開始時間・終了時間を指定して予約します。</span>
+      </a>
+      <a href="status.html" class="link-card">
+        <div class="link-accent">Status</div>
+        <strong>利用状況を見る</strong>
+        <span>現在の予約一覧やタイムライン、キャンセル依頼を確認できます。</span>
+      </a>
+    </section>
+  </main>
+</body>
+
+</html>
