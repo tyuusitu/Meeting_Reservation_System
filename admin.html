@@ -118,6 +118,14 @@
       activeTab: 'dashboard',
       selectedReservationIds: new Set(),
       selectedCalendarRoomId: '',
+      filters: {
+        meetings:     { keyword: '', status: '' },
+        attendance:   { keyword: '', department: '', answer: '' },
+        members:      { keyword: '', department: '' },
+        streaks:      { keyword: '', level: '' },
+        reasons:      { keyword: '' },
+        reservations: { keyword: '', roomId: '', status: '' },
+      },
     };
 
     // ============================================================
@@ -513,6 +521,56 @@
     const btnSmGhost = 'min-h-[32px] px-3 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg font-bold text-xs transition';
     const btnSmDanger = 'min-h-[32px] px-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition';
 
+    // ============================================================
+    // 検索・フィルター
+    // ============================================================
+    function matchesKeyword(keyword, ...fields) {
+      if (!keyword) return true;
+      const kw = keyword.toLowerCase();
+      return fields.some((f) => String(f || '').toLowerCase().includes(kw));
+    }
+
+    function setFilter(tab, key, value) {
+      state.filters[tab][key] = value;
+      const renderMap = {
+        meetings: renderMeetingsTab,
+        attendance: renderAttendanceTab,
+        members: renderMembersTab,
+        streaks: renderStreaksTab,
+        reasons: renderReasonsTab,
+        reservations: renderReservationsTab,
+      };
+      if (renderMap[tab]) renderMap[tab]();
+    }
+
+    function clearFilters(tab) {
+      Object.keys(state.filters[tab]).forEach((k) => { state.filters[tab][k] = ''; });
+      const renderMap = {
+        meetings: renderMeetingsTab, attendance: renderAttendanceTab, members: renderMembersTab,
+        streaks: renderStreaksTab, reasons: renderReasonsTab, reservations: renderReservationsTab,
+      };
+      if (renderMap[tab]) renderMap[tab]();
+    }
+
+    function renderSearchInput(tab, key, label, placeholder, value) {
+      return `<label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">${escapeHtml(label)}<input type="search" value="${escapeAttr(value)}" oninput="setFilter('${tab}','${key}',this.value)" placeholder="${escapeAttr(placeholder)}" class="min-h-[36px] w-48 border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"></label>`;
+    }
+
+    function renderSearchSelect(tab, key, label, options, value) {
+      const opts = options.map((o) => `<option value="${escapeAttr(o)}" ${o === value ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('');
+      return `<label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">${escapeHtml(label)}<select onchange="setFilter('${tab}','${key}',this.value)" class="min-h-[36px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"><option value="">すべて</option>${opts}</select></label>`;
+    }
+
+    function renderFilterBar(tab, items, count, total) {
+      const hasFilter = Object.values(state.filters[tab]).some(Boolean);
+      const countText = count !== total ? `${count} / ${total} 件` : `${total} 件`;
+      return `<div class="flex flex-wrap gap-3 items-end p-3 bg-slate-50 rounded-xl border border-slate-100">
+        ${items}
+        ${hasFilter ? `<button type="button" onclick="clearFilters('${tab}')" class="self-end min-h-[36px] px-3 bg-white border border-slate-200 text-gray-500 hover:bg-slate-100 rounded-xl text-xs font-bold transition">クリア</button>` : ''}
+        <span class="self-end text-xs text-gray-400 ml-auto">${countText}</span>
+      </div>`;
+    }
+
     function openNativePicker(id) {
       const input = document.getElementById(id);
       if (!input) return;
@@ -592,6 +650,12 @@
     }
 
     function renderMeetingsTab() {
+      const f = state.filters.meetings;
+      const statusOptions = [...new Set(state.meetings.map((m) => m.status).filter(Boolean))].sort();
+      const filtered = state.meetings.filter((m) =>
+        matchesKeyword(f.keyword, m.meetingName, m.meetingId) &&
+        (!f.status || m.status === f.status)
+      );
       document.getElementById('tab-meetings').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">会議登録・更新</div>
@@ -622,35 +686,65 @@
         </div>
         <div class="${panelCls}">
           <div class="${panelTitleCls}">会議一覧</div>
+          ${renderFilterBar('meetings',
+            renderSearchInput('meetings', 'keyword', 'キーワード検索', '会議名・IDで検索', f.keyword) +
+            renderSearchSelect('meetings', 'status', '有効状態', statusOptions, f.status),
+            filtered.length, state.meetings.length
+          )}
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['会議ID', '会議名', '会議日', '時間', '募集期間', '回答締切', '状態', '操作'],
-            state.meetings.map((m) => [m.meetingId, m.meetingName, formatDateLabel(m.meetingDate), `${m.startTime}〜${m.endTime}`, `${formatDateTimeLabel(m.recruitStartAt)}〜${formatDateTimeLabel(m.recruitEndAt)}`, formatDateTimeLabel(m.answerDeadlineAt), m.status, `<button type="button" class="${btnSmSecondary}" onclick="fillMeetingForm('${escapeJs(m.meetingId)}')">編集</button>`])
+            filtered.map((m) => [m.meetingId, m.meetingName, formatDateLabel(m.meetingDate), `${m.startTime}〜${m.endTime}`, `${formatDateTimeLabel(m.recruitStartAt)}〜${formatDateTimeLabel(m.recruitEndAt)}`, formatDateTimeLabel(m.answerDeadlineAt), renderStatusBadge(m.status), `<button type="button" class="${btnSmSecondary}" onclick="fillMeetingForm('${escapeJs(m.meetingId)}')">編集</button>`])
           )}</div>
         </div>
       `;
     }
 
     function renderAttendanceTab() {
-      const rows = buildAttendanceRows();
+      const f = state.filters.attendance;
+      const allRows = buildAttendanceRows();
+      const deptOptions = [...new Set(allRows.map((r) => r.department).filter(Boolean))].sort();
+      const answerOptions = [...new Set(allRows.map((r) => r.answerState).filter(Boolean))].sort();
+      const filtered = allRows.filter((item) =>
+        matchesKeyword(f.keyword, item.meetingName, item.name) &&
+        (!f.department || item.department === f.department) &&
+        (!f.answer || item.answerState === f.answer)
+      );
       document.getElementById('tab-attendance').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">出欠一覧</div>
           <div class="${noticeCls}">未提出者も一覧に出し、集計上の扱いは「出席扱い」として表示します。</div>
+          ${renderFilterBar('attendance',
+            renderSearchInput('attendance', 'keyword', 'キーワード検索', '会議名・名前で検索', f.keyword) +
+            renderSearchSelect('attendance', 'department', '部局', deptOptions, f.department) +
+            renderSearchSelect('attendance', 'answer', '回答状態', answerOptions, f.answer),
+            filtered.length, allRows.length
+          )}
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['会議名', '会議日', '名前', '部局', '学年', '役職', '回答状態', '集計上の扱い', '欠席理由', '欠席理由詳細', '回答日時', '更新日時'],
-            rows.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.answerState, item.aggregateStatus, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt), formatDateTimeLabel(item.updatedAt)])
+            filtered.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, renderAnswerBadge(item.answerState), item.aggregateStatus, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt), formatDateTimeLabel(item.updatedAt)])
           )}</div>
         </div>
       `;
     }
 
     function renderMembersTab() {
+      const f = state.filters.members;
+      const deptOptions = [...new Set(state.memberAggregations.map((m) => m.department).filter(Boolean))].sort();
+      const filtered = state.memberAggregations.filter((item) =>
+        matchesKeyword(f.keyword, item.name, item.memberId) &&
+        (!f.department || item.department === f.department)
+      );
       document.getElementById('tab-members').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">個人別集計</div>
+          ${renderFilterBar('members',
+            renderSearchInput('members', 'keyword', 'キーワード検索', '名前で検索', f.keyword) +
+            renderSearchSelect('members', 'department', '部局', deptOptions, f.department),
+            filtered.length, state.memberAggregations.length
+          )}
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['名前', '部局', '学年', '役職', '対象会議数', '出席扱い回数', '欠席回数', '未提出回数', '参加率', '連続欠席回数', '最終回答日時'],
-            state.memberAggregations.map((item) => [item.name, item.department, item.grade, item.role, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), item.absenceStreak, formatDateTimeLabel(item.lastAnsweredAt)])
+            filtered.map((item) => [item.name, item.department, item.grade, item.role, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), item.absenceStreak, formatDateTimeLabel(item.lastAnsweredAt)])
           )}</div>
         </div>
       `;
@@ -669,12 +763,23 @@
     }
 
     function renderStreaksTab() {
+      const f = state.filters.streaks;
+      const levelOptions = [...new Set(state.streaks.map((s) => s.alertLevel).filter(Boolean))].sort();
+      const filtered = state.streaks.filter((item) =>
+        matchesKeyword(f.keyword, item.name, item.department) &&
+        (!f.level || item.alertLevel === f.level)
+      );
       document.getElementById('tab-streaks').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">連続欠席チェック</div>
+          ${renderFilterBar('streaks',
+            renderSearchInput('streaks', 'keyword', 'キーワード検索', '名前・部局で検索', f.keyword) +
+            renderSearchSelect('streaks', 'level', '注意レベル', levelOptions, f.level),
+            filtered.length, state.streaks.length
+          )}
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['名前', '部局', '学年', '役職', '連続欠席回数', '注意レベル', '直近欠席会議', '直近欠席理由'],
-            state.streaks.map((item) => [item.name, item.department, item.grade, item.role, item.streak, renderLevelBadge(item.alertLevel), item.latestMeeting, item.latestReason])
+            filtered.map((item) => [item.name, item.department, item.grade, item.role, item.streak, renderLevelBadge(item.alertLevel), item.latestMeeting, item.latestReason])
           )}</div>
         </div>
       `;
@@ -697,12 +802,20 @@
             answeredAt: item.answeredAt,
           };
         });
+      const f = state.filters.reasons;
+      const filtered = reasons.filter((item) =>
+        matchesKeyword(f.keyword, item.meetingName, item.name, item.department, item.absenceReason)
+      );
       document.getElementById('tab-reasons').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">欠席理由一覧</div>
+          ${renderFilterBar('reasons',
+            renderSearchInput('reasons', 'keyword', 'キーワード検索', '会議名・名前・理由で検索', f.keyword),
+            filtered.length, reasons.length
+          )}
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['会議名', '会議日', '名前', '部局', '学年', '役職', '欠席理由', '欠席理由詳細', '回答日時'],
-            reasons.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt)])
+            filtered.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt)])
           )}</div>
         </div>
       `;
@@ -787,13 +900,27 @@
     }
 
     function renderReservationsTab() {
-      const activeRows = state.reservations
+      const f = state.filters.reservations;
+      const allRows = state.reservations
         .slice()
         .sort((a, b) => `${a.usageDate}${a.startTime}${a.roomName}`.localeCompare(`${b.usageDate}${b.startTime}${b.roomName}`));
+      const roomOptions = [...new Set(allRows.map((r) => r.roomName).filter(Boolean))].sort();
+      const statusOptions = [...new Set(allRows.map((r) => r.status).filter(Boolean))].sort();
+      const filtered = allRows.filter((item) =>
+        matchesKeyword(f.keyword, item.meetingName, item.organizationName, item.userName) &&
+        (!f.roomId || item.roomName === f.roomId) &&
+        (!f.status || item.status === f.status)
+      );
       document.getElementById('tab-reservations').innerHTML = `
         ${renderAdminCalendarViewer()}
         <div class="${panelCls}">
           <div class="${panelTitleCls}">会議室予約管理</div>
+          ${renderFilterBar('reservations',
+            renderSearchInput('reservations', 'keyword', 'キーワード検索', '会議名・団体名・申請者で検索', f.keyword) +
+            renderSearchSelect('reservations', 'roomId', '会議室', roomOptions, f.roomId) +
+            renderSearchSelect('reservations', 'status', 'ステータス', statusOptions, f.status),
+            filtered.length, allRows.length
+          )}
           <div class="flex flex-wrap gap-2">
             <button type="button" onclick="selectAllReservations()" class="${btnSmSecondary}">全選択</button>
             <button type="button" onclick="clearReservationSelection()" class="${btnSmGhost}">選択解除</button>
@@ -801,7 +928,7 @@
           </div>
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['選択', '会議名', '利用日', '時間', '会議室', '団体名', '申請者', '状態'],
-            activeRows.map((item) => [
+            filtered.map((item) => [
               `<input type="checkbox" ${state.selectedReservationIds.has(item.reservationId) ? 'checked' : ''} onchange="toggleReservationSelection('${escapeJs(item.reservationId)}')" class="w-4 h-4 accent-blue-600">`,
               item.meetingName,
               formatDateLabel(item.usageDate),
@@ -809,7 +936,7 @@
               item.roomName,
               item.organizationName,
               item.userName,
-              item.status,
+              renderStatusBadge(item.status),
             ])
           )}</div>
         </div>
@@ -859,11 +986,33 @@
 
     function renderLevelBadge(level) {
       const styles = {
-        '要確認': 'background:#fff0f0;color:#c73d3d',
-        '注意': 'background:#fff8e1;color:#9a6b00',
+        '要確認': 'background:#fff0f0;color:#c73d3d;border:1px solid #fecaca',
+        '注意':   'background:#fff8e1;color:#9a6b00;border:1px solid #fde68a',
       };
-      const s = styles[level] || 'background:#eaf8f2;color:#0f8f68';
+      const s = styles[level] || 'background:#eaf8f2;color:#0f8f68;border:1px solid #a7f3d0';
       return `<span style="${s};display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;">${escapeHtml(level || '通常')}</span>`;
+    }
+
+    function renderStatusBadge(status) {
+      const styles = {
+        '有効':   'background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe',
+        '無効':   'background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0',
+        '確定':   'background:#f0fdf4;color:#166534;border:1px solid #bbf7d0',
+        '取消':   'background:#fff0f0;color:#c73d3d;border:1px solid #fecaca',
+        '仮予約': 'background:#fff8e1;color:#9a6b00;border:1px solid #fde68a',
+      };
+      const s = styles[status] || 'background:#f8fafc;color:#64748b;border:1px solid #e2e8f0';
+      return `<span style="${s};display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;">${escapeHtml(status || '')}</span>`;
+    }
+
+    function renderAnswerBadge(state) {
+      const styles = {
+        '出席':  'background:#f0fdf4;color:#166534;border:1px solid #bbf7d0',
+        '欠席':  'background:#fff0f0;color:#c73d3d;border:1px solid #fecaca',
+        '未提出':'background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0',
+      };
+      const s = styles[state] || 'background:#f8fafc;color:#64748b;border:1px solid #e2e8f0';
+      return `<span style="${s};display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;">${escapeHtml(state || '')}</span>`;
     }
 
     // ============================================================
