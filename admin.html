@@ -884,17 +884,17 @@
     }
 
     function renderSettingsTab() {
-      const editableKeys = ['管理者パスワード', 'その他理由詳細必須', '欠席詳細常時必須', '注意連続欠席回数', '要確認連続欠席回数', 'システム名'];
-      const rows = state.settings.filter((item) => editableKeys.includes(item.settingKey));
+      const rows = state.settings;
       document.getElementById('tab-settings').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">設定確認・更新</div>
+          <div class="${noticeCls}">スプレッドシートの設定シートにある全項目を表示しています。保存すると即時反映されます。</div>
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['設定キー', '現在値', '説明', '更新日時', '操作'],
             rows.map((item) => [
-              item.settingKey,
+              escapeHtml(item.settingKey),
               `<input id="setting-${escapeAttr(item.settingKey)}" value="${escapeAttr(item.settingValue)}">`,
-              item.description,
+              escapeHtml(item.description),
               formatDateTimeLabel(item.updatedAt),
               `<button type="button" class="${btnSmPrimary}" onclick="saveSetting('${escapeJs(item.settingKey)}')">保存</button>`,
             ])
