@@ -106,6 +106,7 @@
       systemName: '会議室予約・出欠管理システム',
       reservations: [],
       rooms: [],
+      calendarRooms: [],
       settings: [],
       members: [],
       meetings: [],
@@ -116,6 +117,7 @@
       streaks: [],
       activeTab: 'dashboard',
       selectedReservationIds: new Set(),
+      selectedCalendarRoomId: '',
     };
 
     // ============================================================
@@ -142,10 +144,16 @@
 
     async function loadPublicSettings() {
       try {
-        const res = await fetch(`${CONFIG.GAS_API_URL}?action=get_public_settings`);
+        const res = await fetch(`${CONFIG.GAS_API_URL}?action=get_config`);
         const data = await res.json();
-        if (data.ok && data.systemName) {
-          state.systemName = data.systemName;
+        if (data.ok) {
+          if (data.systemName) {
+            state.systemName = data.systemName;
+          }
+          state.calendarRooms = Array.isArray(data.rooms) ? data.rooms.filter((room) => room.calendar_url) : [];
+          if (!state.calendarRooms.some((room) => room.room_id === state.selectedCalendarRoomId)) {
+            state.selectedCalendarRoomId = state.calendarRooms.length ? state.calendarRooms[0].room_id : '';
+          }
         }
       } catch (_) {
       }
@@ -227,6 +235,7 @@
     // ============================================================
     async function reloadAll(showToast) {
       showLoading('データを読み込み中...');
+      await loadPublicSettings();
       const results = await Promise.all([
         fetchSheetCsv('reservations', reservationMapper),
         fetchSheetCsv('rooms', roomMapper),
@@ -681,11 +690,70 @@
       `;
     }
 
+    /**
+     * 管理画面のGoogleカレンダー選択を更新します。
+     *
+     * @return {void}
+     */
+    function handleAdminCalendarRoomChange() {
+      /** @type {HTMLSelectElement|null} 管理画面の会議室セレクト。 */
+      const roomSelect = document.getElementById('admin-calendar-room');
+      state.selectedCalendarRoomId = roomSelect ? roomSelect.value : '';
+      renderReservationsTab();
+    }
+
+    /**
+     * 管理画面用のGoogleカレンダービューアHTMLを返します。
+     *
+     * @return {string} GoogleカレンダービューアHTML。
+     */
+    function renderAdminCalendarViewer() {
+      /** @type {Array<Object>} Googleカレンダー設定済み会議室一覧。 */
+      const calendarRooms = Array.isArray(state.calendarRooms) ? state.calendarRooms : [];
+      /** @type {Object|undefined} 現在選択中の会議室。 */
+      const selectedRoom = calendarRooms.find((room) => room.room_id === state.selectedCalendarRoomId) || calendarRooms[0];
+
+      if (!selectedRoom) {
+        return `
+          <div class="${panelCls}">
+            <div class="${panelTitleCls}">Googleカレンダー</div>
+            <div class="${noticeCls}">GoogleカレンダーURLが設定された会議室がありません。</div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="${panelCls}">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div class="${panelTitleCls}">Googleカレンダー</div>
+              <div class="text-xs text-gray-400 mt-1">会議室ごとのカレンダーを埋め込み表示します。</div>
+            </div>
+            <a href="${escapeAttr(selectedRoom.calendar_url)}" target="_blank" rel="noopener noreferrer" class="${btnSmSecondary}">別タブで開く</a>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-3 items-start">
+            <label class="${labelCls}">表示する会議室
+              <select id="admin-calendar-room" onchange="handleAdminCalendarRoomChange()" class="${inputCls}">
+                ${calendarRooms.map((room) => `<option value="${escapeAttr(room.room_id)}" ${room.room_id === selectedRoom.room_id ? 'selected' : ''}>${escapeHtml(room.room_name)}</option>`).join('')}
+              </select>
+            </label>
+            <iframe
+              src="${escapeAttr(selectedRoom.calendar_url)}"
+              title="${escapeAttr(selectedRoom.room_name)} のGoogleカレンダー"
+              class="w-full h-[520px] rounded-2xl border border-slate-200 bg-white"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+      `;
+    }
+
     function renderReservationsTab() {
       const activeRows = state.reservations
         .slice()
         .sort((a, b) => `${a.usageDate}${a.startTime}${a.roomName}`.localeCompare(`${b.usageDate}${b.startTime}${b.roomName}`));
       document.getElementById('tab-reservations').innerHTML = `
+        ${renderAdminCalendarViewer()}
         <div class="${panelCls}">
           <div class="${panelTitleCls}">会議室予約管理</div>
           <div class="flex flex-wrap gap-2">
