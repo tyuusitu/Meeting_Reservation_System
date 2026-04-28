@@ -5,72 +5,159 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>管理画面</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .hidden { display: none !important; }
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at top left, rgba(29,111,214,.09), transparent 25%), linear-gradient(180deg,#fbfcfe 0%,#edf2f9 100%); }
+    *, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { background: #f0f4f9; color: #202124; }
+    /* Google-style tab buttons */
+    .tab-btn { position: relative; padding: 12px 16px; font-size: 13px; font-weight: 600; color: #5f6368; border: none; background: none; cursor: pointer; white-space: nowrap; transition: color 0.15s; border-bottom: 3px solid transparent; }
+    .tab-btn:hover { color: #1a73e8; background: rgba(26,115,232,0.05); }
+    .tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+    /* Data table */
     .data-table { width: 100%; border-collapse: collapse; min-width: 640px; }
-    .data-table th { background: #f8fbff; font-weight: 800; color: #647085; font-size: 12px; padding: 10px 12px; text-align: left; border-bottom: 2px solid #e2eaf5; position: sticky; top: 0; white-space: nowrap; }
-    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #f0f4fb; vertical-align: top; color: #2d3a52; }
+    .data-table th { background: #f8f9fa; font-weight: 600; color: #5f6368; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 16px; text-align: left; border-bottom: 1px solid #e8eaed; position: sticky; top: 0; white-space: nowrap; }
+    .data-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #f1f3f4; vertical-align: middle; color: #202124; }
     .data-table tr:last-child td { border-bottom: none; }
-    .data-table tr:hover td { background: #f8fbff; }
-    .data-table input { min-height: 36px; width: 100%; border: 1px solid #d7e0ec; border-radius: 8px; padding: 4px 10px; font-size: 13px; background: #fff; color: #172033; }
-    .data-table input:focus { outline: none; box-shadow: 0 0 0 2px rgba(29,111,214,0.2); border-color: #1d6fd6; }
+    .data-table tr:hover td { background: #f8f9fa; }
+    .data-table input { min-height: 32px; width: 100%; border: 1px solid #dadce0; border-radius: 4px; padding: 4px 8px; font-size: 13px; background: #fff; color: #202124; }
+    .data-table input:focus { outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); border-color: #1a73e8; }
+    /* Loading overlay */
+    .loading-box { background: #fff; border-radius: 12px; padding: 28px 36px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .loading-spinner { width: 40px; height: 40px; border: 4px solid #e8eaed; border-top-color: #1a73e8; border-radius: 50%; }
+    .loading-text { font-size: 14px; font-weight: 500; color: #5f6368; }
+    /* Login screen */
+    .login-avatar { width: 48px; height: 48px; background: #1a73e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .login-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .login-input { height: 48px; border: 1px solid #dadce0; border-radius: 8px; background: #fff; color: #202124; padding: 0 14px; font-size: 14px; transition: all 0.15s; outline: none; width: 100%; }
+    .login-input:focus { border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+    .login-btn-primary { height: 44px; background: #1a73e8; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; width: 100%; }
+    .login-btn-primary:hover { background: #1557b0; }
+    .login-link { color: #1a73e8; font-size: 14px; font-weight: 500; text-decoration: none; }
+    .login-link:hover { text-decoration: underline; }
+    /* Admin screen */
+    .admin-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08); }
+    .admin-header { padding: 14px 20px; border-bottom: 1px solid #e8eaed; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+    .admin-header-icon { width: 36px; height: 36px; background: #1a73e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .admin-header-title { font-size: 16px; font-weight: 700; color: #202124; line-height: 1.3; }
+    .admin-tab-nav { display: flex; overflow-x: auto; padding: 0 20px; border-bottom: 1px solid #e8eaed; gap: 0; }
+    .admin-content { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+    .header-btn { height: 36px; padding: 0 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; }
+    .header-btn-ghost { background: #fff; border: 1px solid #dadce0; color: #5f6368; }
+    .header-btn-ghost:hover { background: #f8f9fa; }
+    .header-btn-outline { background: #fff; border: 1px solid #1a73e8; color: #1a73e8; }
+    .header-btn-outline:hover { background: #e8f0fe; }
+    /* Panel / card inside admin */
+    .g-panel { background: #fff; border: 1px solid #e8eaed; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+    .g-panel-title { font-size: 15px; font-weight: 700; color: #202124; }
+    .g-table-wrap { overflow: auto; border-radius: 8px; border: 1px solid #e8eaed; }
+    .g-notice { background: #e8f0fe; border: 1px solid #c5d8fb; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #1a56c4; line-height: 1.6; }
+    .g-input { height: 40px; border: 1px solid #dadce0; border-radius: 6px; background: #fff; color: #202124; padding: 0 12px; font-size: 14px; transition: all 0.15s; outline: none; width: 100%; }
+    .g-input:focus { border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+    .g-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 500; color: #5f6368; }
+    .g-btn-primary { height: 36px; padding: 0 16px; background: #1a73e8; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .g-btn-primary:hover { background: #1557b0; }
+    .g-btn-secondary { height: 36px; padding: 0 16px; background: #fff; border: 1px solid #1a73e8; color: #1a73e8; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .g-btn-secondary:hover { background: #e8f0fe; }
+    .g-btn-ghost { height: 36px; padding: 0 16px; background: #f1f3f4; border: none; color: #3c4043; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .g-btn-ghost:hover { background: #e8eaed; }
+    .g-btn-danger { height: 36px; padding: 0 16px; background: #d93025; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .g-btn-danger:hover { background: #b0261c; }
+    .g-btn-sm-primary { height: 30px; padding: 0 12px; background: #1a73e8; color: #fff; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .g-btn-sm-primary:hover { background: #1557b0; }
+    .g-btn-sm-secondary { height: 30px; padding: 0 12px; background: #fff; border: 1px solid #1a73e8; color: #1a73e8; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .g-btn-sm-secondary:hover { background: #e8f0fe; }
+    .g-btn-sm-ghost { height: 30px; padding: 0 12px; background: #f1f3f4; border: none; color: #3c4043; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .g-btn-sm-ghost:hover { background: #e8eaed; }
+    .g-btn-sm-danger { height: 30px; padding: 0 12px; background: #d93025; color: #fff; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .g-btn-sm-danger:hover { background: #b0261c; }
+    .g-filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 12px 14px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e8eaed; }
+    .g-filter-input { height: 34px; width: 192px; border: 1px solid #dadce0; border-radius: 6px; background: #fff; color: #202124; padding: 0 10px; font-size: 13px; outline: none; transition: all 0.15s; }
+    .g-filter-input:focus { border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+    .g-filter-select { height: 34px; border: 1px solid #dadce0; border-radius: 6px; background: #fff; color: #202124; padding: 0 10px; font-size: 13px; outline: none; transition: all 0.15s; }
+    .g-filter-select:focus { border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+    .g-filter-clear { height: 34px; padding: 0 12px; background: #fff; border: 1px solid #dadce0; color: #5f6368; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .g-filter-clear:hover { background: #f1f3f4; }
+    .g-stat-card { background: #fff; border: 1px solid #e8eaed; border-radius: 10px; padding: 16px 20px; transition: box-shadow 0.15s; }
+    .g-stat-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .g-stat-label { font-size: 12px; color: #5f6368; font-weight: 500; margin-bottom: 6px; }
+    .g-stat-value { font-size: 26px; font-weight: 800; color: #202124; }
+    .login-title { font-size: 20px; font-weight: 700; text-align: center; color: #202124; }
+    .login-subtitle { font-size: 14px; text-align: center; color: #5f6368; }
+    .g-textarea { min-height: 80px; border: 1px solid #dadce0; border-radius: 6px; background: #fff; color: #202124; padding: 8px 12px; font-size: 14px; transition: all 0.15s; outline: none; width: 100%; resize: vertical; }
+    .g-textarea:focus { border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+    .g-calendar-iframe { width: 100%; height: 520px; border-radius: 8px; border: 1px solid #e8eaed; background: #fff; }
+    .g-muted { color: #9aa0a6; }
+    .g-body-text { color: #3c4043; font-size: 13px; }
+    .g-overlay-bg { background: rgba(0,0,0,0.35); }
+    /* Empty table row */
+    .g-empty-cell { text-align: center; padding: 24px; color: #9aa0a6; font-size: 13px; }
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 700; border-width: 1px; border-style: solid; }
+    .badge-green  { background: #e6f4ea; color: #137333; border-color: #a8d5b5; }
+    .badge-blue   { background: #e8f0fe; color: #1a56c4; border-color: #c5d8fb; }
+    .badge-gray   { background: #f1f3f4; color: #5f6368; border-color: #dadce0; }
+    .badge-red    { background: #fce8e6; color: #c5221f; border-color: #f5c6c4; }
+    .badge-yellow { background: #fef7e0; color: #7c4b00; border-color: #fde68a; }
   </style>
 </head>
 
-<body class="min-h-screen text-gray-800">
+<body class="min-h-screen">
 
   <!-- ローディングオーバーレイ -->
-  <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
-      <div class="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-      <p id="loading-text" class="text-sm text-gray-600 font-semibold">処理中...</p>
+  <div id="loading-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center g-overlay-bg">
+    <div class="loading-box">
+      <div class="loading-spinner animate-spin"></div>
+      <p id="loading-text" class="loading-text">処理中...</p>
     </div>
   </div>
 
-  <main class="max-w-6xl mx-auto px-4 py-5 pb-16 flex flex-col gap-5">
+  <main class="max-w-7xl mx-auto px-4 py-6 pb-16 flex flex-col gap-5">
 
     <!-- ログイン画面 -->
-    <section id="login-screen" class="max-w-md mx-auto w-full mt-12 bg-white/95 border border-slate-200 rounded-2xl shadow-lg p-6 flex flex-col gap-4">
-      <div>
-        <div id="login-title" class="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">管理画面</div>
-        <div class="text-sm text-gray-500 mt-1 leading-relaxed">会議室予約管理と会議出欠管理を同じ画面で扱います。認証状態はこのブラウザのセッションにだけ保持します。</div>
+    <section id="login-screen" class="max-w-sm mx-auto w-full mt-16 flex flex-col items-center gap-4">
+      <div class="flex flex-col items-center gap-3 mb-1">
+        <div class="login-avatar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+        </div>
+        <div id="login-title" class="login-title">管理画面</div>
+        <div class="login-subtitle">管理者パスワードでサインイン</div>
       </div>
-      <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
-        管理者パスワード
-        <input id="login-password" type="password" placeholder="設定シートのパスワード"
-          class="min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
-      </label>
-      <div class="flex flex-wrap gap-2">
-        <button type="button" onclick="login()"
-          class="flex-1 min-h-[46px] bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition shadow-sm">ログイン</button>
-        <a href="index.html"
-          class="flex-1 flex items-center justify-center min-h-[46px] bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition">トップへ戻る</a>
+      <div class="login-card w-full">
+        <label class="g-label">
+          管理者パスワード
+          <input id="login-password" type="password" placeholder="パスワードを入力" class="login-input">
+        </label>
+        <button type="button" onclick="login()" class="login-btn-primary">ログイン</button>
+        <div id="login-message" class="hidden rounded-lg px-3 py-2.5 text-sm"></div>
       </div>
-      <div id="login-message" class="hidden rounded-xl px-4 py-3 text-sm"></div>
+      <a href="index.html" class="login-link">← ホームに戻る</a>
     </section>
 
     <!-- 管理画面本体 -->
-    <section id="admin-screen" class="hidden bg-white/95 border border-slate-200 rounded-2xl shadow-lg">
+    <section id="admin-screen" class="hidden admin-card">
       <!-- ヘッダー -->
-      <div class="px-5 py-4 flex flex-wrap gap-3 justify-between items-center border-b border-slate-100">
-        <div>
-          <h1 id="system-name" class="text-2xl font-black text-gray-900">管理画面</h1>
-          <div class="text-xs text-gray-400 mt-0.5">CSV 直接読み込みで一覧を表示し、更新系だけ GAS API に送信します。</div>
+      <div class="admin-header">
+        <div class="flex items-center gap-3">
+          <div class="admin-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          </div>
+          <h1 id="system-name" class="admin-header-title">管理画面</h1>
         </div>
-        <div class="flex gap-2 flex-wrap">
-          <button type="button" onclick="reloadAll(true, true)"
-            class="min-h-[40px] px-4 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition">最新化</button>
-          <button type="button" onclick="logout()"
-            class="min-h-[40px] px-4 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition">ログアウト</button>
+        <div class="flex gap-2 flex-wrap items-center">
+          <a href="index.html" class="header-btn header-btn-ghost">← ホームに戻る</a>
+          <button type="button" onclick="reloadAll(true, true)" class="header-btn header-btn-outline">最新化</button>
+          <button type="button" onclick="logout()" class="header-btn header-btn-ghost">ログアウト</button>
         </div>
       </div>
       <!-- タブナビ -->
-      <div id="tab-nav" class="px-5 py-3 flex flex-wrap gap-1.5 border-b border-slate-100 overflow-x-auto"></div>
+      <div id="tab-nav" class="admin-tab-nav"></div>
       <!-- コンテンツ -->
-      <div class="p-5 flex flex-col gap-5">
-        <div id="global-message" class="hidden rounded-xl px-4 py-3 text-sm"></div>
+      <div class="admin-content">
+        <div id="global-message" class="hidden rounded-lg px-4 py-3 text-sm"></div>
         <div id="tab-dashboard" class="tab-content"></div>
         <div id="tab-meetings" class="tab-content hidden"></div>
         <div id="tab-attendance" class="tab-content hidden"></div>
@@ -226,10 +313,7 @@
       const nav = document.getElementById('tab-nav');
       nav.innerHTML = TABS.map(([key, label]) => {
         const active = state.activeTab === key;
-        const cls = active
-          ? 'min-h-[34px] px-3 text-xs font-bold rounded-lg bg-blue-600 text-white border border-blue-600 transition whitespace-nowrap'
-          : 'min-h-[34px] px-3 text-xs font-bold rounded-lg bg-white text-gray-500 border border-slate-200 hover:bg-slate-50 transition whitespace-nowrap';
-        return `<button type="button" class="${cls}" onclick="switchTab('${key}')">${label}</button>`;
+        return `<button type="button" class="tab-btn${active ? ' active' : ''}" onclick="switchTab('${key}')">${label}</button>`;
       }).join('');
     }
 
@@ -507,20 +591,20 @@
       switchTab(state.activeTab);
     }
 
-    const panelCls = 'bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col gap-3';
-    const panelTitleCls = 'font-extrabold text-gray-900 text-base';
-    const tableWrapCls = 'overflow-auto rounded-xl border border-slate-200';
-    const noticeCls = 'bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700 leading-relaxed';
-    const inputCls = 'min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full';
-    const labelCls = 'flex flex-col gap-1 text-xs font-semibold text-gray-500';
-    const btnPrimary = 'min-h-[40px] px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition shadow-sm';
-    const btnSecondary = 'min-h-[40px] px-4 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition';
-    const btnGhost = 'min-h-[40px] px-4 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition';
-    const btnDanger = 'min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition';
-    const btnSmPrimary = 'min-h-[32px] px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition';
-    const btnSmSecondary = 'min-h-[32px] px-3 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-lg font-bold text-xs transition';
-    const btnSmGhost = 'min-h-[32px] px-3 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg font-bold text-xs transition';
-    const btnSmDanger = 'min-h-[32px] px-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition';
+    const panelCls = 'g-panel';
+    const panelTitleCls = 'g-panel-title';
+    const tableWrapCls = 'g-table-wrap';
+    const noticeCls = 'g-notice';
+    const inputCls = 'g-input';
+    const labelCls = 'g-label';
+    const btnPrimary = 'g-btn-primary';
+    const btnSecondary = 'g-btn-secondary';
+    const btnGhost = 'g-btn-ghost';
+    const btnDanger = 'g-btn-danger';
+    const btnSmPrimary = 'g-btn-sm-primary';
+    const btnSmSecondary = 'g-btn-sm-secondary';
+    const btnSmGhost = 'g-btn-sm-ghost';
+    const btnSmDanger = 'g-btn-sm-danger';
 
     // ============================================================
     // 検索・フィルター
@@ -556,21 +640,21 @@
     }
 
     function renderSearchInput(tab, key, label, placeholder, value) {
-      return `<label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">${escapeHtml(label)}<input type="search" value="${escapeAttr(value)}" oninput="setFilter('${tab}','${key}',this.value)" placeholder="${escapeAttr(placeholder)}" class="min-h-[36px] w-48 border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"></label>`;
+      return `<label class="g-label">${escapeHtml(label)}<input type="search" value="${escapeAttr(value)}" oninput="setFilter('${tab}','${key}',this.value)" placeholder="${escapeAttr(placeholder)}" class="g-filter-input"></label>`;
     }
 
     function renderSearchSelect(tab, key, label, options, value) {
       const opts = options.map((o) => `<option value="${escapeAttr(o)}" ${o === value ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('');
-      return `<label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">${escapeHtml(label)}<select onchange="setFilter('${tab}','${key}',this.value)" class="min-h-[36px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"><option value="">すべて</option>${opts}</select></label>`;
+      return `<label class="g-label">${escapeHtml(label)}<select onchange="setFilter('${tab}','${key}',this.value)" class="g-filter-select"><option value="">すべて</option>${opts}</select></label>`;
     }
 
     function renderFilterBar(tab, items, count, total) {
       const hasFilter = Object.values(state.filters[tab]).some(Boolean);
       const countText = count !== total ? `${count} / ${total} 件` : `${total} 件`;
-      return `<div class="flex flex-wrap gap-3 items-end p-3 bg-slate-50 rounded-xl border border-slate-100">
+      return `<div class="g-filter-bar">
         ${items}
-        ${hasFilter ? `<button type="button" onclick="clearFilters('${tab}')" class="self-end min-h-[36px] px-3 bg-white border border-slate-200 text-gray-500 hover:bg-slate-100 rounded-xl text-xs font-bold transition">クリア</button>` : ''}
-        <span class="self-end text-xs text-gray-400 ml-auto">${countText}</span>
+        ${hasFilter ? `<button type="button" onclick="clearFilters('${tab}')" class="g-filter-clear self-end">クリア</button>` : ''}
+        <span class="self-end text-xs ml-auto g-muted">${countText}</span>
       </div>`;
     }
 
@@ -626,23 +710,23 @@
             ['全体参加率', formatPercent(overallRate)],
             ['注意が必要なメンバー', warnings.length],
           ].map(([label, val]) => `
-            <div class="bg-white border border-slate-200 rounded-2xl p-4">
-              <div class="text-xs text-gray-400 mb-1.5">${label}</div>
-              <div class="text-2xl font-black text-gray-900">${val}</div>
+            <div class="g-stat-card">
+              <div class="g-stat-label">${label}</div>
+              <div class="g-stat-value">${val}</div>
             </div>`).join('')}
         </div>
-        <div class="grid sm:grid-cols-2 gap-4 mt-1">
+        <div class="grid sm:grid-cols-2 gap-4">
           <div class="${panelCls}">
             <div class="${panelTitleCls}">直近の会議</div>
             ${upcomingMeetings.length
-              ? upcomingMeetings.map((m) => `<div class="text-sm text-gray-600">${escapeHtml(m.meetingName)} / ${escapeHtml(formatDateLabel(m.meetingDate))} ${escapeHtml(m.startTime)}〜${escapeHtml(m.endTime)}</div>`).join('')
-              : '<div class="text-sm text-gray-400">会議データがありません。</div>'}
+              ? upcomingMeetings.map((m) => `<div class="text-sm" class="g-body-text">${escapeHtml(m.meetingName)} / ${escapeHtml(formatDateLabel(m.meetingDate))} ${escapeHtml(m.startTime)}〜${escapeHtml(m.endTime)}</div>`).join('')
+              : '<div class="text-sm" class="g-muted">会議データがありません。</div>'}
           </div>
           <div class="${panelCls}">
             <div class="${panelTitleCls}">部局別参加率</div>
             ${topDepartments.length
-              ? topDepartments.map((item) => `<div class="text-sm text-gray-600">${escapeHtml(item.department)}: ${formatPercent(item.attendanceRate)}</div>`).join('')
-              : '<div class="text-sm text-gray-400">集計データがありません。</div>'}
+              ? topDepartments.map((item) => `<div class="text-sm" class="g-body-text">${escapeHtml(item.department)}: ${formatPercent(item.attendanceRate)}</div>`).join('')
+              : '<div class="text-sm" class="g-muted">集計データがありません。</div>'}
           </div>
         </div>
         <div class="${panelCls}">
@@ -679,7 +763,7 @@
             <label class="${labelCls}">回答締切日時<div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-2"><div onclick="openNativePicker('meeting-deadline-date')"><input id="meeting-deadline-date" type="date" class="${inputCls} cursor-pointer"></div><select id="meeting-deadline-time" class="${inputCls}">${renderTimeOptions()}</select></div></label>
           </div>
           <label class="${labelCls}">備考
-            <textarea id="meeting-note" class="min-h-[80px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-vertical w-full"></textarea>
+            <textarea id="meeting-note" class="g-textarea"></textarea>
           </label>
           <div class="flex flex-wrap gap-2">
             <button type="button" onclick="saveMeeting()" class="${btnPrimary}">保存する</button>
@@ -793,16 +877,16 @@
       const subtitle = selectedMeeting
         ? `${escapeHtml(selectedMeeting.meetingName)}（${escapeHtml(formatDateLabel(selectedMeeting.meetingDate))}）`
         : '全会議の通算集計';
-      const meetingSelectHtml = `<label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">会議で絞り込む<select onchange="setFilter('departments','meetingId',this.value)" class="min-h-[36px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"><option value="">全会議（通算）</option>${meetingOptions.map((m) => `<option value="${escapeAttr(m.meetingId)}" ${m.meetingId === f.meetingId ? 'selected' : ''}>${escapeHtml(m.meetingName)} / ${escapeHtml(formatDateLabel(m.meetingDate))}</option>`).join('')}</select></label>`;
+      const meetingSelectHtml = `<label class="g-label">会議で絞り込む<select onchange="setFilter('departments','meetingId',this.value)" class="g-filter-select"><option value="">全会議（通算）</option>${meetingOptions.map((m) => `<option value="${escapeAttr(m.meetingId)}" ${m.meetingId === f.meetingId ? 'selected' : ''}>${escapeHtml(m.meetingName)} / ${escapeHtml(formatDateLabel(m.meetingDate))}</option>`).join('')}</select></label>`;
       document.getElementById('tab-departments').innerHTML = `
         <div class="${panelCls}">
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div class="${panelTitleCls}">部局別集計</div>
-            <span class="text-xs text-gray-400 self-end">${subtitle}</span>
+            <span class="text-xs self-end" class="g-muted">${subtitle}</span>
           </div>
-          <div class="flex flex-wrap gap-3 items-end p-3 bg-slate-50 rounded-xl border border-slate-100">
+          <div class="g-filter-bar">
             ${meetingSelectHtml}
-            ${f.meetingId ? `<button type="button" onclick="clearFilters('departments')" class="self-end min-h-[36px] px-3 bg-white border border-slate-200 text-gray-500 hover:bg-slate-100 rounded-xl text-xs font-bold transition">クリア</button>` : ''}
+            ${f.meetingId ? `<button type="button" onclick="clearFilters('departments')" class="g-filter-clear self-end">クリア</button>` : ''}
           </div>
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['部局', '所属人数', f.meetingId ? '出席' : '出席扱い回数', '欠席回数', '未提出回数', '参加率', '欠席率'],
@@ -830,7 +914,7 @@
         matchesKeyword(f.keyword, item.name, item.department) &&
         meetsMinLevel(item.alertLevel, f.minLevel)
       );
-      const minLevelSelectHtml = `<label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">注意レベル<select onchange="setFilter('streaks','minLevel',this.value)" class="min-h-[36px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"><option value="">すべて</option>${minLevelOptions.map((o) => `<option value="${escapeAttr(o.value)}" ${o.value === f.minLevel ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('')}</select></label>`;
+      const minLevelSelectHtml = `<label class="g-label">注意レベル<select onchange="setFilter('streaks','minLevel',this.value)" class="g-filter-select"><option value="">すべて</option>${minLevelOptions.map((o) => `<option value="${escapeAttr(o.value)}" ${o.value === f.minLevel ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('')}</select></label>`;
       document.getElementById('tab-streaks').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">連続欠席チェック</div>
@@ -940,7 +1024,7 @@
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div class="${panelTitleCls}">Googleカレンダー</div>
-              <div class="text-xs text-gray-400 mt-1">会議室ごとのカレンダーを埋め込み表示します。</div>
+              <div class="text-xs mt-1" class="g-muted">会議室ごとのカレンダーを埋め込み表示します。</div>
             </div>
             <a href="${escapeAttr(selectedRoom.calendar_url)}" target="_blank" rel="noopener noreferrer" class="${btnSmSecondary}">別タブで開く</a>
           </div>
@@ -953,7 +1037,7 @@
             <iframe
               src="${escapeAttr(selectedRoom.calendar_url)}"
               title="${escapeAttr(selectedRoom.room_name)} のGoogleカレンダー"
-              class="w-full h-[520px] rounded-2xl border border-slate-200 bg-white"
+              class="g-calendar-iframe"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"></iframe>
           </div>
@@ -1042,39 +1126,23 @@
       const thead = headers.map((h) => `<th>${h}</th>`).join('');
       const tbody = rows.length
         ? rows.map((row) => `<tr>${row.map((cell) => `<td>${cell === 0 ? '0' : (cell || '')}</td>`).join('')}</tr>`).join('')
-        : `<tr><td colspan="${headers.length}" style="text-align:center;padding:24px;color:#9ca3af;font-size:13px;">データがありません。</td></tr>`;
+        : `<tr><td colspan="${headers.length}" class="g-empty-cell">データがありません。</td></tr>`;
       return `<table class="data-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
     }
 
     function renderLevelBadge(level) {
-      const styles = {
-        '要確認': 'background:#fff0f0;color:#c73d3d;border:1px solid #fecaca',
-        '注意':   'background:#fff8e1;color:#9a6b00;border:1px solid #fde68a',
-      };
-      const s = styles[level] || 'background:#eaf8f2;color:#0f8f68;border:1px solid #a7f3d0';
-      return `<span style="${s};display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;">${escapeHtml(level || '通常')}</span>`;
+      const cls = { '要確認': 'badge-red', '注意': 'badge-yellow' }[level] || 'badge-green';
+      return `<span class="badge ${cls}">${escapeHtml(level || '通常')}</span>`;
     }
 
     function renderStatusBadge(status) {
-      const styles = {
-        '有効':   'background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe',
-        '無効':   'background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0',
-        '確定':   'background:#f0fdf4;color:#166534;border:1px solid #bbf7d0',
-        '取消':   'background:#fff0f0;color:#c73d3d;border:1px solid #fecaca',
-        '仮予約': 'background:#fff8e1;color:#9a6b00;border:1px solid #fde68a',
-      };
-      const s = styles[status] || 'background:#f8fafc;color:#64748b;border:1px solid #e2e8f0';
-      return `<span style="${s};display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;">${escapeHtml(status || '')}</span>`;
+      const cls = { '有効': 'badge-blue', '無効': 'badge-gray', '確定': 'badge-green', '取消': 'badge-red', '仮予約': 'badge-yellow' }[status] || 'badge-gray';
+      return `<span class="badge ${cls}">${escapeHtml(status || '')}</span>`;
     }
 
-    function renderAnswerBadge(state) {
-      const styles = {
-        '出席':  'background:#f0fdf4;color:#166534;border:1px solid #bbf7d0',
-        '欠席':  'background:#fff0f0;color:#c73d3d;border:1px solid #fecaca',
-        '未提出':'background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0',
-      };
-      const s = styles[state] || 'background:#f8fafc;color:#64748b;border:1px solid #e2e8f0';
-      return `<span style="${s};display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;">${escapeHtml(state || '')}</span>`;
+    function renderAnswerBadge(answerState) {
+      const cls = { '出席': 'badge-green', '欠席': 'badge-red', '未提出': 'badge-gray' }[answerState] || 'badge-gray';
+      return `<span class="badge ${cls}">${escapeHtml(answerState || '')}</span>`;
     }
 
     // ============================================================
