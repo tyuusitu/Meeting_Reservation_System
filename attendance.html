@@ -5,354 +5,74 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>出欠登録</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --primary: #1d6fd6;
-      --primary-dark: #1559ae;
-      --accent: #0f8f68;
-      --danger: #c73d3d;
-      --surface: #ffffff;
-      --background: #f5f7fb;
-      --border: #d7e0ec;
-      --text: #172033;
-      --muted: #647085;
-      --soft-blue: #eaf2ff;
-      --soft-green: #eaf8f2;
-      --soft-red: #fff0f0;
-      --soft-yellow: #fff8e1;
-      --shadow: 0 8px 28px rgba(20, 36, 64, 0.08);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at top left, rgba(29, 111, 214, .12), transparent 28%),
-        linear-gradient(180deg, #fbfcfe 0%, #eef3fa 100%);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100vh;
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
-    }
-
-    button,
-    .button-link {
-      min-height: 44px;
-      border: 0;
-      border-radius: 10px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-weight: 700;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      min-height: 46px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      color: var(--text);
-      padding: 10px 12px;
-    }
-
-    textarea {
-      min-height: 88px;
-      resize: vertical;
-    }
-
-    label {
-      display: grid;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .app {
-      width: min(100%, 960px);
-      margin: 0 auto;
-      padding: 20px 16px 40px;
-      display: grid;
-      gap: 16px;
-    }
-
-    .hero,
-    .panel,
-    .meeting-card {
-      background: rgba(255, 255, 255, .94);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-    }
-
-    .hero {
-      padding: 24px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .hero h1 {
-      font-size: clamp(28px, 4vw, 38px);
-      line-height: 1.1;
-    }
-
-    .hero p {
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.7;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .panel {
-      padding: 18px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .panel-title {
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 14px;
-    }
-
-    .member-meta {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .meta-box {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      background: #fff;
-    }
-
-    .meta-label {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .meta-value {
-      font-size: 15px;
-      font-weight: 800;
-    }
-
-    .notice,
-    .message {
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .notice {
-      background: var(--soft-yellow);
-      border: 1px solid #f1dda1;
-      color: #7a5800;
-    }
-
-    .message-success {
-      background: var(--soft-green);
-      border: 1px solid #9ad7b7;
-      color: var(--accent);
-    }
-
-    .message-error {
-      background: var(--soft-red);
-      border: 1px solid #f3c0c0;
-      color: var(--danger);
-    }
-
-    .meeting-list {
-      display: grid;
-      gap: 14px;
-    }
-
-    .meeting-card {
-      padding: 18px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .meeting-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .meeting-title {
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .meeting-sub {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .badge-open {
-      background: var(--soft-green);
-      color: var(--accent);
-    }
-
-    .badge-closed {
-      background: var(--soft-red);
-      color: var(--danger);
-    }
-
-    .answer-grid {
-      display: grid;
-      gap: 12px;
-    }
-
-    .radio-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .radio-card {
-      flex: 1 1 180px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fff;
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .radio-card input {
-      width: auto;
-      min-height: auto;
-    }
-
-    .meeting-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: var(--primary-dark);
-    }
-
-    .btn-secondary {
-      background: #fff;
-      color: var(--primary);
-      border: 1.5px solid var(--primary);
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    @media (max-width: 760px) {
-      .grid2 {
-        grid-template-columns: 1fr;
-      }
-
-      .member-meta {
-        grid-template-columns: 1fr;
-      }
-    }
+    .hidden { display: none !important; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at top left, rgba(29,111,214,.10), transparent 30%), linear-gradient(180deg,#f8faff 0%,#eef3fa 100%); }
   </style>
 </head>
 
-<body>
-  <main class="app">
-    <section class="hero">
-      <h1 id="system-name">会議出欠登録</h1>
-      <p>名前を選ぶと、現在回答受付中の会議だけを表示します。未提出は集計上は出席扱いですが、欠席する場合は理由を必ず登録してください。</p>
-      <div class="hero-actions">
-        <a class="button-link btn-secondary" href="index.html">トップへ戻る</a>
-        <a class="button-link btn-secondary" href="admin.html">管理画面</a>
+<body class="min-h-screen text-gray-800"
+>
+
+  <!-- ローディングオーバーレイ -->
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
+      <div class="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+      <p id="loading-text" class="text-sm text-gray-600 font-semibold">処理中...</p>
+    </div>
+  </div>
+
+  <main class="max-w-3xl mx-auto px-4 py-6 pb-16 flex flex-col gap-5">
+
+    <!-- ヒーロー -->
+    <section class="bg-white/90 border border-slate-200 rounded-2xl shadow-md p-5 sm:p-6 flex flex-col gap-3">
+      <h1 id="system-name" class="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">会議出欠登録</h1>
+      <p class="text-sm text-gray-500 leading-relaxed">名前を選ぶと、現在回答受付中の会議だけを表示します。未提出は集計上は出席扱いですが、欠席する場合は理由を必ず登録してください。</p>
+      <div class="flex gap-2 flex-wrap">
+        <a href="index.html" class="inline-flex items-center justify-center min-h-[44px] px-4 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition">トップへ戻る</a>
+        <a href="admin.html" class="inline-flex items-center justify-center min-h-[44px] px-4 bg-white border border-slate-200 text-gray-500 hover:bg-slate-50 rounded-xl font-bold text-sm transition">管理画面</a>
       </div>
     </section>
 
-    <section class="panel">
-      <div class="panel-title">メンバー選択</div>
-      <div class="grid2">
-        <label>
+    <!-- メンバー選択 -->
+    <section class="bg-white/90 border border-slate-200 rounded-2xl shadow-md p-5 sm:p-6 flex flex-col gap-4">
+      <div class="font-extrabold text-gray-900 text-lg">メンバー選択</div>
+      <div class="grid sm:grid-cols-[1.2fr_.8fr] gap-4">
+        <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
           名前
-          <select id="member-select">
+          <select id="member-select"
+            class="min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
             <option value="">名前を選択してください</option>
           </select>
         </label>
-        <div class="notice">同名メンバーがいても内部ではメンバーIDで処理します。表示順はシートの「表示順」を使います。</div>
-      </div>
-      <div class="member-meta">
-        <div class="meta-box">
-          <div class="meta-label">所属部局</div>
-          <div class="meta-value" id="member-department">-</div>
-        </div>
-        <div class="meta-box">
-          <div class="meta-label">学年</div>
-          <div class="meta-value" id="member-grade">-</div>
-        </div>
-        <div class="meta-box">
-          <div class="meta-label">役職</div>
-          <div class="meta-value" id="member-role">-</div>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700 leading-relaxed flex items-start">
+          同名メンバーがいても内部ではメンバーIDで処理します。表示順はシートの「表示順」を使います。
         </div>
       </div>
-      <div id="global-message" class="hidden"></div>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="border border-slate-200 rounded-xl p-3 bg-white">
+          <div class="text-xs text-gray-400 mb-1">所属部局</div>
+          <div class="font-extrabold text-gray-900 text-sm" id="member-department">-</div>
+        </div>
+        <div class="border border-slate-200 rounded-xl p-3 bg-white">
+          <div class="text-xs text-gray-400 mb-1">学年</div>
+          <div class="font-extrabold text-gray-900 text-sm" id="member-grade">-</div>
+        </div>
+        <div class="border border-slate-200 rounded-xl p-3 bg-white">
+          <div class="text-xs text-gray-400 mb-1">役職</div>
+          <div class="font-extrabold text-gray-900 text-sm" id="member-role">-</div>
+        </div>
+      </div>
+      <div id="global-message" class="hidden rounded-xl px-4 py-3 text-sm"></div>
     </section>
 
-    <section class="panel">
-      <div class="panel-title">回答受付中の会議</div>
-      <div id="meeting-list" class="meeting-list"></div>
+    <!-- 会議一覧 -->
+    <section class="bg-white/90 border border-slate-200 rounded-2xl shadow-md p-5 sm:p-6 flex flex-col gap-4">
+      <div class="font-extrabold text-gray-900 text-lg">回答受付中の会議</div>
+      <div id="meeting-list" class="flex flex-col gap-4"></div>
     </section>
+
   </main>
 
   <script src="config.js"></script>
@@ -368,17 +88,26 @@
     let attendanceResponses = [];
     let selectedMemberId = '';
 
+    // ============================================================
+    // ローディング
+    // ============================================================
+    function showLoading(text) {
+      document.getElementById('loading-text').textContent = text || '処理中...';
+      document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }
+
+    // ============================================================
+    // 初期化
+    // ============================================================
     document.addEventListener('DOMContentLoaded', async () => {
       await Promise.all([loadPublicSettings(), loadCsvData()]);
       renderMembers();
       renderMeetings();
     });
 
-    /**
-     * GAS から出欠画面に必要な公開設定を読み込み、画面タイトルへ反映します。
-     *
-     * @return {Promise<void>} 読み込み完了。
-     */
     async function loadPublicSettings() {
       try {
         const res = await fetch(`${CONFIG.GAS_API_URL}?action=get_public_settings`);
@@ -396,25 +125,12 @@
       document.getElementById('system-name').textContent = `${appSettings.systemName} - 出欠登録`;
     }
 
-    /**
-     * 出欠画面で使うメンバー、会議、既存回答を並列で読み込みます。
-     *
-     * @return {Promise<void>} 読み込み完了。
-     */
     async function loadCsvData() {
       members = await fetchSheetCsv('members', memberMapper);
       meetings = await fetchSheetCsv('meetings', meetingMapper);
       attendanceResponses = await fetchSheetCsv('attendanceResponses', attendanceMapper);
     }
 
-    /**
-     * config.js の設定を使って指定シートの CSV を取得し、画面用オブジェクトへ変換します。
-     *
-     * @param {string} key config.js の SHEET_GID / SHEET_NAME に対応するキー。
-     * @param {Function} mapper CSV 行オブジェクトを画面用データへ変換する関数。
-     * @param {boolean} bustCache true の場合はキャッシュ回避パラメータを付けます。
-     * @return {Promise<Array<Object>>} 変換済みデータ配列。
-     */
     async function fetchSheetCsv(key, mapper, bustCache = false) {
       const url = CONFIG.buildSheetCsvUrl(key, bustCache);
       if (!url) {
@@ -430,13 +146,6 @@
       }
     }
 
-    /**
-     * CSV 文字列をヘッダー付き行オブジェクトへ変換し、mapper を通します。
-     *
-     * @param {string} text CSV 文字列。
-     * @param {Function} mapper 行変換関数。
-     * @return {Array<Object>} 変換済みデータ配列。
-     */
     function parseCsv(text, mapper) {
       const rows = parseCsvRows(text);
       if (rows.length < 2) return [];
@@ -447,12 +156,6 @@
         .filter(Boolean);
     }
 
-    /**
-     * ダブルクォート内のカンマや改行を考慮して CSV を2次元配列へ分解します。
-     *
-     * @param {string} text CSV 文字列。
-     * @return {Array<Array<string>>} CSV 行配列。
-     */
     function parseCsvRows(text) {
       const rows = [];
       let row = [];
@@ -487,13 +190,6 @@
       return rows;
     }
 
-    /**
-     * ヘッダー配列と値配列から、列名をキーにしたオブジェクトを作ります。
-     *
-     * @param {Array<string>} headers CSV ヘッダー。
-     * @param {Array<string>} row CSV 1行分の値。
-     * @return {Object} 行オブジェクト。
-     */
     function rowToObject(headers, row) {
       const obj = {};
       headers.forEach((header, index) => {
@@ -502,12 +198,6 @@
       return obj;
     }
 
-    /**
-     * メンバー一覧 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} メンバー情報。
-     */
     function memberMapper(row) {
       if (!row['メンバーID']) return null;
       return {
@@ -521,12 +211,6 @@
       };
     }
 
-    /**
-     * 会議一覧 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 会議情報。
-     */
     function meetingMapper(row) {
       if (!row['会議ID']) return null;
       return {
@@ -543,12 +227,6 @@
       };
     }
 
-    /**
-     * 出欠回答 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 出欠回答。
-     */
     function attendanceMapper(row) {
       if (!row['回答ID']) return null;
       return {
@@ -563,9 +241,9 @@
       };
     }
 
-    /**
-     * 有効メンバーを名前選択欄へ描画します。
-     */
+    // ============================================================
+    // 描画
+    // ============================================================
     function renderMembers() {
       const select = document.getElementById('member-select');
       const activeMembers = members
@@ -575,9 +253,6 @@
       select.addEventListener('change', onMemberChange);
     }
 
-    /**
-     * 選択されたメンバーの部局・学年・役職を表示し、会議一覧を再描画します。
-     */
     function onMemberChange() {
       selectedMemberId = document.getElementById('member-select').value;
       const member = members.find((item) => item.memberId === selectedMemberId);
@@ -587,9 +262,6 @@
       renderMeetings();
     }
 
-    /**
-     * 現在募集中の会議カードを描画します。
-     */
     function renderMeetings() {
       const container = document.getElementById('meeting-list');
       const openMeetings = meetings
@@ -597,62 +269,76 @@
         .sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`));
 
       if (!selectedMemberId) {
-        container.innerHTML = '<div class="notice">先に名前を選択してください。</div>';
+        container.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">先に名前を選択してください。</div>`;
         return;
       }
       if (openMeetings.length === 0) {
-        container.innerHTML = '<div class="notice">現在回答受付中の会議はありません。</div>';
+        container.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">現在回答受付中の会議はありません。</div>`;
         return;
       }
+
+      const inputCls = 'min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full';
 
       container.innerHTML = openMeetings.map((meeting) => {
         const existing = attendanceResponses.find((response) => response.meetingId === meeting.meetingId && response.memberId === selectedMemberId);
         const editable = isBeforeDeadline(meeting.answerDeadlineAt);
         return `
-          <article class="meeting-card">
-            <div class="meeting-header">
-              <div>
-                <div class="meeting-title">${escapeHtml(meeting.meetingName)}</div>
-                <div class="meeting-sub">${formatDateLabel(meeting.meetingDate)} ${escapeHtml(meeting.startTime)}〜${escapeHtml(meeting.endTime)}</div>
-                <div class="meeting-sub">募集終了: ${escapeHtml(formatDateTimeLabel(meeting.recruitEndAt))}</div>
-                <div class="meeting-sub">回答締切: ${escapeHtml(formatDateTimeLabel(meeting.answerDeadlineAt))}</div>
+          <article class="bg-white/90 border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 flex flex-col gap-4">
+            <div class="flex justify-between gap-3 flex-wrap items-start">
+              <div class="flex flex-col gap-1">
+                <div class="font-extrabold text-gray-900 text-base">${escapeHtml(meeting.meetingName)}</div>
+                <div class="text-sm text-gray-500">${formatDateLabel(meeting.meetingDate)} ${escapeHtml(meeting.startTime)}〜${escapeHtml(meeting.endTime)}</div>
+                <div class="text-xs text-gray-400">募集終了: ${escapeHtml(formatDateTimeLabel(meeting.recruitEndAt))}</div>
+                <div class="text-xs text-gray-400">回答締切: ${escapeHtml(formatDateTimeLabel(meeting.answerDeadlineAt))}</div>
               </div>
-              <span class="badge ${editable ? 'badge-open' : 'badge-closed'}">${editable ? '回答可能' : '締切後'}</span>
+              <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-extrabold ${editable ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}">${editable ? '回答可能' : '締切後'}</span>
             </div>
-            ${meeting.note ? `<div class="notice">${escapeHtml(meeting.note)}</div>` : ''}
-            ${existing ? `<div class="notice">登録済み: ${escapeHtml(existing.attendance)}${existing.updatedAt ? ` / 更新日時 ${escapeHtml(formatDateTimeLabel(existing.updatedAt))}` : ''}</div>` : '<div class="muted">未提出です。集計上は出席扱いですが、欠席する場合は理由を登録してください。</div>'}
-            <div class="answer-grid">
-              <div class="radio-row">
-                <label class="radio-card"><input type="radio" name="attendance-${escapeHtml(meeting.meetingId)}" value="出席" ${existing && existing.attendance === '出席' ? 'checked' : ''} ${!existing ? 'checked' : ''} ${!editable ? 'disabled' : ''}>出席</label>
-                <label class="radio-card"><input type="radio" name="attendance-${escapeHtml(meeting.meetingId)}" value="欠席" ${existing && existing.attendance === '欠席' ? 'checked' : ''} ${!editable ? 'disabled' : ''}>欠席</label>
+            ${meeting.note ? `<div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700 leading-relaxed">${escapeHtml(meeting.note)}</div>` : ''}
+            ${existing
+              ? `<div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700">登録済み: ${escapeHtml(existing.attendance)}${existing.updatedAt ? ` / 更新日時 ${escapeHtml(formatDateTimeLabel(existing.updatedAt))}` : ''}</div>`
+              : `<div class="text-xs text-gray-400">未提出です。集計上は出席扱いですが、欠席する場合は理由を登録してください。</div>`
+            }
+            <div class="flex flex-col gap-3">
+              <div class="flex gap-2 flex-wrap">
+                <label class="flex-1 min-w-[140px] border border-slate-200 rounded-xl bg-white px-4 py-3 flex items-center gap-2.5 cursor-pointer has-[:checked]:bg-blue-50 has-[:checked]:border-blue-400 transition">
+                  <input type="radio" name="attendance-${escapeHtml(meeting.meetingId)}" value="出席"
+                    ${existing && existing.attendance === '出席' ? 'checked' : ''} ${!existing ? 'checked' : ''} ${!editable ? 'disabled' : ''}
+                    class="w-4 h-4 accent-blue-600">
+                  <span class="text-sm font-bold text-gray-700">出席</span>
+                </label>
+                <label class="flex-1 min-w-[140px] border border-slate-200 rounded-xl bg-white px-4 py-3 flex items-center gap-2.5 cursor-pointer has-[:checked]:bg-red-50 has-[:checked]:border-red-400 transition">
+                  <input type="radio" name="attendance-${escapeHtml(meeting.meetingId)}" value="欠席"
+                    ${existing && existing.attendance === '欠席' ? 'checked' : ''} ${!editable ? 'disabled' : ''}
+                    class="w-4 h-4 accent-red-500">
+                  <span class="text-sm font-bold text-gray-700">欠席</span>
+                </label>
               </div>
-              <label>
+              <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
                 欠席理由
-                <select id="reason-${escapeHtml(meeting.meetingId)}" ${!editable ? 'disabled' : ''}>
+                <select id="reason-${escapeHtml(meeting.meetingId)}" ${!editable ? 'disabled' : ''} class="${inputCls}">
                   <option value="">欠席しない場合は未選択のままで構いません</option>
                   ${CONFIG.ABSENCE_REASONS.map((reason) => `<option value="${escapeHtml(reason)}" ${existing && existing.absenceReason === reason ? 'selected' : ''}>${escapeHtml(reason)}</option>`).join('')}
                 </select>
               </label>
-              <label>
+              <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
                 欠席理由の詳細
-                <textarea id="detail-${escapeHtml(meeting.meetingId)}" placeholder="必要な場合のみ入力してください。" ${!editable ? 'disabled' : ''}>${existing ? escapeHtml(existing.absenceDetail) : ''}</textarea>
+                <textarea id="detail-${escapeHtml(meeting.meetingId)}" placeholder="必要な場合のみ入力してください。" ${!editable ? 'disabled' : ''}
+                  class="min-h-[80px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-vertical w-full">${existing ? escapeHtml(existing.absenceDetail) : ''}</textarea>
               </label>
             </div>
-            <div class="meeting-actions">
-              <button class="btn-primary" ${!editable ? 'disabled' : ''} onclick="submitAttendance('${escapeJs(meeting.meetingId)}')">この会議の回答を保存</button>
-              <span class="muted">${editable ? '締切までは上書き更新できます。' : '締切後は管理者による直接修正のみです。'}</span>
+            <div class="flex items-center gap-3 flex-wrap">
+              <button type="button" class="min-h-[46px] px-5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition shadow-sm"
+                ${!editable ? 'disabled' : ''} onclick="submitAttendance('${escapeJs(meeting.meetingId)}')">この会議の回答を保存</button>
+              <span class="text-xs text-gray-400">${editable ? '締切までは上書き更新できます。' : '締切後は管理者による直接修正のみです。'}</span>
             </div>
           </article>
         `;
       }).join('');
     }
 
-    /**
-     * 1会議分の出欠回答を GAS API へ送信します。
-     *
-     * @param {string} meetingId 回答対象の会議ID。
-     * @return {Promise<void>} 登録処理完了。
-     */
+    // ============================================================
+    // 出欠送信
+    // ============================================================
     async function submitAttendance(meetingId) {
       const member = members.find((item) => item.memberId === selectedMemberId);
       if (!member) {
@@ -678,6 +364,7 @@
         }
       }
 
+      showLoading('回答を保存中...');
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
@@ -696,6 +383,7 @@
         const data = await res.json();
         if (!data.ok) {
           showMessage(data.error || '登録に失敗しました。', 'error');
+          hideLoading();
           return;
         }
         attendanceResponses = await fetchSheetCsv('attendanceResponses', attendanceMapper, true);
@@ -704,25 +392,17 @@
       } catch (_) {
         showMessage('通信エラーが発生しました。', 'error');
       }
+      hideLoading();
     }
 
-    /**
-     * 指定 name のラジオボタンで選択されている値を取得します。
-     *
-     * @param {string} name ラジオボタンの name 属性。
-     * @return {string} 選択値。未選択時は出席。
-     */
+    // ============================================================
+    // ユーティリティ
+    // ============================================================
     function getRadioValue(name) {
       const checked = document.querySelector(`input[name="${name}"]:checked`);
       return checked ? checked.value : '出席';
     }
 
-    /**
-     * 現在日時が会議の募集期間内かを判定します。
-     *
-     * @param {Object} meeting 会議情報。
-     * @return {boolean} 募集中の場合は true。
-     */
     function isOpenRecruitment(meeting) {
       const now = new Date();
       const start = new Date(meeting.recruitStartAt);
@@ -730,54 +410,24 @@
       return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= now && now <= end;
     }
 
-    /**
-     * 現在日時が回答締切前かを判定します。
-     *
-     * @param {string} value 回答締切日時。
-     * @return {boolean} 回答可能な場合は true。
-     */
     function isBeforeDeadline(value) {
       const deadline = new Date(value);
       return !Number.isNaN(deadline.getTime()) && new Date() <= deadline;
     }
 
-    /**
-     * 日付文字列を yyyy-MM-dd に近い形式へ整えます。
-     *
-     * @param {*} value 対象値。
-     * @return {string} 正規化済み日付。
-     */
     function normalizeDate(value) {
       return String(value || '').replace(/\//g, '-').slice(0, 10);
     }
 
-    /**
-     * 時刻文字列を HH:mm 形式へ整えます。
-     *
-     * @param {*} value 対象値。
-     * @return {string} 正規化済み時刻。
-     */
     function normalizeTime(value) {
       const match = String(value || '').trim().match(/^(\d{1,2}):(\d{1,2})/);
       return match ? `${String(match[1]).padStart(2, '0')}:${String(match[2]).padStart(2, '0')}` : String(value || '').trim();
     }
 
-    /**
-     * 日時文字列を Date で解釈しやすい ISO 風表記へ整えます。
-     *
-     * @param {*} value 対象値。
-     * @return {string} 正規化済み日時。
-     */
     function normalizeDateTime(value) {
       return String(value || '').trim().replace(/\//g, '-').replace(' ', 'T');
     }
 
-    /**
-     * 会議日を画面表示用の短い日付ラベルにします。
-     *
-     * @param {string} value yyyy-MM-dd 形式の日付。
-     * @return {string} 表示用日付。
-     */
     function formatDateLabel(value) {
       const date = new Date(`${value}T00:00:00`);
       if (Number.isNaN(date.getTime())) return value;
@@ -785,12 +435,6 @@
       return `${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]})`;
     }
 
-    /**
-     * 日時を画面表示用ラベルにします。
-     *
-     * @param {string} value 日時文字列。
-     * @return {string} 表示用日時。
-     */
     function formatDateTimeLabel(value) {
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return value;
@@ -798,37 +442,21 @@
       return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 
-    /**
-     * 画面上部のメッセージを表示します。
-     *
-     * @param {string} text 表示文。
-     * @param {string} type success または error。
-     */
     function showMessage(text, type) {
       const el = document.getElementById('global-message');
-      el.className = type === 'error' ? 'message message-error' : 'message message-success';
+      el.className = type === 'error'
+        ? 'rounded-xl px-4 py-3 text-sm bg-red-50 border border-red-200 text-red-600'
+        : 'rounded-xl px-4 py-3 text-sm bg-emerald-50 border border-emerald-200 text-emerald-700';
       el.textContent = text;
       el.classList.remove('hidden');
       window.clearTimeout(showMessage.timer);
       showMessage.timer = window.setTimeout(() => el.classList.add('hidden'), 5000);
     }
 
-    /**
-     * HTML へ埋め込む文字列をエスケープします。
-     *
-     * @param {*} text 対象文字列。
-     * @return {string} エスケープ済み文字列。
-     */
     function escapeHtml(text) {
       return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    /**
-     * JavaScript 文字列リテラルへ埋め込む値をエスケープします。
-     *
-     * @param {*} text 対象文字列。
-     * @return {string} エスケープ済み文字列。
-     */
     function escapeJs(text) {
       return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }

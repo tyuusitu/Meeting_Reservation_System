@@ -5,400 +5,72 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>管理画面</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --primary: #1d6fd6;
-      --primary-dark: #1559ae;
-      --accent: #0f8f68;
-      --danger: #c73d3d;
-      --warning: #9a6b00;
-      --surface: #ffffff;
-      --background: #f5f7fb;
-      --border: #d7e0ec;
-      --text: #172033;
-      --muted: #647085;
-      --soft-blue: #eaf2ff;
-      --soft-green: #eaf8f2;
-      --soft-red: #fff0f0;
-      --soft-yellow: #fff8e1;
-      --shadow: 0 8px 28px rgba(20, 36, 64, 0.08);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at top left, rgba(29, 111, 214, .11), transparent 25%),
-        linear-gradient(180deg, #fbfcfe 0%, #edf2f9 100%);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100vh;
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
-    }
-
-    button,
-    .button-link {
-      min-height: 42px;
-      border: 0;
-      border-radius: 10px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-weight: 700;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      min-height: 44px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      color: var(--text);
-      padding: 10px 12px;
-    }
-
-    textarea {
-      min-height: 88px;
-      resize: vertical;
-    }
-
-    label {
-      display: grid;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 720px;
-    }
-
-    th,
-    td {
-      border-bottom: 1px solid var(--border);
-      text-align: left;
-      padding: 10px 12px;
-      font-size: 13px;
-      vertical-align: top;
-    }
-
-    th {
-      background: #f8fbff;
-      font-weight: 800;
-      color: var(--muted);
-      position: sticky;
-      top: 0;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .app {
-      width: min(100%, 1240px);
-      margin: 0 auto;
-      padding: 18px 16px 40px;
-      display: grid;
-      gap: 16px;
-    }
-
-    .card {
-      background: rgba(255, 255, 255, .95);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-    }
-
-    .login-card {
-      max-width: 480px;
-      margin: 56px auto;
-      padding: 24px;
-      display: grid;
-      gap: 16px;
-    }
-
-    .title {
-      font-size: clamp(26px, 4vw, 34px);
-      line-height: 1.15;
-      font-weight: 900;
-    }
-
-    .sub {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .header {
-      padding: 18px 20px;
-      display: flex;
-      gap: 12px;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .header h1 {
-      font-size: 26px;
-    }
-
-    .header-actions,
-    .tab-nav,
-    .row-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: var(--primary-dark);
-    }
-
-    .btn-secondary {
-      background: #fff;
-      color: var(--primary);
-      border: 1.5px solid var(--primary);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: #fff;
-    }
-
-    .btn-ghost {
-      background: #eef3f9;
-      color: var(--text);
-    }
-
-    .btn-sm {
-      min-height: 34px;
-      padding: 6px 12px;
-      font-size: 13px;
-    }
-
-    .tab-nav {
-      padding: 0 20px 18px;
-    }
-
-    .tab-button {
-      background: #fff;
-      border: 1px solid var(--border);
-      color: var(--muted);
-    }
-
-    .tab-button.active {
-      background: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
-    }
-
-    .section {
-      padding: 0 20px 20px;
-      display: grid;
-      gap: 16px;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .stat-box {
-      padding: 16px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #fff;
-    }
-
-    .stat-label {
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-
-    .stat-value {
-      font-size: 24px;
-      font-weight: 900;
-    }
-
-    .split2,
-    .split3 {
-      display: grid;
-      gap: 14px;
-    }
-
-    .split2 {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .split3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .panel {
-      padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: #fff;
-      display: grid;
-      gap: 14px;
-    }
-
-    .panel-title {
-      font-size: 18px;
-      font-weight: 900;
-    }
-
-    .table-wrap {
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #fff;
-    }
-
-    .message {
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .message-success {
-      background: var(--soft-green);
-      border: 1px solid #9ad7b7;
-      color: var(--accent);
-    }
-
-    .message-error {
-      background: var(--soft-red);
-      border: 1px solid #f1c0c0;
-      color: var(--danger);
-    }
-
-    .notice {
-      background: var(--soft-yellow);
-      border: 1px solid #ead18a;
-      color: var(--warning);
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 900;
-    }
-
-    .badge-ok {
-      background: var(--soft-green);
-      color: var(--accent);
-    }
-
-    .badge-warn {
-      background: var(--soft-yellow);
-      color: var(--warning);
-    }
-
-    .badge-danger {
-      background: var(--soft-red);
-      color: var(--danger);
-    }
-
-    .filters {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    @media (max-width: 980px) {
-      .stats-grid,
-      .split2,
-      .split3,
-      .filters {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .stats-grid,
-      .split2,
-      .split3,
-      .filters {
-        grid-template-columns: 1fr;
-      }
-
-      .header {
-        align-items: flex-start;
-      }
-    }
+    .hidden { display: none !important; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at top left, rgba(29,111,214,.09), transparent 25%), linear-gradient(180deg,#fbfcfe 0%,#edf2f9 100%); }
+    .data-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    .data-table th { background: #f8fbff; font-weight: 800; color: #647085; font-size: 12px; padding: 10px 12px; text-align: left; border-bottom: 2px solid #e2eaf5; position: sticky; top: 0; white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #f0f4fb; vertical-align: top; color: #2d3a52; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f8fbff; }
+    .data-table input { min-height: 36px; width: 100%; border: 1px solid #d7e0ec; border-radius: 8px; padding: 4px 10px; font-size: 13px; background: #fff; color: #172033; }
+    .data-table input:focus { outline: none; box-shadow: 0 0 0 2px rgba(29,111,214,0.2); border-color: #1d6fd6; }
   </style>
 </head>
 
-<body>
-  <main class="app">
-    <section id="login-screen" class="card login-card">
-      <div class="title" id="login-title">管理画面</div>
-      <div class="sub">会議室予約管理と会議出欠管理を同じ画面で扱います。認証状態はこのブラウザのセッションにだけ保持します。</div>
-      <label>
-        管理者パスワード
-        <input id="login-password" type="password" placeholder="設定シートのパスワード">
-      </label>
-      <div class="row-actions">
-        <button class="btn-primary" onclick="login()">ログイン</button>
-        <a class="button-link btn-secondary" href="index.html">トップへ戻る</a>
+<body class="min-h-screen text-gray-800">
+
+  <!-- ローディングオーバーレイ -->
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
+      <div class="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+      <p id="loading-text" class="text-sm text-gray-600 font-semibold">処理中...</p>
+    </div>
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 py-5 pb-16 flex flex-col gap-5">
+
+    <!-- ログイン画面 -->
+    <section id="login-screen" class="max-w-md mx-auto w-full mt-12 bg-white/95 border border-slate-200 rounded-2xl shadow-lg p-6 flex flex-col gap-4">
+      <div>
+        <div id="login-title" class="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">管理画面</div>
+        <div class="text-sm text-gray-500 mt-1 leading-relaxed">会議室予約管理と会議出欠管理を同じ画面で扱います。認証状態はこのブラウザのセッションにだけ保持します。</div>
       </div>
-      <div id="login-message" class="hidden"></div>
+      <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+        管理者パスワード
+        <input id="login-password" type="password" placeholder="設定シートのパスワード"
+          class="min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+      </label>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" onclick="login()"
+          class="flex-1 min-h-[46px] bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition shadow-sm">ログイン</button>
+        <a href="index.html"
+          class="flex-1 flex items-center justify-center min-h-[46px] bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition">トップへ戻る</a>
+      </div>
+      <div id="login-message" class="hidden rounded-xl px-4 py-3 text-sm"></div>
     </section>
 
-    <section id="admin-screen" class="card hidden">
-      <div class="header">
+    <!-- 管理画面本体 -->
+    <section id="admin-screen" class="hidden bg-white/95 border border-slate-200 rounded-2xl shadow-lg">
+      <!-- ヘッダー -->
+      <div class="px-5 py-4 flex flex-wrap gap-3 justify-between items-center border-b border-slate-100">
         <div>
-          <h1 id="system-name">管理画面</h1>
-          <div class="sub">CSV 直接読み込みで一覧を表示し、更新系だけ GAS API に送信します。</div>
+          <h1 id="system-name" class="text-2xl font-black text-gray-900">管理画面</h1>
+          <div class="text-xs text-gray-400 mt-0.5">CSV 直接読み込みで一覧を表示し、更新系だけ GAS API に送信します。</div>
         </div>
-        <div class="header-actions">
-          <button class="btn-secondary" onclick="reloadAll(true)">最新化</button>
-          <button class="btn-ghost" onclick="logout()">ログアウト</button>
+        <div class="flex gap-2 flex-wrap">
+          <button type="button" onclick="reloadAll(true)"
+            class="min-h-[40px] px-4 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition">最新化</button>
+          <button type="button" onclick="logout()"
+            class="min-h-[40px] px-4 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition">ログアウト</button>
         </div>
       </div>
-      <div class="tab-nav" id="tab-nav"></div>
-      <div class="section">
-        <div id="global-message" class="hidden"></div>
+      <!-- タブナビ -->
+      <div id="tab-nav" class="px-5 py-3 flex flex-wrap gap-1.5 border-b border-slate-100 overflow-x-auto"></div>
+      <!-- コンテンツ -->
+      <div class="p-5 flex flex-col gap-5">
+        <div id="global-message" class="hidden rounded-xl px-4 py-3 text-sm"></div>
         <div id="tab-dashboard" class="tab-content"></div>
         <div id="tab-meetings" class="tab-content hidden"></div>
         <div id="tab-attendance" class="tab-content hidden"></div>
@@ -410,6 +82,7 @@
         <div id="tab-reservations" class="tab-content hidden"></div>
       </div>
     </section>
+
   </main>
 
   <script src="config.js"></script>
@@ -445,6 +118,20 @@
       selectedReservationIds: new Set(),
     };
 
+    // ============================================================
+    // ローディング
+    // ============================================================
+    function showLoading(text) {
+      document.getElementById('loading-text').textContent = text || '処理中...';
+      document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }
+
+    // ============================================================
+    // 初期化
+    // ============================================================
     document.addEventListener('DOMContentLoaded', async () => {
       await loadPublicSettings();
       if (sessionStorage.getItem(AUTH_KEY) === '1' && sessionStorage.getItem(PASSWORD_KEY)) {
@@ -453,11 +140,6 @@
       }
     });
 
-    /**
-     * 管理画面のタイトル表示に使う公開設定を読み込みます。
-     *
-     * @return {Promise<void>} 読み込み完了。
-     */
     async function loadPublicSettings() {
       try {
         const res = await fetch(`${CONFIG.GAS_API_URL}?action=get_public_settings`);
@@ -472,17 +154,16 @@
       document.getElementById('login-title').textContent = `${state.systemName} - 管理画面`;
     }
 
-    /**
-     * 入力された管理者パスワードを GAS で検証し、成功時に管理画面を表示します。
-     *
-     * @return {Promise<void>} ログイン処理完了。
-     */
+    // ============================================================
+    // 認証
+    // ============================================================
     async function login() {
       const password = document.getElementById('login-password').value;
       if (!password) {
         showMessage('login-message', 'パスワードを入力してください。', 'error');
         return;
       }
+      showLoading('ログイン中...');
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
@@ -491,6 +172,7 @@
         });
         const data = await res.json();
         if (!data.ok) {
+          hideLoading();
           showMessage('login-message', data.error || 'ログインできません。', 'error');
           return;
         }
@@ -501,11 +183,9 @@
       } catch (_) {
         showMessage('login-message', '通信エラーが発生しました。', 'error');
       }
+      hideLoading();
     }
 
-    /**
-     * セッション上の認証情報を削除してログイン画面に戻します。
-     */
     function logout() {
       sessionStorage.removeItem(AUTH_KEY);
       sessionStorage.removeItem(PASSWORD_KEY);
@@ -515,28 +195,26 @@
       document.getElementById('login-password').value = '';
     }
 
-    /**
-     * 管理画面本体を表示し、タブナビゲーションを描画します。
-     */
     function showAdmin() {
       document.getElementById('login-screen').classList.add('hidden');
       document.getElementById('admin-screen').classList.remove('hidden');
       renderTabs();
     }
 
-    /**
-     * 管理画面上部のタブボタンを描画します。
-     */
+    // ============================================================
+    // タブ
+    // ============================================================
     function renderTabs() {
       const nav = document.getElementById('tab-nav');
-      nav.innerHTML = TABS.map(([key, label]) => `<button class="tab-button ${state.activeTab === key ? 'active' : ''}" onclick="switchTab('${key}')">${label}</button>`).join('');
+      nav.innerHTML = TABS.map(([key, label]) => {
+        const active = state.activeTab === key;
+        const cls = active
+          ? 'min-h-[34px] px-3 text-xs font-bold rounded-lg bg-blue-600 text-white border border-blue-600 transition whitespace-nowrap'
+          : 'min-h-[34px] px-3 text-xs font-bold rounded-lg bg-white text-gray-500 border border-slate-200 hover:bg-slate-50 transition whitespace-nowrap';
+        return `<button type="button" class="${cls}" onclick="switchTab('${key}')">${label}</button>`;
+      }).join('');
     }
 
-    /**
-     * 表示する管理タブを切り替えます。
-     *
-     * @param {string} tabKey 表示するタブキー。
-     */
     function switchTab(tabKey) {
       state.activeTab = tabKey;
       renderTabs();
@@ -544,13 +222,11 @@
       document.getElementById(`tab-${tabKey}`).classList.remove('hidden');
     }
 
-    /**
-     * 管理画面で使う全シートの CSV を並列読み込みし、全タブを再描画します。
-     *
-     * @param {boolean} showToast true の場合は読み込み完了メッセージを表示します。
-     * @return {Promise<void>} 読み込み完了。
-     */
+    // ============================================================
+    // データ読み込み
+    // ============================================================
     async function reloadAll(showToast) {
+      showLoading('データを読み込み中...');
       const results = await Promise.all([
         fetchSheetCsv('reservations', reservationMapper),
         fetchSheetCsv('rooms', roomMapper),
@@ -576,18 +252,12 @@
         state.streaks,
       ] = results;
       renderAll();
+      hideLoading();
       if (showToast) {
         showGlobal('最新データを再読み込みしました。', 'success');
       }
     }
 
-    /**
-     * config.js の設定を使って指定シートの CSV を取得し、画面用オブジェクトへ変換します。
-     *
-     * @param {string} key config.js の SHEET_GID / SHEET_NAME に対応するキー。
-     * @param {Function} mapper CSV 行オブジェクトを画面用データへ変換する関数。
-     * @return {Promise<Array<Object>>} 変換済みデータ配列。
-     */
     async function fetchSheetCsv(key, mapper) {
       const url = CONFIG.buildSheetCsvUrl(key, true);
       if (!url) return [];
@@ -599,13 +269,6 @@
       }
     }
 
-    /**
-     * CSV 文字列をヘッダー付き行オブジェクトへ変換し、mapper を通します。
-     *
-     * @param {string} text CSV 文字列。
-     * @param {Function} mapper 行変換関数。
-     * @return {Array<Object>} 変換済みデータ配列。
-     */
     function parseCsv(text, mapper) {
       const rows = parseCsvRows(text);
       if (rows.length < 2) return [];
@@ -616,12 +279,6 @@
         .filter(Boolean);
     }
 
-    /**
-     * ダブルクォート内のカンマや改行を考慮して CSV を2次元配列へ分解します。
-     *
-     * @param {string} text CSV 文字列。
-     * @return {Array<Array<string>>} CSV 行配列。
-     */
     function parseCsvRows(text) {
       const rows = [];
       let row = [];
@@ -656,13 +313,6 @@
       return rows;
     }
 
-    /**
-     * ヘッダー配列と値配列から、列名をキーにしたオブジェクトを作ります。
-     *
-     * @param {Array<string>} headers CSV ヘッダー。
-     * @param {Array<string>} row CSV 1行分の値。
-     * @return {Object} 行オブジェクト。
-     */
     function rowToObject(headers, row) {
       const obj = {};
       headers.forEach((header, index) => {
@@ -671,12 +321,9 @@
       return obj;
     }
 
-    /**
-     * 予約 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 予約情報。
-     */
+    // ============================================================
+    // マッパー
+    // ============================================================
     function reservationMapper(row) {
       if (!row['予約ID']) return null;
       return {
@@ -693,26 +340,11 @@
       };
     }
 
-    /**
-     * 会議室 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 会議室情報。
-     */
     function roomMapper(row) {
       if (!row['会議室ID']) return null;
-      return {
-        roomId: row['会議室ID'],
-        roomName: row['会議室名'],
-      };
+      return { roomId: row['会議室ID'], roomName: row['会議室名'] };
     }
 
-    /**
-     * 設定 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 設定情報。
-     */
     function settingMapper(row) {
       if (!row['設定キー']) return null;
       return {
@@ -723,12 +355,6 @@
       };
     }
 
-    /**
-     * メンバー一覧 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} メンバー情報。
-     */
     function memberMapper(row) {
       if (!row['メンバーID']) return null;
       return {
@@ -742,12 +368,6 @@
       };
     }
 
-    /**
-     * 会議一覧 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 会議情報。
-     */
     function meetingMapper(row) {
       if (!row['会議ID']) return null;
       return {
@@ -764,12 +384,6 @@
       };
     }
 
-    /**
-     * 出欠回答 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 出欠回答。
-     */
     function attendanceMapper(row) {
       if (!row['回答ID']) return null;
       return {
@@ -788,12 +402,6 @@
       };
     }
 
-    /**
-     * 会議別集計 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 会議別集計。
-     */
     function meetingAggregationMapper(row) {
       if (!row['会議ID']) return null;
       return {
@@ -810,12 +418,6 @@
       };
     }
 
-    /**
-     * 個人別集計 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 個人別集計。
-     */
     function memberAggregationMapper(row) {
       if (!row['メンバーID']) return null;
       return {
@@ -835,12 +437,6 @@
       };
     }
 
-    /**
-     * 部局別集計 CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 部局別集計。
-     */
     function departmentAggregationMapper(row) {
       if (!row['部局']) return null;
       return {
@@ -856,12 +452,6 @@
       };
     }
 
-    /**
-     * 連続欠席チェック CSV の日本語列名を画面用キーへ変換します。
-     *
-     * @param {Object} row CSV 行オブジェクト。
-     * @return {Object|null} 連続欠席情報。
-     */
     function streakMapper(row) {
       if (!row['メンバーID']) return null;
       return {
@@ -877,9 +467,9 @@
       };
     }
 
-    /**
-     * すべてのタブ内容を現在の state から再描画します。
-     */
+    // ============================================================
+    // 描画
+    // ============================================================
     function renderAll() {
       renderDashboard();
       renderMeetingsTab();
@@ -893,13 +483,25 @@
       switchTab(state.activeTab);
     }
 
-    /**
-     * ダッシュボードタブを描画します。
-     */
+    const panelCls = 'bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col gap-3';
+    const panelTitleCls = 'font-extrabold text-gray-900 text-base';
+    const tableWrapCls = 'overflow-auto rounded-xl border border-slate-200';
+    const noticeCls = 'bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700 leading-relaxed';
+    const inputCls = 'min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full';
+    const labelCls = 'flex flex-col gap-1 text-xs font-semibold text-gray-500';
+    const btnPrimary = 'min-h-[40px] px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition shadow-sm';
+    const btnSecondary = 'min-h-[40px] px-4 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition';
+    const btnGhost = 'min-h-[40px] px-4 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition';
+    const btnDanger = 'min-h-[40px] px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition';
+    const btnSmPrimary = 'min-h-[32px] px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition';
+    const btnSmSecondary = 'min-h-[32px] px-3 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-lg font-bold text-xs transition';
+    const btnSmGhost = 'min-h-[32px] px-3 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg font-bold text-xs transition';
+    const btnSmDanger = 'min-h-[32px] px-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition';
+
     function renderDashboard() {
-      const openMeetings = state.meetings.filter((meeting) => meeting.status === '有効' && isRecruiting(meeting));
+      const openMeetings = state.meetings.filter((m) => m.status === '有効' && isRecruiting(m));
       const upcomingMeetings = state.meetings
-        .filter((meeting) => meeting.status === '有効')
+        .filter((m) => m.status === '有効')
         .sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`))
         .slice(0, 5);
       const overallRate = state.meetingAggregations.length
@@ -909,114 +511,128 @@
       const topDepartments = state.departmentAggregations.slice().sort((a, b) => b.attendanceRate - a.attendanceRate).slice(0, 4);
 
       document.getElementById('tab-dashboard').innerHTML = `
-        <div class="stats-grid">
-          <div class="stat-box"><div class="stat-label">現在募集中の会議</div><div class="stat-value">${openMeetings.length}</div></div>
-          <div class="stat-box"><div class="stat-label">有効メンバー</div><div class="stat-value">${state.members.filter((m) => m.status === '有効').length}</div></div>
-          <div class="stat-box"><div class="stat-label">全体参加率</div><div class="stat-value">${formatPercent(overallRate)}</div></div>
-          <div class="stat-box"><div class="stat-label">注意が必要なメンバー</div><div class="stat-value">${warnings.length}</div></div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          ${[
+            ['現在募集中の会議', openMeetings.length],
+            ['有効メンバー', state.members.filter((m) => m.status === '有効').length],
+            ['全体参加率', formatPercent(overallRate)],
+            ['注意が必要なメンバー', warnings.length],
+          ].map(([label, val]) => `
+            <div class="bg-white border border-slate-200 rounded-2xl p-4">
+              <div class="text-xs text-gray-400 mb-1.5">${label}</div>
+              <div class="text-2xl font-black text-gray-900">${val}</div>
+            </div>`).join('')}
         </div>
-        <div class="split2">
-          <div class="panel">
-            <div class="panel-title">直近の会議</div>
-            ${upcomingMeetings.length ? upcomingMeetings.map((meeting) => `<div class="sub">${escapeHtml(meeting.meetingName)} / ${escapeHtml(formatDateLabel(meeting.meetingDate))} ${escapeHtml(meeting.startTime)}〜${escapeHtml(meeting.endTime)}</div>`).join('') : '<div class="muted">会議データがありません。</div>'}
+        <div class="grid sm:grid-cols-2 gap-4 mt-1">
+          <div class="${panelCls}">
+            <div class="${panelTitleCls}">直近の会議</div>
+            ${upcomingMeetings.length
+              ? upcomingMeetings.map((m) => `<div class="text-sm text-gray-600">${escapeHtml(m.meetingName)} / ${escapeHtml(formatDateLabel(m.meetingDate))} ${escapeHtml(m.startTime)}〜${escapeHtml(m.endTime)}</div>`).join('')
+              : '<div class="text-sm text-gray-400">会議データがありません。</div>'}
           </div>
-          <div class="panel">
-            <div class="panel-title">部局別参加率</div>
-            ${topDepartments.length ? topDepartments.map((item) => `<div class="sub">${escapeHtml(item.department)}: ${formatPercent(item.attendanceRate)}</div>`).join('') : '<div class="muted">集計データがありません。</div>'}
+          <div class="${panelCls}">
+            <div class="${panelTitleCls}">部局別参加率</div>
+            ${topDepartments.length
+              ? topDepartments.map((item) => `<div class="text-sm text-gray-600">${escapeHtml(item.department)}: ${formatPercent(item.attendanceRate)}</div>`).join('')
+              : '<div class="text-sm text-gray-400">集計データがありません。</div>'}
           </div>
         </div>
-        <div class="panel">
-          <div class="panel-title">会議ごとの出欠状況</div>
-          <div class="table-wrap">${renderSimpleTable(['会議名', '会議日', '出席', '欠席', '未提出', '参加率'], state.meetingAggregations.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.attendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate)]))}</div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">会議ごとの出欠状況</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(['会議名', '会議日', '出席', '欠席', '未提出', '参加率'], state.meetingAggregations.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.attendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate)]))}</div>
         </div>
       `;
     }
 
-    /**
-     * 会議登録フォームと会議一覧タブを描画します。
-     */
     function renderMeetingsTab() {
       document.getElementById('tab-meetings').innerHTML = `
-        <div class="panel">
-          <div class="panel-title">会議登録・更新</div>
-          <div class="split3">
-            <label>会議ID<input id="meeting-id" placeholder="未入力なら自動採番"></label>
-            <label>会議名<input id="meeting-name"></label>
-            <label>会議日<input id="meeting-date" type="date"></label>
-            <label>開始時間<input id="meeting-start" type="time"></label>
-            <label>終了時間<input id="meeting-end" type="time"></label>
-            <label>有効状態<select id="meeting-status"><option value="有効">有効</option><option value="無効">無効</option></select></label>
-            <label>募集開始日時<input id="meeting-recruit-start" type="datetime-local"></label>
-            <label>募集終了日時<input id="meeting-recruit-end" type="datetime-local"></label>
-            <label>回答締切日時<input id="meeting-deadline" type="datetime-local"></label>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">会議登録・更新</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="${labelCls}">会議ID<input id="meeting-id" placeholder="未入力なら自動採番" class="${inputCls}"></label>
+            <label class="${labelCls}">会議名<input id="meeting-name" class="${inputCls}"></label>
+            <label class="${labelCls}">会議日<input id="meeting-date" type="date" class="${inputCls}"></label>
+            <label class="${labelCls}">開始時間<input id="meeting-start" type="time" class="${inputCls}"></label>
+            <label class="${labelCls}">終了時間<input id="meeting-end" type="time" class="${inputCls}"></label>
+            <label class="${labelCls}">有効状態
+              <select id="meeting-status" class="${inputCls}">
+                <option value="有効">有効</option>
+                <option value="無効">無効</option>
+              </select>
+            </label>
+            <label class="${labelCls}">募集開始日時<input id="meeting-recruit-start" type="datetime-local" class="${inputCls}"></label>
+            <label class="${labelCls}">募集終了日時<input id="meeting-recruit-end" type="datetime-local" class="${inputCls}"></label>
+            <label class="${labelCls}">回答締切日時<input id="meeting-deadline" type="datetime-local" class="${inputCls}"></label>
           </div>
-          <label>備考<textarea id="meeting-note"></textarea></label>
-          <div class="row-actions">
-            <button class="btn-primary" onclick="saveMeeting()">保存する</button>
-            <button class="btn-ghost" onclick="clearMeetingForm()">フォームをクリア</button>
-            <button class="btn-secondary" onclick="refreshAggregations()">集計を再計算</button>
+          <label class="${labelCls}">備考
+            <textarea id="meeting-note" class="min-h-[80px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-vertical w-full"></textarea>
+          </label>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="saveMeeting()" class="${btnPrimary}">保存する</button>
+            <button type="button" onclick="clearMeetingForm()" class="${btnGhost}">フォームをクリア</button>
+            <button type="button" onclick="refreshAggregations()" class="${btnSecondary}">集計を再計算</button>
           </div>
         </div>
-        <div class="panel">
-          <div class="panel-title">会議一覧</div>
-          <div class="table-wrap">${renderSimpleTable(['会議ID', '会議名', '会議日', '時間', '募集期間', '回答締切', '状態', '操作'], state.meetings.map((meeting) => [meeting.meetingId, meeting.meetingName, formatDateLabel(meeting.meetingDate), `${meeting.startTime}〜${meeting.endTime}`, `${formatDateTimeLabel(meeting.recruitStartAt)}〜${formatDateTimeLabel(meeting.recruitEndAt)}`, formatDateTimeLabel(meeting.answerDeadlineAt), meeting.status, `<button class="btn-secondary btn-sm" onclick="fillMeetingForm('${escapeJs(meeting.meetingId)}')">編集</button>`]))}</div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">会議一覧</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['会議ID', '会議名', '会議日', '時間', '募集期間', '回答締切', '状態', '操作'],
+            state.meetings.map((m) => [m.meetingId, m.meetingName, formatDateLabel(m.meetingDate), `${m.startTime}〜${m.endTime}`, `${formatDateTimeLabel(m.recruitStartAt)}〜${formatDateTimeLabel(m.recruitEndAt)}`, formatDateTimeLabel(m.answerDeadlineAt), m.status, `<button type="button" class="${btnSmSecondary}" onclick="fillMeetingForm('${escapeJs(m.meetingId)}')">編集</button>`])
+          )}</div>
         </div>
       `;
     }
 
-    /**
-     * 会議と有効メンバーを掛け合わせ、未提出者も含む出欠一覧を描画します。
-     */
     function renderAttendanceTab() {
       const rows = buildAttendanceRows();
       document.getElementById('tab-attendance').innerHTML = `
-        <div class="panel">
-          <div class="panel-title">出欠一覧</div>
-          <div class="notice">未提出者も一覧に出し、集計上の扱いは「出席扱い」として表示します。</div>
-          <div class="table-wrap">${renderSimpleTable(['会議名', '会議日', '名前', '部局', '学年', '役職', '回答状態', '集計上の扱い', '欠席理由', '欠席理由詳細', '回答日時', '更新日時'], rows.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.answerState, item.aggregateStatus, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt), formatDateTimeLabel(item.updatedAt)]))}</div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">出欠一覧</div>
+          <div class="${noticeCls}">未提出者も一覧に出し、集計上の扱いは「出席扱い」として表示します。</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['会議名', '会議日', '名前', '部局', '学年', '役職', '回答状態', '集計上の扱い', '欠席理由', '欠席理由詳細', '回答日時', '更新日時'],
+            rows.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.answerState, item.aggregateStatus, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt), formatDateTimeLabel(item.updatedAt)])
+          )}</div>
         </div>
       `;
     }
 
-    /**
-     * 個人別集計タブを描画します。
-     */
     function renderMembersTab() {
       document.getElementById('tab-members').innerHTML = `
-        <div class="panel">
-          <div class="panel-title">個人別集計</div>
-          <div class="table-wrap">${renderSimpleTable(['名前', '部局', '学年', '役職', '対象会議数', '出席扱い回数', '欠席回数', '未提出回数', '参加率', '連続欠席回数', '最終回答日時'], state.memberAggregations.map((item) => [item.name, item.department, item.grade, item.role, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), item.absenceStreak, formatDateTimeLabel(item.lastAnsweredAt)]))}</div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">個人別集計</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['名前', '部局', '学年', '役職', '対象会議数', '出席扱い回数', '欠席回数', '未提出回数', '参加率', '連続欠席回数', '最終回答日時'],
+            state.memberAggregations.map((item) => [item.name, item.department, item.grade, item.role, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), item.absenceStreak, formatDateTimeLabel(item.lastAnsweredAt)])
+          )}</div>
         </div>
       `;
     }
 
-    /**
-     * 部局別集計タブを描画します。
-     */
     function renderDepartmentsTab() {
       document.getElementById('tab-departments').innerHTML = `
-        <div class="panel">
-          <div class="panel-title">部局別集計</div>
-          <div class="table-wrap">${renderSimpleTable(['部局', '所属人数', '対象会議数', '出席扱い回数', '欠席回数', '未提出回数', '参加率', '欠席率'], state.departmentAggregations.map((item) => [item.department, item.memberCount, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), formatPercent(item.absenceRate)]))}</div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">部局別集計</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['部局', '所属人数', '対象会議数', '出席扱い回数', '欠席回数', '未提出回数', '参加率', '欠席率'],
+            state.departmentAggregations.map((item) => [item.department, item.memberCount, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), formatPercent(item.absenceRate)])
+          )}</div>
         </div>
       `;
     }
 
-    /**
-     * 連続欠席チェックタブを描画します。
-     */
     function renderStreaksTab() {
       document.getElementById('tab-streaks').innerHTML = `
-        <div class="panel">
-          <div class="panel-title">連続欠席チェック</div>
-          <div class="table-wrap">${renderSimpleTable(['名前', '部局', '学年', '役職', '連続欠席回数', '注意レベル', '直近欠席会議', '直近欠席理由'], state.streaks.map((item) => [item.name, item.department, item.grade, item.role, item.streak, renderLevelBadge(item.alertLevel), item.latestMeeting, item.latestReason]))}</div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">連続欠席チェック</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['名前', '部局', '学年', '役職', '連続欠席回数', '注意レベル', '直近欠席会議', '直近欠席理由'],
+            state.streaks.map((item) => [item.name, item.department, item.grade, item.role, item.streak, renderLevelBadge(item.alertLevel), item.latestMeeting, item.latestReason])
+          )}</div>
         </div>
       `;
     }
 
-    /**
-     * 欠席回答だけを抽出し、欠席理由一覧タブを描画します。
-     */
     function renderReasonsTab() {
       const reasons = state.attendanceResponses
         .filter((item) => item.attendance === '欠席')
@@ -1035,55 +651,71 @@
           };
         });
       document.getElementById('tab-reasons').innerHTML = `
-        <div class="panel">
-          <div class="panel-title">欠席理由一覧</div>
-          <div class="table-wrap">${renderSimpleTable(['会議名', '会議日', '名前', '部局', '学年', '役職', '欠席理由', '欠席理由詳細', '回答日時'], reasons.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt)]))}</div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">欠席理由一覧</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['会議名', '会議日', '名前', '部局', '学年', '役職', '欠席理由', '欠席理由詳細', '回答日時'],
+            reasons.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.name, item.department, item.grade, item.role, item.absenceReason, item.absenceDetail, formatDateTimeLabel(item.answeredAt)])
+          )}</div>
         </div>
       `;
     }
 
-    /**
-     * 管理画面から更新可能な設定だけを表示します。
-     */
     function renderSettingsTab() {
       const editableKeys = ['管理者パスワード', 'その他理由詳細必須', '欠席詳細常時必須', '注意連続欠席回数', '要確認連続欠席回数', 'システム名'];
       const rows = state.settings.filter((item) => editableKeys.includes(item.settingKey));
       document.getElementById('tab-settings').innerHTML = `
-        <div class="panel">
-          <div class="panel-title">設定確認・更新</div>
-          <div class="table-wrap">${renderSimpleTable(['設定キー', '現在値', '説明', '更新日時', '操作'], rows.map((item) => [item.settingKey, `<input id="setting-${escapeAttr(item.settingKey)}" value="${escapeAttr(item.settingValue)}">`, item.description, formatDateTimeLabel(item.updatedAt), `<button class="btn-primary btn-sm" onclick="saveSetting('${escapeJs(item.settingKey)}')">保存</button>`]))}</div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">設定確認・更新</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['設定キー', '現在値', '説明', '更新日時', '操作'],
+            rows.map((item) => [
+              item.settingKey,
+              `<input id="setting-${escapeAttr(item.settingKey)}" value="${escapeAttr(item.settingValue)}">`,
+              item.description,
+              formatDateTimeLabel(item.updatedAt),
+              `<button type="button" class="${btnSmPrimary}" onclick="saveSetting('${escapeJs(item.settingKey)}')">保存</button>`,
+            ])
+          )}</div>
         </div>
       `;
     }
 
-    /**
-     * 会議室予約管理タブを描画します。
-     */
     function renderReservationsTab() {
       const activeRows = state.reservations
         .slice()
         .sort((a, b) => `${a.usageDate}${a.startTime}${a.roomName}`.localeCompare(`${b.usageDate}${b.startTime}${b.roomName}`));
       document.getElementById('tab-reservations').innerHTML = `
-        <div class="panel">
-          <div class="panel-title">会議室予約管理</div>
-          <div class="row-actions">
-            <button class="btn-secondary btn-sm" onclick="selectAllReservations()">全選択</button>
-            <button class="btn-ghost btn-sm" onclick="clearReservationSelection()">選択解除</button>
-            <button class="btn-danger btn-sm" onclick="deleteSelectedReservations()">選択した予約を削除</button>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">会議室予約管理</div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="selectAllReservations()" class="${btnSmSecondary}">全選択</button>
+            <button type="button" onclick="clearReservationSelection()" class="${btnSmGhost}">選択解除</button>
+            <button type="button" onclick="deleteSelectedReservations()" class="${btnSmDanger}">選択した予約を削除</button>
           </div>
-          <div class="table-wrap">${renderSimpleTable(['選択', '会議名', '利用日', '時間', '会議室', '団体名', '申請者', '状態'], activeRows.map((item) => [`<input type="checkbox" ${state.selectedReservationIds.has(item.reservationId) ? 'checked' : ''} onchange="toggleReservationSelection('${escapeJs(item.reservationId)}')">`, item.meetingName, formatDateLabel(item.usageDate), `${item.startTime}〜${item.endTime}`, item.roomName, item.organizationName, item.userName, item.status]))}</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['選択', '会議名', '利用日', '時間', '会議室', '団体名', '申請者', '状態'],
+            activeRows.map((item) => [
+              `<input type="checkbox" ${state.selectedReservationIds.has(item.reservationId) ? 'checked' : ''} onchange="toggleReservationSelection('${escapeJs(item.reservationId)}')" class="w-4 h-4 accent-blue-600">`,
+              item.meetingName,
+              formatDateLabel(item.usageDate),
+              `${item.startTime}〜${item.endTime}`,
+              item.roomName,
+              item.organizationName,
+              item.userName,
+              item.status,
+            ])
+          )}</div>
         </div>
       `;
     }
 
-    /**
-     * 会議一覧と有効メンバー、回答済みデータから出欠一覧行を作成します。
-     *
-     * @return {Array<Object>} 出欠一覧用の行データ。
-     */
+    // ============================================================
+    // 出欠一覧ビルダー
+    // ============================================================
     function buildAttendanceRows() {
-      const activeMembers = state.members.filter((member) => member.status === '有効').sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name, 'ja'));
-      const activeMeetings = state.meetings.filter((meeting) => meeting.status === '有効').sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`));
+      const activeMembers = state.members.filter((m) => m.status === '有効').sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name, 'ja'));
+      const activeMeetings = state.meetings.filter((m) => m.status === '有効').sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`));
       const responseMap = new Map(state.attendanceResponses.map((item) => [`${item.meetingId}__${item.memberId}`, item]));
       const rows = [];
       activeMeetings.forEach((meeting) => {
@@ -1108,22 +740,29 @@
       return rows;
     }
 
-    /**
-     * 2次元配列をシンプルな HTML テーブルに変換します。
-     *
-     * @param {Array<string>} headers 表ヘッダー。
-     * @param {Array<Array<*>>} rows 表示行。
-     * @return {string} テーブル HTML。
-     */
+    // ============================================================
+    // テーブル・バッジ
+    // ============================================================
     function renderSimpleTable(headers, rows) {
-      return `<table><thead><tr>${headers.map((header) => `<th>${header}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map((row) => `<tr>${row.map((cell) => `<td>${cell === 0 ? '0' : (cell || '')}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}" class="muted">データがありません。</td></tr>`}</tbody></table>`;
+      const thead = headers.map((h) => `<th>${h}</th>`).join('');
+      const tbody = rows.length
+        ? rows.map((row) => `<tr>${row.map((cell) => `<td>${cell === 0 ? '0' : (cell || '')}</td>`).join('')}</tr>`).join('')
+        : `<tr><td colspan="${headers.length}" style="text-align:center;padding:24px;color:#9ca3af;font-size:13px;">データがありません。</td></tr>`;
+      return `<table class="data-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
     }
 
-    /**
-     * 選択した会議の値を会議編集フォームへ流し込みます。
-     *
-     * @param {string} meetingId 編集対象の会議ID。
-     */
+    function renderLevelBadge(level) {
+      const styles = {
+        '要確認': 'background:#fff0f0;color:#c73d3d',
+        '注意': 'background:#fff8e1;color:#9a6b00',
+      };
+      const s = styles[level] || 'background:#eaf8f2;color:#0f8f68';
+      return `<span style="${s};display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;">${escapeHtml(level || '通常')}</span>`;
+    }
+
+    // ============================================================
+    // 会議フォーム操作
+    // ============================================================
     function fillMeetingForm(meetingId) {
       const meeting = state.meetings.find((item) => item.meetingId === meetingId);
       if (!meeting) return;
@@ -1140,9 +779,6 @@
       switchTab('meetings');
     }
 
-    /**
-     * 会議編集フォームを初期状態へ戻します。
-     */
     function clearMeetingForm() {
       ['meeting-id', 'meeting-name', 'meeting-date', 'meeting-start', 'meeting-end', 'meeting-recruit-start', 'meeting-recruit-end', 'meeting-deadline', 'meeting-note'].forEach((id) => {
         document.getElementById(id).value = '';
@@ -1150,12 +786,8 @@
       document.getElementById('meeting-status').value = '有効';
     }
 
-    /**
-     * 会議編集フォームの内容を GAS API へ送信して保存します。
-     *
-     * @return {Promise<void>} 保存処理完了。
-     */
     async function saveMeeting() {
+      showLoading('会議を保存中...');
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
@@ -1180,6 +812,7 @@
         const data = await res.json();
         if (!data.ok) {
           showGlobal(data.error || '会議を保存できません。', 'error');
+          hideLoading();
           return;
         }
         await reloadAll(false);
@@ -1188,14 +821,11 @@
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
       }
+      hideLoading();
     }
 
-    /**
-     * GAS API へ集計再計算を依頼し、完了後に全データを再読み込みします。
-     *
-     * @return {Promise<void>} 集計更新完了。
-     */
     async function refreshAggregations() {
+      showLoading('集計を再計算中...');
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
@@ -1205,6 +835,7 @@
         const data = await res.json();
         if (!data.ok) {
           showGlobal(data.error || '集計更新に失敗しました。', 'error');
+          hideLoading();
           return;
         }
         await reloadAll(false);
@@ -1212,16 +843,12 @@
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
       }
+      hideLoading();
     }
 
-    /**
-     * 指定された設定キーの入力値を GAS API へ送信して保存します。
-     *
-     * @param {string} settingKey 更新対象の設定キー。
-     * @return {Promise<void>} 設定更新完了。
-     */
     async function saveSetting(settingKey) {
       const input = document.getElementById(`setting-${settingKey}`);
+      showLoading('設定を保存中...');
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
@@ -1238,6 +865,7 @@
         const data = await res.json();
         if (!data.ok) {
           showGlobal(data.error || '設定更新に失敗しました。', 'error');
+          hideLoading();
           return;
         }
         await loadPublicSettings();
@@ -1246,13 +874,12 @@
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
       }
+      hideLoading();
     }
 
-    /**
-     * 予約IDの選択状態を切り替えます。
-     *
-     * @param {string} reservationId 予約ID。
-     */
+    // ============================================================
+    // 予約管理
+    // ============================================================
     function toggleReservationSelection(reservationId) {
       if (state.selectedReservationIds.has(reservationId)) {
         state.selectedReservationIds.delete(reservationId);
@@ -1262,9 +889,6 @@
       renderReservationsTab();
     }
 
-    /**
-     * 取消済み以外の予約をすべて選択します。
-     */
     function selectAllReservations() {
       state.reservations.forEach((item) => {
         if (item.status !== '取消') state.selectedReservationIds.add(item.reservationId);
@@ -1272,19 +896,11 @@
       renderReservationsTab();
     }
 
-    /**
-     * 予約の選択状態をすべて解除します。
-     */
     function clearReservationSelection() {
       state.selectedReservationIds = new Set();
       renderReservationsTab();
     }
 
-    /**
-     * 選択された予約を GAS API 経由で取消状態に更新します。
-     *
-     * @return {Promise<void>} 取消処理完了。
-     */
     async function deleteSelectedReservations() {
       const ids = Array.from(state.selectedReservationIds);
       if (!ids.length) {
@@ -1294,6 +910,7 @@
       if (!window.confirm(`${ids.length}件の予約を取消に更新します。続けますか。`)) {
         return;
       }
+      showLoading('予約を削除中...');
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
@@ -1306,6 +923,7 @@
         const data = await res.json();
         if (!data.ok) {
           showGlobal(data.error || '予約削除に失敗しました。', 'error');
+          hideLoading();
           return;
         }
         state.selectedReservationIds = new Set();
@@ -1314,23 +932,39 @@
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
       }
+      hideLoading();
     }
 
-    /**
-     * sessionStorage から管理者パスワードを取得します。
-     *
-     * @return {string} 管理者パスワード。
-     */
     function getAdminPassword() {
       return sessionStorage.getItem(PASSWORD_KEY) || '';
     }
 
-    /**
-     * 会議が現在募集中かどうかを判定します。
-     *
-     * @param {Object} meeting 会議情報。
-     * @return {boolean} 募集中の場合は true。
-     */
+    // ============================================================
+    // メッセージ
+    // ============================================================
+    function showMessage(id, text, type) {
+      const el = document.getElementById(id);
+      el.className = type === 'error'
+        ? 'rounded-xl px-4 py-3 text-sm bg-red-50 border border-red-200 text-red-600'
+        : 'rounded-xl px-4 py-3 text-sm bg-emerald-50 border border-emerald-200 text-emerald-700';
+      el.textContent = text;
+      el.classList.remove('hidden');
+    }
+
+    function showGlobal(text, type) {
+      const el = document.getElementById('global-message');
+      el.className = type === 'error'
+        ? 'rounded-xl px-4 py-3 text-sm bg-red-50 border border-red-200 text-red-600'
+        : 'rounded-xl px-4 py-3 text-sm bg-emerald-50 border border-emerald-200 text-emerald-700';
+      el.textContent = text;
+      el.classList.remove('hidden');
+      clearTimeout(showGlobal.timer);
+      showGlobal.timer = setTimeout(() => el.classList.add('hidden'), 5000);
+    }
+
+    // ============================================================
+    // ユーティリティ
+    // ============================================================
     function isRecruiting(meeting) {
       const now = new Date();
       const start = new Date(meeting.recruitStartAt);
@@ -1338,83 +972,19 @@
       return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= now && now <= end;
     }
 
-    /**
-     * 指定要素にメッセージを表示します。
-     *
-     * @param {string} id 表示先要素ID。
-     * @param {string} text 表示文。
-     * @param {string} type success または error。
-     */
-    function showMessage(id, text, type) {
-      const el = document.getElementById(id);
-      el.className = type === 'error' ? 'message message-error' : 'message message-success';
-      el.textContent = text;
-      el.classList.remove('hidden');
-    }
-
-    /**
-     * 管理画面全体用のメッセージを表示します。
-     *
-     * @param {string} text 表示文。
-     * @param {string} type success または error。
-     */
-    function showGlobal(text, type) {
-      const el = document.getElementById('global-message');
-      el.className = type === 'error' ? 'message message-error' : 'message message-success';
-      el.textContent = text;
-      el.classList.remove('hidden');
-      clearTimeout(showGlobal.timer);
-      showGlobal.timer = setTimeout(() => el.classList.add('hidden'), 5000);
-    }
-
-    /**
-     * 連続欠席の注意レベルをバッジ HTML に変換します。
-     *
-     * @param {string} level 注意レベル。
-     * @return {string} バッジ HTML。
-     */
-    function renderLevelBadge(level) {
-      const cls = level === '要確認' ? 'badge-danger' : level === '注意' ? 'badge-warn' : 'badge-ok';
-      return `<span class="badge ${cls}">${escapeHtml(level || '通常')}</span>`;
-    }
-
-    /**
-     * 日付文字列を yyyy-MM-dd に近い形式へ整えます。
-     *
-     * @param {*} value 対象値。
-     * @return {string} 正規化済み日付。
-     */
     function normalizeDate(value) {
       return String(value || '').replace(/\//g, '-').slice(0, 10);
     }
 
-    /**
-     * 時刻文字列を HH:mm 形式へ整えます。
-     *
-     * @param {*} value 対象値。
-     * @return {string} 正規化済み時刻。
-     */
     function normalizeTime(value) {
       const match = String(value || '').trim().match(/^(\d{1,2}):(\d{1,2})/);
       return match ? `${String(match[1]).padStart(2, '0')}:${String(match[2]).padStart(2, '0')}` : String(value || '').trim();
     }
 
-    /**
-     * 日時文字列を Date で解釈しやすい ISO 風表記へ整えます。
-     *
-     * @param {*} value 対象値。
-     * @return {string} 正規化済み日時。
-     */
     function normalizeDateTime(value) {
       return String(value || '').trim().replace(/\//g, '-').replace(' ', 'T');
     }
 
-    /**
-     * 日付を画面表示用ラベルに変換します。
-     *
-     * @param {string} value yyyy-MM-dd 形式の日付。
-     * @return {string} 表示用日付。
-     */
     function formatDateLabel(value) {
       if (!value) return '';
       const date = new Date(`${value}T00:00:00`);
@@ -1423,12 +993,6 @@
       return `${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]})`;
     }
 
-    /**
-     * 日時を画面表示用ラベルに変換します。
-     *
-     * @param {string} value 日時文字列。
-     * @return {string} 表示用日時。
-     */
     function formatDateTimeLabel(value) {
       if (!value) return '';
       const date = new Date(value);
@@ -1437,12 +1001,6 @@
       return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 
-    /**
-     * Date で解釈できる日時を datetime-local 入力値へ変換します。
-     *
-     * @param {string} value 日時文字列。
-     * @return {string} datetime-local 用の値。
-     */
     function toDateTimeLocal(value) {
       if (!value) return '';
       const date = new Date(value);
@@ -1450,12 +1008,6 @@
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 
-    /**
-     * シートから取得した割合表記を 0 から 1 の数値へ変換します。
-     *
-     * @param {*} value 割合値またはパーセント文字列。
-     * @return {number} 0 から 1 の割合。
-     */
     function toRatio(value) {
       const text = String(value || '').trim();
       if (!text) return 0;
@@ -1464,42 +1016,18 @@
       return numeric > 1 ? numeric / 100 : numeric;
     }
 
-    /**
-     * 0 から 1 の割合をパーセント表記へ変換します。
-     *
-     * @param {*} value 割合値。
-     * @return {string} パーセント表示。
-     */
     function formatPercent(value) {
       return `${(Number(value || 0) * 100).toFixed(1)}%`;
     }
 
-    /**
-     * HTML へ埋め込む文字列をエスケープします。
-     *
-     * @param {*} text 対象値。
-     * @return {string} エスケープ済み文字列。
-     */
     function escapeHtml(text) {
       return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    /**
-     * HTML 属性へ埋め込む文字列をエスケープします。
-     *
-     * @param {*} text 対象値。
-     * @return {string} エスケープ済み文字列。
-     */
     function escapeAttr(text) {
       return escapeHtml(text).replace(/'/g, '&#39;');
     }
 
-    /**
-     * JavaScript 文字列リテラルへ埋め込む値をエスケープします。
-     *
-     * @param {*} text 対象値。
-     * @return {string} エスケープ済み文字列。
-     */
     function escapeJs(text) {
       return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }

@@ -5,451 +5,122 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>会議室予約</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --primary: #1d6fd6;
-      --primary-dark: #1559ae;
-      --accent: #0f8f68;
-      --danger: #c73d3d;
-      --surface: #ffffff;
-      --background: #f6f8fb;
-      --border: #d7e0ec;
-      --text: #172033;
-      --muted: #647085;
-      --soft-blue: #eaf2ff;
-      --soft-green: #eaf8f2;
-      --soft-red: #fff0f0;
-      --shadow: 0 2px 12px rgba(20, 36, 64, 0.07);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0
-    }
-
-    body {
-      background: var(--background);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 16px;
-      line-height: 1.5
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit
-    }
-
-    button {
-      min-height: 44px;
-      border: 0;
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-weight: 700;
-      transition: background .15s
-    }
-
-    button:disabled {
-      opacity: .5;
-      cursor: not-allowed
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      min-height: 46px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--text);
-      padding: 10px 12px
-    }
-
-    textarea {
-      min-height: 80px;
-      resize: vertical
-    }
-
-    label {
-      display: grid;
-      gap: 5px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700
-    }
-
-    a {
-      color: var(--primary)
-    }
-
-    /* layout */
-    .app {
-      width: min(100%, 780px);
-      margin: 0 auto;
-      padding: 16px
-    }
-
-    .header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      margin: -16px -16px 16px;
-      padding: 12px 16px;
-      background: rgba(246, 248, 251, .96);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border)
-    }
-
-    .header-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px
-    }
-
-    .header-top h1 {
-      font-size: 20px;
-      line-height: 1.2
-    }
-
-    .header-nav {
-      display: flex;
-      gap: 8px;
-      align-items: center
-    }
-
-    /* cards */
-    .screen {
-      display: grid;
-      gap: 14px
-    }
-
-    .panel {
-      padding: 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 12px
-    }
-
-    .panel-title {
-      font-size: 17px;
-      font-weight: 700
-    }
-
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px
-    }
-
-    .actions>button {
-      flex: 1 1 140px
-    }
-
-    /* buttons */
-    .btn-primary {
-      background: var(--primary);
-      color: #fff
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: var(--primary-dark)
-    }
-
-    .btn-secondary {
-      background: #fff;
-      color: var(--primary);
-      border: 1.5px solid var(--primary)
-    }
-
-    .btn-ghost {
-      background: #eef3f9;
-      color: var(--text)
-    }
-
-    .btn-sm {
-      min-height: 36px;
-      padding: 6px 12px;
-      font-size: 14px
-    }
-
-    /* admin button */
-    .admin-link {
-      font-size: 13px;
-      color: var(--muted);
-      text-decoration: none;
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px
-    }
-
-    .admin-link:hover {
-      color: var(--primary)
-    }
-
-    .back-link {
-      font-size: 13px;
-      color: var(--primary);
-      text-decoration: none;
-      padding: 6px 10px;
-      border: 1px solid var(--primary);
-      border-radius: 6px
-    }
-
-    .back-link:hover {
-      background: var(--soft-blue)
-    }
-
-    .error-msg {
-      color: var(--danger);
-      font-size: 13px;
-      padding: 4px 0
-    }
-
-    .global-error {
-      background: var(--soft-red);
-      border: 1px solid #fccaca;
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: var(--danger);
-      font-size: 14px
-    }
-
-    .success-box {
-      background: var(--soft-green);
-      border: 1px solid #a3e6cb;
-      border-radius: 8px;
-      padding: 12px 16px;
-      display: grid;
-      gap: 6px
-    }
-
-    .success-box h3 {
-      color: var(--accent)
-    }
-
-    /* form */
-    .reserve-card {
-      padding: 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 12px;
-      position: relative
-    }
-
-    .reserve-card-num {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 700
-    }
-
-    /* 日時入力エリアのタップ範囲拡大 */
-    .date-time-label {
-      display: grid;
-      gap: 0;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      padding: 10px 12px;
-      transition: border-color .15s, box-shadow .15s
-    }
-
-    .date-time-label .label-text {
-      padding: 0 0 8px 0
-    }
-
-    .date-time-label input {
-      cursor: pointer;
-      padding: 0;
-      min-height: 32px;
-      border: 0;
-      border-radius: 0
-    }
-
-    .date-time-label:focus-within {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(29, 111, 214, 0.12)
-    }
-
-    /* confirm modal */
-    .confirm-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px
-    }
-
-    .confirm-table th,
-    .confirm-table td {
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      text-align: left
-    }
-
-    .confirm-table th {
-      background: #f0f4fa;
-      font-weight: 700;
-      width: 35%
-    }
-
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .45);
-      z-index: 100;
-      align-items: center;
-      justify-content: center
-    }
-
-    .modal-overlay.open {
-      display: flex
-    }
-
-    .modal {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      width: min(90%, 420px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, .18);
-      display: grid;
-      gap: 14px
-    }
-
-    .modal h2 {
-      font-size: 18px
-    }
-
-    .loading {
-      text-align: center;
-      padding: 24px;
-      color: var(--muted);
-      font-size: 14px
-    }
-
-    .hidden {
-      display: none !important
-    }
-
-    @media(max-width:480px) {
-      .grid2 {
-        grid-template-columns: 1fr
-      }
-    }
+    .hidden { display: none !important; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    input[type="date"], input[type="time"] { color-scheme: light; }
   </style>
 </head>
 
-<body>
-  <div class="app">
-    <!-- HEADER -->
-    <div class="header">
-      <div class="header-top">
-        <h1 id="system-name">会議室予約</h1>
-        <div class="header-nav">
-          <a href="index.html" class="back-link">メニュー</a>
-          <a href="status.html" class="back-link">利用状況</a>
-          <a href="admin.html" class="admin-link">管理者</a>
-        </div>
+<body class="bg-slate-50 text-gray-800 min-h-screen">
+
+  <!-- ローディングオーバーレイ -->
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
+      <div class="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+      <p id="loading-text" class="text-sm text-gray-600 font-semibold">処理中...</p>
+    </div>
+  </div>
+
+  <div class="max-w-2xl mx-auto px-4 pb-16">
+    <!-- ヘッダー -->
+    <div class="sticky top-0 z-20 -mx-4 px-4 py-3 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200 mb-5">
+      <div class="flex items-center justify-between gap-2">
+        <h1 id="system-name" class="text-lg font-bold leading-tight text-gray-900">会議室予約</h1>
+        <nav class="flex items-center gap-1.5 flex-shrink-0">
+          <a href="index.html" class="text-xs font-semibold text-blue-600 border border-blue-300 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition">メニュー</a>
+          <a href="status.html" class="text-xs font-semibold text-blue-600 border border-blue-300 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition">利用状況</a>
+          <a href="admin.html" class="text-xs text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:text-blue-600 transition">管理者</a>
+        </nav>
       </div>
     </div>
 
     <!-- 読み込み中 -->
-    <div id="loading-msg" class="loading">読み込み中...</div>
+    <div id="loading-msg" class="text-center py-12 text-gray-400 text-sm">読み込み中...</div>
 
     <!-- 予約フォーム -->
-    <div id="screen-reserve" class="screen hidden">
+    <div id="screen-reserve" class="hidden flex flex-col gap-4">
       <!-- 予約者情報 -->
-      <div class="panel" id="common-panel">
-        <div class="panel-title">予約者情報</div>
-        <div id="common-fields">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+        <div class="font-bold text-gray-900 mb-3">予約者情報</div>
+        <div id="common-fields" class="flex flex-col gap-3">
           <div id="field-org-wrap">
-            <label id="label-org">団体名 <span style="color:var(--danger)">*</span>
-              <input type="text" id="input-org" autocomplete="organization">
-              <span class="error-msg hidden" id="err-org"></span>
+            <label id="label-org" class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+              団体名&nbsp;<span class="text-red-500 inline">*</span>
+              <input type="text" id="input-org" autocomplete="organization"
+                class="min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+              <span class="error-msg text-red-500 text-xs font-normal hidden" id="err-org"></span>
             </label>
           </div>
-          <div id="field-name-wrap" style="margin-top:10px">
-            <label id="label-name">お名前 <span style="color:var(--danger)">*</span>
-              <input type="text" id="input-name" autocomplete="name">
-              <span class="error-msg hidden" id="err-name"></span>
+          <div id="field-name-wrap">
+            <label id="label-name" class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+              お名前&nbsp;<span class="text-red-500 inline">*</span>
+              <input type="text" id="input-name" autocomplete="name"
+                class="min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+              <span class="error-msg text-red-500 text-xs font-normal hidden" id="err-name"></span>
             </label>
           </div>
         </div>
       </div>
 
       <!-- グローバルエラー -->
-      <div id="global-error" class="global-error hidden"></div>
+      <div id="global-error" class="hidden bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm"></div>
 
       <!-- 予約カード一覧 -->
       <div id="reserve-cards"></div>
 
       <!-- 追加・送信 -->
-      <div class="actions">
-        <button class="btn-ghost" onclick="addReserveCard()">＋ 予約を追加</button>
-        <button class="btn-primary" id="btn-confirm" onclick="goToConfirm()">確認へ進む</button>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="addReserveCard()" class="flex-1 min-w-[140px] min-h-[46px] bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl px-4 font-bold text-sm transition">＋ 予約を追加</button>
+        <button id="btn-confirm" onclick="goToConfirm()" class="flex-1 min-w-[140px] min-h-[46px] bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 font-bold text-sm transition shadow-sm">確認へ進む</button>
       </div>
     </div>
 
     <!-- 完了画面 -->
     <div id="screen-done" class="hidden">
-      <div class="success-box">
-        <h3>予約が完了しました</h3>
-        <div id="done-list"></div>
-        <div class="actions" style="margin-top:8px">
-          <a href="status.html" class="btn-secondary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;border-radius:8px;font-weight:700">利用状況を確認</a>
-          <button class="btn-ghost" onclick="resetReserveForm()">続けて予約</button>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex flex-col gap-3">
+        <h3 class="font-bold text-emerald-700 text-base">予約が完了しました</h3>
+        <div id="done-list" class="flex flex-col divide-y divide-slate-200"></div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <a href="status.html" class="flex-1 flex items-center justify-center min-h-[46px] bg-white border border-blue-500 text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50 transition">利用状況を確認</a>
+          <button onclick="resetReserveForm()" class="flex-1 min-h-[46px] bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition">続けて予約</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- 確認モーダル -->
-    <div class="modal-overlay" id="confirm-modal">
-      <div class="modal" style="width:min(95%,600px);max-height:90vh;overflow-y:auto">
-        <h2>予約内容の確認</h2>
-        <div id="confirm-content"></div>
-        <div class="actions">
-          <button class="btn-ghost" onclick="closeConfirm()">戻る</button>
-          <button class="btn-primary" id="btn-submit" onclick="submitReservations()">予約確定</button>
-        </div>
+  <!-- 確認モーダル -->
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-5 w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col gap-4 shadow-2xl">
+      <h2 class="text-lg font-bold text-gray-900">予約内容の確認</h2>
+      <div id="confirm-content"></div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="closeConfirm()" class="flex-1 min-h-[46px] bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition">戻る</button>
+        <button id="btn-submit" onclick="submitReservations()" class="flex-1 min-h-[46px] bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition shadow-sm">予約確定</button>
       </div>
     </div>
   </div>
 
   <script src="config.js"></script>
   <script>
-    // ============================================================
-    // 設定
-    // ============================================================
     const CONFIG = window.APP_CONFIG;
-
-    // ============================================================
-    // 状態
-    // ============================================================
     let appConfig = null;
     let allReservations = [];
     let reserveCards = [];
     let cardIdCounter = 0;
     let reservationsLoaded = false;
+
+    // ============================================================
+    // ローディング
+    // ============================================================
+    function showLoading(text) {
+      document.getElementById('loading-text').textContent = text || '処理中...';
+      document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }
 
     // ============================================================
     // 初期化
@@ -463,11 +134,6 @@
       });
     });
 
-    /**
-     * 今日の日付を yyyy-MM-dd 形式で返します。
-     *
-     * @return {string} 今日の日付。
-     */
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
@@ -475,11 +141,6 @@
     // ============================================================
     // GAS から設定取得
     // ============================================================
-    /**
-     * GAS から予約画面の表示設定と会議室一覧を読み込みます。
-     *
-     * @return {Promise<void>} 読み込み完了。
-     */
     async function loadConfig() {
       try {
         const url = CONFIG.GAS_API_URL + '?action=get_config';
@@ -496,11 +157,6 @@
       }
     }
 
-    /**
-     * GAS 設定取得に失敗した場合に使う既定設定を返します。
-     *
-     * @return {Object} 予約画面の既定設定。
-     */
     function defaultConfig() {
       return {
         ok: true,
@@ -518,34 +174,20 @@
       };
     }
 
-    /**
-     * 読み込んだ設定値を画面タイトル、ラベル、表示フィールドへ反映します。
-     *
-     * @param {Object} cfg GAS から取得した画面設定。
-     */
     function applyConfig(cfg) {
       const s = cfg.settings;
       document.getElementById('system-name').textContent = s.systemName + ' - 予約';
       document.title = s.systemName + ' - 予約';
-
       document.getElementById('label-org').childNodes[0].textContent = s.labels.organizationName + ' ';
       document.getElementById('label-name').childNodes[0].textContent = s.labels.userName + ' ';
-
       if (!s.fieldConfig.organizationName) document.getElementById('field-org-wrap').classList.add('hidden');
       if (!s.fieldConfig.userName) document.getElementById('field-name-wrap').classList.add('hidden');
-
       if (reserveCards.length === 0) addReserveCard();
     }
 
     // ============================================================
-    // スプレッドシートCSV取得
+    // CSV 取得
     // ============================================================
-    /**
-     * 予約シートの CSV を読み込み、既存予約一覧を更新します。
-     *
-     * @param {boolean} bustCache true の場合はキャッシュ回避します。
-     * @return {Promise<void>} 読み込み完了。
-     */
     async function loadReservations(bustCache = false) {
       const url = CONFIG.buildSheetCsvUrl('reservations', bustCache);
       try {
@@ -572,12 +214,6 @@
       '開始時間': 'start_time', '終了時間': 'end_time', 'ステータス': 'status',
     };
 
-    /**
-     * 予約 CSV を画面用オブジェクト配列へ変換します。
-     *
-     * @param {string} text CSV 文字列。
-     * @return {Array<Object>} 予約一覧。
-     */
     function parseCSV(text) {
       const lines = text.trim().split('\n');
       if (lines.length < 2) return [];
@@ -599,12 +235,6 @@
       return result;
     }
 
-    /**
-     * CSV 1行を、クォート内カンマを考慮して列配列へ変換します。
-     *
-     * @param {string} line CSV 1行。
-     * @return {Array<string>} 列値配列。
-     */
     function parseCSVRow(line) {
       const result = [];
       let cur = '', inQ = false;
@@ -623,9 +253,6 @@
     // ============================================================
     // 予約フォーム
     // ============================================================
-    /**
-     * 予約入力カードを1件追加します。
-     */
     function addReserveCard() {
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
       if (reserveCards.length >= cfg.maxReservationsPerSubmit) {
@@ -637,69 +264,66 @@
       renderReserveCards();
     }
 
-    /**
-     * 指定IDの予約入力カードを削除します。
-     *
-     * @param {number} id カードID。
-     */
     function removeReserveCard(id) {
       reserveCards = reserveCards.filter(c => c !== id);
       if (reserveCards.length === 0) addReserveCard();
       else renderReserveCards();
     }
 
-    /**
-     * 現在の予約入力カード一覧をフォームへ描画します。
-     */
+    const inputCls = 'w-full min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition';
+    const labelCls = 'flex flex-col gap-1 text-xs font-semibold text-gray-500';
+
     function renderReserveCards() {
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
       const container = document.getElementById('reserve-cards');
       container.innerHTML = reserveCards.map((id, idx) => `
-    <div class="reserve-card" id="card-${id}" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="reserve-card-num">${idx + 1}件目</span>
-        ${reserveCards.length > 1 ? `<button class="btn-ghost btn-sm" onclick="removeReserveCard(${id})">削除</button>` : ''}
-      </div>
-      <div class="grid2">
-        <label class="date-time-label" for="card-date-${id}" onclick="openInputPicker('card-date-${id}', event)">
-          <span class="label-text">利用日 <span style="color:var(--danger)">*</span></span>
-          <input type="date" id="card-date-${id}" onchange="searchAvailable(${id})">
-          <span class="error-msg hidden" id="card-err-date-${id}"></span>
-        </label>
-        <div></div>
-      </div>
-      <div class="grid2">
-        <label class="date-time-label" for="card-start-${id}" onclick="openInputPicker('card-start-${id}', event)">
-          <span class="label-text">開始時間 <span style="color:var(--danger)">*</span></span>
-          <input type="time" id="card-start-${id}" step="300" onchange="searchAvailable(${id})">
-          <span class="error-msg hidden" id="card-err-start-${id}"></span>
-        </label>
-        <label class="date-time-label" for="card-end-${id}" onclick="openInputPicker('card-end-${id}', event)">
-          <span class="label-text">終了時間 <span style="color:var(--danger)">*</span></span>
-          <input type="time" id="card-end-${id}" step="300" onchange="searchAvailable(${id})">
-          <span class="error-msg hidden" id="card-err-end-${id}"></span>
-        </label>
-      </div>
-      <label>${esc(cfg.labels.room)} <span style="color:var(--danger)">*</span>
-        <select id="card-room-${id}">
-          <option value="">日付・時間を先に入力してください</option>
-        </select>
-        <span class="error-msg hidden" id="card-err-room-${id}"></span>
-      </label>
-      <label>${esc(cfg.labels.meetingName)} <span style="color:var(--danger)">*</span>
-        <input type="text" id="card-meeting-${id}" placeholder="${esc(cfg.labels.meetingName)}を入力">
-        <span class="error-msg hidden" id="card-err-meeting-${id}"></span>
-      </label>
-    </div>
-  `).join('');
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col gap-3 mb-3" id="card-${id}">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">${idx + 1}件目</span>
+            ${reserveCards.length > 1 ? `<button class="text-xs bg-slate-100 hover:bg-red-50 hover:text-red-600 text-gray-500 rounded-lg px-3 py-1.5 font-semibold transition" onclick="removeReserveCard(${id})">削除</button>` : ''}
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="${labelCls}" onclick="openInputPicker('card-date-${id}', event)">
+              利用日&nbsp;<span class="text-red-500 inline">*</span>
+              <div class="border border-slate-200 rounded-xl bg-white px-3 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition cursor-pointer min-h-[44px] flex flex-col justify-center">
+                <input type="date" id="card-date-${id}" onchange="searchAvailable(${id})" class="w-full text-sm text-gray-900 bg-transparent border-0 outline-none cursor-pointer font-normal">
+              </div>
+              <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-date-${id}"></span>
+            </label>
+            <div></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="${labelCls}">
+              開始時間&nbsp;<span class="text-red-500 inline">*</span>
+              <select id="card-start-${id}" onchange="updateEndTimeOptions(${id}); searchAvailable(${id})" class="${inputCls}">
+                ${generateTimeOptions(toMin(cfg.businessStartTime || '09:00'), toMin(cfg.businessEndTime || '22:00') - 5, '')}
+              </select>
+              <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-start-${id}"></span>
+            </label>
+            <label class="${labelCls}">
+              終了時間&nbsp;<span class="text-red-500 inline">*</span>
+              <select id="card-end-${id}" onchange="searchAvailable(${id})" class="${inputCls}">
+                <option value="">開始時間を先に選択してください</option>
+              </select>
+              <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-end-${id}"></span>
+            </label>
+          </div>
+          <label class="${labelCls}">
+            ${esc(cfg.labels.room)}&nbsp;<span class="text-red-500 inline">*</span>
+            <select id="card-room-${id}" class="${inputCls}">
+              <option value="">日付・時間を先に入力してください</option>
+            </select>
+            <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-room-${id}"></span>
+          </label>
+          <label class="${labelCls}">
+            ${esc(cfg.labels.meetingName)}&nbsp;<span class="text-red-500 inline">*</span>
+            <input type="text" id="card-meeting-${id}" placeholder="${esc(cfg.labels.meetingName)}を入力" class="${inputCls}">
+            <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-meeting-${id}"></span>
+          </label>
+        </div>
+      `).join('');
     }
 
-    /**
-     * 入力された日付・時間から空き会議室を検索し、選択肢へ反映します。
-     *
-     * @param {number} id 対象カードID。
-     * @return {Promise<void>} 検索完了。
-     */
     async function searchAvailable(id) {
       const date = document.getElementById(`card-date-${id}`).value;
       const start = document.getElementById(`card-start-${id}`).value;
@@ -736,9 +360,6 @@
     // ============================================================
     // 確認画面
     // ============================================================
-    /**
-     * 入力内容を検証し、予約確認モーダルを表示します。
-     */
     function goToConfirm() {
       clearErrors();
       const { ok, common, reservations, errors } = collectFormData();
@@ -748,40 +369,37 @@
       }
 
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
-      let html = '<h3 style="font-size:15px;margin-bottom:8px">予約者情報</h3><table class="confirm-table"><tbody>';
-      if (cfg.fieldConfig.organizationName) html += `<tr><th>${esc(cfg.labels.organizationName)}</th><td>${esc(common.organization_name)}</td></tr>`;
-      if (cfg.fieldConfig.userName) html += `<tr><th>${esc(cfg.labels.userName)}</th><td>${esc(common.user_name)}</td></tr>`;
+      const thCls = 'border border-slate-200 bg-slate-50 px-3 py-2 text-left font-semibold text-xs text-gray-600 w-1/3';
+      const tdCls = 'border border-slate-200 px-3 py-2 text-sm text-gray-800';
+
+      let html = `<h3 class="text-sm font-bold text-gray-700 mb-2">予約者情報</h3>
+        <table class="w-full border-collapse text-sm mb-4"><tbody>`;
+      if (cfg.fieldConfig.organizationName) html += `<tr><th class="${thCls}">${esc(cfg.labels.organizationName)}</th><td class="${tdCls}">${esc(common.organization_name)}</td></tr>`;
+      if (cfg.fieldConfig.userName) html += `<tr><th class="${thCls}">${esc(cfg.labels.userName)}</th><td class="${tdCls}">${esc(common.user_name)}</td></tr>`;
       html += '</tbody></table>';
 
       reservations.forEach((r, i) => {
-        html += `<h3 style="font-size:15px;margin:12px 0 6px">${i + 1}件目</h3><table class="confirm-table"><tbody>
-      <tr><th>${esc(cfg.labels.meetingName)}</th><td>${esc(r.meeting_name)}</td></tr>
-      <tr><th>利用日</th><td>${fmtDate(r.usage_date)}</td></tr>
-      <tr><th>時間</th><td>${esc(r.start_time)}〜${esc(r.end_time)}</td></tr>
-      <tr><th>${esc(cfg.labels.room)}</th><td>${esc(r.room_name)}</td></tr>
-    </tbody></table>`;
+        html += `<h3 class="text-sm font-bold text-gray-700 mt-4 mb-2">${i + 1}件目</h3>
+          <table class="w-full border-collapse text-sm"><tbody>
+            <tr><th class="${thCls}">${esc(cfg.labels.meetingName)}</th><td class="${tdCls}">${esc(r.meeting_name)}</td></tr>
+            <tr><th class="${thCls}">利用日</th><td class="${tdCls}">${fmtDate(r.usage_date)}</td></tr>
+            <tr><th class="${thCls}">時間</th><td class="${tdCls}">${esc(r.start_time)}〜${esc(r.end_time)}</td></tr>
+            <tr><th class="${thCls}">${esc(cfg.labels.room)}</th><td class="${tdCls}">${esc(r.room_name)}</td></tr>
+          </tbody></table>`;
       });
 
       document.getElementById('confirm-content').innerHTML = html;
-      document.getElementById('confirm-modal').classList.add('open');
+      document.getElementById('confirm-modal').classList.remove('hidden');
     }
 
-    /**
-     * 予約確認モーダルを閉じます。
-     */
     function closeConfirm() {
-      document.getElementById('confirm-modal').classList.remove('open');
+      document.getElementById('confirm-modal').classList.add('hidden');
     }
 
-    /**
-     * 確認済みの予約内容を GAS API へ送信します。
-     *
-     * @return {Promise<void>} 登録処理完了。
-     */
     async function submitReservations() {
       const btn = document.getElementById('btn-submit');
       btn.disabled = true;
-      btn.textContent = '送信中...';
+      showLoading('予約を送信中...');
 
       const { common, reservations } = collectFormData();
 
@@ -790,7 +408,7 @@
       if (dupErrors.length > 0) {
         closeConfirm();
         btn.disabled = false;
-        btn.textContent = '予約確定';
+        hideLoading();
         showErrors(dupErrors);
         return;
       }
@@ -817,28 +435,20 @@
         document.getElementById('global-error').classList.remove('hidden');
       }
       btn.disabled = false;
-      btn.textContent = '予約確定';
+      hideLoading();
     }
 
-    /**
-     * 予約完了画面に登録済み予約一覧を表示します。
-     *
-     * @param {Array<Object>} reservations 登録された予約一覧。
-     */
     function showDone(reservations) {
       document.getElementById('screen-reserve').classList.add('hidden');
       const done = document.getElementById('screen-done');
       done.classList.remove('hidden');
       document.getElementById('done-list').innerHTML = (reservations || []).map(r =>
-        `<div style="font-size:14px;padding:4px 0;border-bottom:1px solid var(--border)">
-      ${esc(r.meeting_name)} / ${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)} / ${esc(r.room_name)}
-    </div>`
+        `<div class="text-sm py-2 text-gray-700">
+          ${esc(r.meeting_name)} / ${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)} / ${esc(r.room_name)}
+        </div>`
       ).join('');
     }
 
-    /**
-     * 予約フォームを初期状態へ戻します。
-     */
     function resetReserveForm() {
       document.getElementById('screen-done').classList.add('hidden');
       document.getElementById('screen-reserve').classList.remove('hidden');
@@ -852,11 +462,6 @@
     // ============================================================
     // バリデーション
     // ============================================================
-    /**
-     * フォーム入力値を収集し、画面側でできる入力チェックを行います。
-     *
-     * @return {Object} 検証結果、共通情報、予約配列、エラー一覧。
-     */
     function collectFormData() {
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
       const errors = [];
@@ -895,12 +500,6 @@
       };
     }
 
-    /**
-     * 最新の既存予約と比較して、会議室・日付・時間の重複を検出します。
-     *
-     * @param {Array<Object>} reservations 登録予定の予約配列。
-     * @return {Array<Object>} エラー一覧。
-     */
     function checkDuplicates(reservations) {
       const errors = [];
       reservations.forEach((r, idx) => {
@@ -917,19 +516,11 @@
       return errors;
     }
 
-    /**
-     * 画面上の入力エラー表示を消します。
-     */
     function clearErrors() {
       document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.classList.add('hidden'); });
       document.getElementById('global-error').classList.add('hidden');
     }
 
-    /**
-     * 入力エラーを各フィールドと全体メッセージへ表示します。
-     *
-     * @param {Array<Object>} errors エラー一覧。
-     */
     function showErrors(errors) {
       errors.forEach(e => {
         const el = document.getElementById(`err-${e.field}`) || document.getElementById(`card-err-${e.field}`);
@@ -946,37 +537,37 @@
     // ============================================================
     // ユーティリティ
     // ============================================================
-    /**
-     * HH:mm 形式の時刻を分数へ変換します。
-     *
-     * @param {string} t 時刻文字列。
-     * @return {number} 0:00 からの分数。
-     */
+    function generateTimeOptions(startMin, endMin, selectedVal) {
+      let html = '';
+      for (let m = startMin; m <= endMin; m += 5) {
+        const h = String(Math.floor(m / 60)).padStart(2, '0');
+        const min = String(m % 60).padStart(2, '0');
+        const val = `${h}:${min}`;
+        html += `<option value="${val}"${val === selectedVal ? ' selected' : ''}>${val}</option>`;
+      }
+      return html;
+    }
+
+    function updateEndTimeOptions(id) {
+      const startSel = document.getElementById(`card-start-${id}`);
+      const endSel = document.getElementById(`card-end-${id}`);
+      if (!startSel || !endSel) return;
+      const startMin = toMin(startSel.value);
+      const endMax = toMin(cfg.businessEndTime || '22:00');
+      const prevEnd = endSel.value;
+      endSel.innerHTML = generateTimeOptions(startMin + 5, endMax, prevEnd);
+    }
+
     function toMin(t) {
       if (!t) return 0;
       const [h, m] = t.split(':').map(Number);
       return h * 60 + m;
     }
 
-    /**
-     * 2つの時間帯が重複しているか判定します。
-     *
-     * @param {string} s1 1つ目の開始時刻。
-     * @param {string} e1 1つ目の終了時刻。
-     * @param {string} s2 2つ目の開始時刻。
-     * @param {string} e2 2つ目の終了時刻。
-     * @return {boolean} 重複する場合は true。
-     */
     function timeOverlap(s1, e1, s2, e2) {
       return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1);
     }
 
-    /**
-     * 日付を画面表示用の短いラベルに変換します。
-     *
-     * @param {string} d yyyy-MM-dd 形式の日付。
-     * @return {string} 表示用日付。
-     */
     function fmtDate(d) {
       if (!d) return '';
       const dt = new Date(d + 'T00:00:00');
@@ -984,22 +575,10 @@
       return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
     }
 
-    /**
-     * HTML へ埋め込む文字列をエスケープします。
-     *
-     * @param {*} s 対象値。
-     * @return {string} エスケープ済み文字列。
-     */
     function esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    /**
-     * ラベルクリック時に date/time 入力のネイティブピッカーを開きます。
-     *
-     * @param {string} id 入力要素ID。
-     * @param {Event} event クリックイベント。
-     */
     function openInputPicker(id, event) {
       if (event && event.target && /input/i.test(event.target.tagName)) return;
       const input = document.getElementById(id);

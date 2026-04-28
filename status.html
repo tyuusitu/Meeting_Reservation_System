@@ -5,500 +5,147 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>会議室利用状況</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --primary: #1d6fd6;
-      --primary-dark: #1559ae;
-      --accent: #0f8f68;
-      --danger: #c73d3d;
-      --surface: #ffffff;
-      --background: #f6f8fb;
-      --border: #d7e0ec;
-      --text: #172033;
-      --muted: #647085;
-      --soft-blue: #eaf2ff;
-      --soft-green: #eaf8f2;
-      --soft-red: #fff0f0;
-      --shadow: 0 2px 12px rgba(20, 36, 64, 0.07);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0
-    }
-
-    body {
-      background: var(--background);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 16px;
-      line-height: 1.5
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit
-    }
-
-    button {
-      min-height: 44px;
-      border: 0;
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-weight: 700;
-      transition: background .15s
-    }
-
-    button:disabled {
-      opacity: .5;
-      cursor: not-allowed
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      min-height: 46px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--text);
-      padding: 10px 12px
-    }
-
-    label {
-      display: grid;
-      gap: 5px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700
-    }
-
-    a {
-      color: var(--primary)
-    }
-
-    /* layout */
-    .app {
-      width: min(100%, 780px);
-      margin: 0 auto;
-      padding: 16px
-    }
-
-    .header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      margin: -16px -16px 16px;
-      padding: 12px 16px;
-      background: rgba(246, 248, 251, .96);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border)
-    }
-
-    .header-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px
-    }
-
-    .header-top h1 {
-      font-size: 20px;
-      line-height: 1.2
-    }
-
-    .header-nav {
-      display: flex;
-      gap: 8px;
-      align-items: center
-    }
-
-    /* cards */
-    .screen {
-      display: grid;
-      gap: 14px
-    }
-
-    .panel {
-      padding: 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 12px
-    }
-
-    /* buttons */
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      font-weight: 700
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-dark)
-    }
-
-    .btn-ghost {
-      background: #eef3f9;
-      color: var(--text)
-    }
-
-    .btn-sm {
-      min-height: 36px;
-      padding: 6px 12px;
-      font-size: 14px
-    }
-
-    /* admin button */
-    .admin-link {
-      font-size: 13px;
-      color: var(--muted);
-      text-decoration: none;
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px
-    }
-
-    .admin-link:hover {
-      color: var(--primary)
-    }
-
-    .reserve-link {
-      font-size: 13px;
-      color: #fff;
-      text-decoration: none;
-      padding: 8px 14px;
-      background: var(--primary);
-      border-radius: 8px;
-      font-weight: 700
-    }
-
-    .reserve-link:hover {
-      background: var(--primary-dark)
-    }
-
-    /* status badges */
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700
-    }
-
-    .badge-active {
-      background: var(--soft-green);
-      color: var(--accent)
-    }
-
-    .badge-request {
-      background: #fff8e1;
-      color: #7a5800
-    }
-
-    /* reservation list */
-    .res-list {
-      display: grid;
-      gap: 8px
-    }
-
-    .res-card {
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 4px
-    }
-
-    .res-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap
-    }
-
-    .res-card-title {
-      font-weight: 700;
-      font-size: 15px
-    }
-
-    .res-card-meta {
-      font-size: 13px;
-      color: var(--muted)
-    }
-
-    .res-card-actions {
-      display: flex;
-      gap: 6px;
-      margin-top: 6px;
-      flex-wrap: wrap
-    }
-
-    /* timeline */
-    .timeline-day {
-      margin-bottom: 16px
-    }
-
-    .timeline-day-label {
-      font-weight: 700;
-      font-size: 15px;
-      margin-bottom: 8px;
-      padding: 6px 0;
-      border-bottom: 2px solid var(--primary);
-      color: var(--primary)
-    }
-
-    .timeline-room {
-      margin-bottom: 10px
-    }
-
-    .timeline-room-label {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted);
-      margin-bottom: 4px
-    }
-
-    .timeline-track {
-      position: relative;
-      height: 36px;
-      background: #f0f4fa;
-      border-radius: 6px;
-      overflow: hidden
-    }
-
-    .timeline-block {
-      position: absolute;
-      top: 0;
-      height: 100%;
-      background: var(--primary);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      padding: 0 6px;
-      font-size: 11px;
-      color: #fff;
-      font-weight: 700;
-      overflow: hidden;
-      white-space: nowrap;
-      cursor: default
-    }
-
-    .timeline-block.cancel-req {
-      background: #e8a000
-    }
-
-    .timeline-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 2px;
-      padding: 0 2px
-    }
-
-    /* filter bar */
-    .filter-bar {
-      display: grid;
-      gap: 10px
-    }
-
-    .filter-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px
-    }
-
-    /* view toggle */
-    .view-toggle {
-      display: flex;
-      gap: 8px
-    }
-
-    .view-btn {
-      background: #fff;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      min-height: 36px;
-      padding: 6px 14px;
-      font-size: 13px
-    }
-
-    .view-btn.active {
-      background: var(--soft-blue);
-      color: var(--primary);
-      border-color: var(--primary)
-    }
-
-    /* modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .45);
-      z-index: 100;
-      align-items: center;
-      justify-content: center
-    }
-
-    .modal-overlay.open {
-      display: flex
-    }
-
-    .modal {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      width: min(90%, 420px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, .18);
-      display: grid;
-      gap: 14px
-    }
-
-    .modal h2 {
-      font-size: 18px
-    }
-
-    .loading {
-      text-align: center;
-      padding: 24px;
-      color: var(--muted);
-      font-size: 14px
-    }
-
-    .empty {
-      text-align: center;
-      padding: 24px;
-      color: var(--muted)
-    }
-
-    .hidden {
-      display: none !important
-    }
-
-    @media(max-width:480px) {
-      .filter-row {
-        grid-template-columns: 1fr
-      }
-    }
+    .hidden { display: none !important; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    input[type="date"], input[type="time"] { color-scheme: light; }
   </style>
 </head>
 
-<body>
-  <div class="app">
-    <!-- HEADER -->
-    <div class="header">
-      <div class="header-top">
-        <h1 id="system-name">会議室予約システム</h1>
-        <div class="header-nav">
-          <a href="index.html" class="reserve-link">メニュー</a>
-          <a href="reserve.html" class="reserve-link">予約する</a>
-          <a href="admin.html" class="admin-link">管理者</a>
-        </div>
+<body class="bg-slate-50 text-gray-800 min-h-screen">
+
+  <!-- ローディングオーバーレイ -->
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
+      <div class="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+      <p id="loading-text" class="text-sm text-gray-600 font-semibold">処理中...</p>
+    </div>
+  </div>
+
+  <div class="max-w-2xl mx-auto px-4 pb-16">
+    <!-- ヘッダー -->
+    <div class="sticky top-0 z-20 -mx-4 px-4 py-3 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200 mb-5">
+      <div class="flex items-center justify-between gap-2">
+        <h1 id="system-name" class="text-lg font-bold leading-tight text-gray-900">会議室利用状況</h1>
+        <nav class="flex items-center gap-1.5 flex-shrink-0">
+          <a href="index.html" class="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-2.5 py-1.5 transition">メニュー</a>
+          <a href="reserve.html" class="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-2.5 py-1.5 transition">予約する</a>
+          <a href="admin.html" class="text-xs text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:text-blue-600 transition">管理者</a>
+        </nav>
       </div>
     </div>
 
-    <!-- フィルター -->
-    <div class="screen">
-      <div class="panel">
-        <div class="filter-bar">
-          <div class="filter-row">
-            <label>日付
-              <input type="date" id="filter-date" onchange="applyFilters()">
-            </label>
-            <label>会議室
-              <select id="filter-room" onchange="applyFilters()">
-                <option value="">すべて</option>
-              </select>
-            </label>
+    <!-- フィルター + 表示 -->
+    <div class="flex flex-col gap-4">
+      <!-- フィルターパネル -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col gap-3">
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+            日付
+            <input type="date" id="filter-date" onchange="applyFilters()"
+              class="min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+          </label>
+          <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+            会議室
+            <select id="filter-room" onchange="applyFilters()"
+              class="min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+              <option value="">すべて</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+            開始時間以降
+            <input type="time" id="filter-start" step="300" onchange="applyFilters()"
+              class="min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+          </label>
+          <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+            終了時間以前
+            <input type="time" id="filter-end" step="300" onchange="applyFilters()"
+              class="min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+          </label>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+            会議名
+            <input type="text" id="filter-meeting" placeholder="キーワード検索" oninput="applyFilters()"
+              class="min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+          </label>
+          <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+            団体名
+            <input type="text" id="filter-org" placeholder="キーワード検索" oninput="applyFilters()"
+              class="min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+          </label>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <div class="flex gap-1">
+            <button type="button" id="view-list-btn" onclick="setView('list')"
+              class="min-h-[36px] px-4 text-sm font-semibold rounded-lg border border-blue-500 bg-blue-50 text-blue-600 transition">一覧</button>
+            <button type="button" id="view-timeline-btn" onclick="setView('timeline')"
+              class="min-h-[36px] px-4 text-sm font-semibold rounded-lg border border-slate-200 bg-white text-gray-500 hover:bg-slate-50 transition">タイムライン</button>
           </div>
-          <div class="filter-row">
-            <label>開始時間以降
-              <input type="time" id="filter-start" step="300" onchange="applyFilters()">
-            </label>
-            <label>終了時間以前
-              <input type="time" id="filter-end" step="300" onchange="applyFilters()">
-            </label>
-          </div>
-          <div class="filter-row">
-            <label>会議名
-              <input type="text" id="filter-meeting" placeholder="キーワード検索" oninput="applyFilters()">
-            </label>
-            <label>団体名
-              <input type="text" id="filter-org" placeholder="キーワード検索" oninput="applyFilters()">
-            </label>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <div class="view-toggle">
-              <button class="view-btn active" id="view-list-btn" onclick="setView('list')">一覧</button>
-              <button class="view-btn" id="view-timeline-btn" onclick="setView('timeline')">タイムライン</button>
-            </div>
-            <button class="btn-ghost btn-sm" onclick="resetFilters()">リセット</button>
-            <button class="btn-ghost btn-sm" onclick="loadReservations(true)">更新</button>
-          </div>
+          <button type="button" onclick="resetFilters()"
+            class="min-h-[36px] px-4 text-sm font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-gray-600 transition">リセット</button>
+          <button type="button" onclick="reloadData()"
+            class="min-h-[36px] px-4 text-sm font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-gray-600 transition">更新</button>
         </div>
       </div>
 
       <!-- 一覧表示 -->
       <div id="view-list">
-        <div id="res-list-container" class="res-list">
-          <div class="loading">読み込み中...</div>
+        <div id="res-list-container" class="flex flex-col gap-2">
+          <div class="text-center py-10 text-gray-400 text-sm">読み込み中...</div>
         </div>
       </div>
 
       <!-- タイムライン表示 -->
       <div id="view-timeline" class="hidden">
         <div id="timeline-container">
-          <div class="loading">読み込み中...</div>
+          <div class="text-center py-10 text-gray-400 text-sm">読み込み中...</div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- キャンセル依頼モーダル -->
-    <div class="modal-overlay" id="cancel-modal">
-      <div class="modal">
-        <h2>キャンセル依頼</h2>
-        <p style="font-size:14px;color:var(--muted)">キャンセル依頼を送信します。管理者が確認後に削除します。</p>
-        <input type="hidden" id="cancel-res-id">
-        <label>理由（任意）
-          <textarea id="cancel-reason" placeholder="例：都合が悪くなったため"></textarea>
-        </label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
-          <button class="btn-ghost" style="flex:1 1 120px" onclick="closeCancelModal()">キャンセル</button>
-          <button class="btn-danger" style="flex:1 1 120px;background:var(--danger);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer" onclick="submitCancelRequest()">依頼を送信</button>
-        </div>
+  <!-- キャンセル依頼モーダル -->
+  <div id="cancel-modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-5 w-full max-w-md flex flex-col gap-4 shadow-2xl">
+      <h2 class="text-lg font-bold text-gray-900">キャンセル依頼</h2>
+      <p class="text-sm text-gray-500">キャンセル依頼を送信します。管理者が確認後に削除します。</p>
+      <input type="hidden" id="cancel-res-id">
+      <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+        理由（任意）
+        <textarea id="cancel-reason" placeholder="例：都合が悪くなったため"
+          class="min-h-[80px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-vertical w-full"></textarea>
+      </label>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeCancelModal()"
+          class="flex-1 min-h-[46px] bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition">キャンセル</button>
+        <button type="button" onclick="submitCancelRequest()"
+          class="flex-1 min-h-[46px] bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition" id="btn-cancel-submit">依頼を送信</button>
       </div>
     </div>
   </div>
 
   <script src="config.js"></script>
   <script>
-    // ============================================================
-    // 設定
-    // ============================================================
     const CONFIG = window.APP_CONFIG;
-
-    // ============================================================
-    // 状態
-    // ============================================================
     let appConfig = null;
     let allReservations = [];
     let filteredReservations = [];
     let currentView = 'list';
+
+    // ============================================================
+    // ローディング
+    // ============================================================
+    function showLoading(text) {
+      document.getElementById('loading-text').textContent = text || '処理中...';
+      document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }
 
     // ============================================================
     // 初期化
@@ -515,11 +162,6 @@
       });
     });
 
-    /**
-     * 今日の日付を yyyy-MM-dd 形式で返します。
-     *
-     * @return {string} 今日の日付。
-     */
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
@@ -527,11 +169,6 @@
     // ============================================================
     // GAS から設定取得
     // ============================================================
-    /**
-     * GAS から表示設定と会議室一覧を読み込みます。
-     *
-     * @return {Promise<void>} 読み込み完了。
-     */
     async function loadConfig() {
       try {
         const url = CONFIG.GAS_API_URL + '?action=get_config';
@@ -548,11 +185,6 @@
       }
     }
 
-    /**
-     * GAS 設定取得に失敗した場合に使う既定設定を返します。
-     *
-     * @return {Object} 予約確認画面の既定設定。
-     */
     function defaultConfig() {
       return {
         ok: true,
@@ -567,11 +199,6 @@
       };
     }
 
-    /**
-     * 読み込んだ設定値を画面タイトル、ラベル、フィルターへ反映します。
-     *
-     * @param {Object} cfg GAS から取得した設定。
-     */
     function applyConfig(cfg) {
       const s = cfg.settings;
       document.getElementById('system-name').textContent = s.systemName;
@@ -588,14 +215,8 @@
     }
 
     // ============================================================
-    // スプレッドシートCSV取得
+    // CSV 取得
     // ============================================================
-    /**
-     * 予約シート CSV を読み込み、画面の予約一覧を更新します。
-     *
-     * @param {boolean} bustCache true の場合はキャッシュ回避します。
-     * @return {Promise<void>} 読み込み完了。
-     */
     async function loadReservations(bustCache = false) {
       const url = CONFIG.buildSheetCsvUrl('reservations', bustCache);
       try {
@@ -610,6 +231,12 @@
       applyFilters();
     }
 
+    async function reloadData() {
+      showLoading('最新データを読み込み中...');
+      await loadReservations(true);
+      hideLoading();
+    }
+
     // ============================================================
     // CSV パーサー
     // ============================================================
@@ -621,12 +248,6 @@
       '開始時間': 'start_time', '終了時間': 'end_time', 'ステータス': 'status',
     };
 
-    /**
-     * 予約 CSV を画面用オブジェクト配列へ変換します。
-     *
-     * @param {string} text CSV 文字列。
-     * @return {Array<Object>} 予約一覧。
-     */
     function parseCSV(text) {
       const lines = text.trim().split('\n');
       if (lines.length < 2) return [];
@@ -648,12 +269,6 @@
       return result;
     }
 
-    /**
-     * CSV 1行を、クォート内カンマを考慮して列配列へ変換します。
-     *
-     * @param {string} line CSV 1行。
-     * @return {Array<string>} 列値配列。
-     */
     function parseCSVRow(line) {
       const result = [];
       let cur = '', inQ = false;
@@ -672,9 +287,6 @@
     // ============================================================
     // フィルター・表示
     // ============================================================
-    /**
-     * フィルター入力を初期化します。
-     */
     function resetFilters() {
       document.getElementById('filter-date').value = appConfig ? appConfig.today : todayStr();
       document.getElementById('filter-room').value = '';
@@ -685,9 +297,6 @@
       applyFilters();
     }
 
-    /**
-     * フィルター条件を予約一覧へ適用し、現在表示を再描画します。
-     */
     function applyFilters() {
       const date = document.getElementById('filter-date').value;
       const room = document.getElementById('filter-room').value;
@@ -714,63 +323,56 @@
       renderCurrentView();
     }
 
-    /**
-     * 一覧表示とタイムライン表示を切り替えます。
-     *
-     * @param {string} v 表示モード。
-     */
     function setView(v) {
       currentView = v;
-      document.getElementById('view-list-btn').classList.toggle('active', v === 'list');
-      document.getElementById('view-timeline-btn').classList.toggle('active', v === 'timeline');
+      const listBtn = document.getElementById('view-list-btn');
+      const tlBtn = document.getElementById('view-timeline-btn');
+      if (v === 'list') {
+        listBtn.className = 'min-h-[36px] px-4 text-sm font-semibold rounded-lg border border-blue-500 bg-blue-50 text-blue-600 transition';
+        tlBtn.className = 'min-h-[36px] px-4 text-sm font-semibold rounded-lg border border-slate-200 bg-white text-gray-500 hover:bg-slate-50 transition';
+      } else {
+        tlBtn.className = 'min-h-[36px] px-4 text-sm font-semibold rounded-lg border border-blue-500 bg-blue-50 text-blue-600 transition';
+        listBtn.className = 'min-h-[36px] px-4 text-sm font-semibold rounded-lg border border-slate-200 bg-white text-gray-500 hover:bg-slate-50 transition';
+      }
       document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
       document.getElementById('view-timeline').classList.toggle('hidden', v !== 'timeline');
       renderCurrentView();
     }
 
-    /**
-     * 現在選択中の表示モードに合わせて一覧またはタイムラインを描画します。
-     */
     function renderCurrentView() {
       if (currentView === 'list') renderList();
       else renderTimeline();
     }
 
     // ---- 一覧 ----
-    /**
-     * 予約一覧カードを描画します。
-     */
     function renderList() {
       const container = document.getElementById('res-list-container');
       if (filteredReservations.length === 0) {
-        container.innerHTML = '<div class="empty">該当する予約はありません</div>';
+        container.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">該当する予約はありません</div>';
         return;
       }
       container.innerHTML = filteredReservations.map(r => {
         const dateLabel = fmtDate(r.usage_date);
         const statusBadge = r.status === '有効'
-          ? '<span class="badge badge-active">有効</span>'
-          : '<span class="badge badge-request">キャンセル依頼中</span>';
+          ? '<span class="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-1">有効</span>'
+          : '<span class="inline-flex items-center rounded-full bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1">キャンセル依頼中</span>';
         const cancelBtn = r.status === '有効'
-          ? `<button class="btn-ghost btn-sm" onclick="openCancelModal('${esc(r.reservation_id)}')">キャンセル依頼</button>`
+          ? `<button type="button" onclick="openCancelModal('${esc(r.reservation_id)}')" class="text-xs bg-slate-100 hover:bg-red-50 hover:text-red-600 text-gray-500 rounded-lg px-3 py-1.5 font-semibold transition">キャンセル依頼</button>`
           : '';
         return `
-      <div class="res-card">
-        <div class="res-card-header">
-          <span class="res-card-title">${esc(r.meeting_name)}</span>
-          ${statusBadge}
-        </div>
-        <div class="res-card-meta">${dateLabel}　${esc(r.start_time)}〜${esc(r.end_time)}　${esc(r.room_name)}</div>
-        <div class="res-card-meta">${esc(r.organization_name)}　${esc(r.user_name)}</div>
-        <div class="res-card-actions">${cancelBtn}</div>
-      </div>`;
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+            <div class="flex items-start justify-between gap-2 flex-wrap">
+              <span class="font-bold text-gray-900 text-sm">${esc(r.meeting_name)}</span>
+              ${statusBadge}
+            </div>
+            <div class="text-xs text-gray-500 mt-1.5">${dateLabel}　${esc(r.start_time)}〜${esc(r.end_time)}　${esc(r.room_name)}</div>
+            <div class="text-xs text-gray-400 mt-0.5">${esc(r.organization_name)}　${esc(r.user_name)}</div>
+            ${cancelBtn ? `<div class="mt-3">${cancelBtn}</div>` : ''}
+          </div>`;
       }).join('');
     }
 
     // ---- タイムライン ----
-    /**
-     * 日付別・会議室別のタイムラインを描画します。
-     */
     function renderTimeline() {
       const container = document.getElementById('timeline-container');
       const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
@@ -779,7 +381,7 @@
       const totalMin = endMin - startMin;
 
       if (filteredReservations.length === 0) {
-        container.innerHTML = '<div class="empty">該当する予約はありません</div>';
+        container.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">該当する予約はありません</div>';
         return;
       }
 
@@ -794,26 +396,32 @@
 
       let html = '';
       Object.keys(days).sort().forEach(date => {
-        html += `<div class="timeline-day"><div class="timeline-day-label">${fmtDate(date)}</div>`;
+        html += `<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-3">
+          <div class="font-bold text-blue-600 text-sm border-b border-blue-100 pb-2 mb-3">${fmtDate(date)}</div>`;
         const dayRooms = days[date];
-        const roomOrder = rooms.length > 0 ? rooms : Object.values(dayRooms).map(v => ({ room_id: Object.keys(dayRooms).find(k => dayRooms[k] === v), room_name: v.room_name }));
+        const roomOrder = rooms.length > 0 ? rooms : Object.values(dayRooms).map((v, i) => ({ room_id: Object.keys(dayRooms)[i], room_name: v.room_name }));
         roomOrder.forEach(room => {
           const roomData = dayRooms[room.room_id];
           if (!roomData) return;
-          html += `<div class="timeline-room">
-        <div class="timeline-room-label">${esc(room.room_name)}</div>
-        <div class="timeline-track">`;
+          html += `<div class="mb-3">
+            <div class="text-xs font-semibold text-gray-500 mb-1">${esc(room.room_name)}</div>
+            <div class="relative h-9 bg-slate-100 rounded-lg overflow-hidden">`;
           roomData.reservations.forEach(r => {
             const rStart = Math.max(toMin(r.start_time), startMin);
             const rEnd = Math.min(toMin(r.end_time), endMin);
             const left = ((rStart - startMin) / totalMin * 100).toFixed(2);
             const width = ((rEnd - rStart) / totalMin * 100).toFixed(2);
-            const cls = r.status === '有効' ? '' : ' cancel-req';
-            html += `<div class="timeline-block${cls}" style="left:${left}%;width:${width}%" title="${esc(r.meeting_name)} ${r.start_time}〜${r.end_time}">${esc(r.meeting_name)}</div>`;
+            const bg = r.status === '有効' ? 'bg-blue-600' : 'bg-amber-500';
+            html += `<div class="absolute top-0 h-full ${bg} rounded flex items-center px-2 overflow-hidden" style="left:${left}%;width:${width}%" title="${esc(r.meeting_name)} ${r.start_time}〜${r.end_time}">
+              <span class="text-white text-xs font-bold truncate">${esc(r.meeting_name)}</span>
+            </div>`;
           });
           html += `</div>
-        <div class="timeline-labels"><span>${cfg.businessStartTime || '09:00'}</span><span>${cfg.businessEndTime || '22:00'}</span></div>
-      </div>`;
+            <div class="flex justify-between text-xs text-gray-400 mt-0.5 px-0.5">
+              <span>${cfg.businessStartTime || '09:00'}</span>
+              <span>${cfg.businessEndTime || '22:00'}</span>
+            </div>
+          </div>`;
         });
         html += '</div>';
       });
@@ -823,35 +431,22 @@
     // ============================================================
     // キャンセル依頼
     // ============================================================
-    /**
-     * キャンセル依頼モーダルを開きます。
-     *
-     * @param {string} reservationId 予約ID。
-     */
     function openCancelModal(reservationId) {
       document.getElementById('cancel-res-id').value = reservationId;
       document.getElementById('cancel-reason').value = '';
-      document.getElementById('cancel-modal').classList.add('open');
+      document.getElementById('cancel-modal').classList.remove('hidden');
     }
 
-    /**
-     * キャンセル依頼モーダルを閉じます。
-     */
     function closeCancelModal() {
-      document.getElementById('cancel-modal').classList.remove('open');
+      document.getElementById('cancel-modal').classList.add('hidden');
     }
 
-    /**
-     * キャンセル依頼を GAS API へ送信します。
-     *
-     * @return {Promise<void>} 送信完了。
-     */
     async function submitCancelRequest() {
       const reservationId = document.getElementById('cancel-res-id').value;
       const reason = document.getElementById('cancel-reason').value;
-      const btn = document.querySelector('#cancel-modal .btn-danger');
+      const btn = document.getElementById('btn-cancel-submit');
       btn.disabled = true;
-      btn.textContent = '送信中...';
+      showLoading('キャンセル依頼を送信中...');
 
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
@@ -872,15 +467,9 @@
         alert('通信エラーが発生しました。');
       }
       btn.disabled = false;
-      btn.textContent = '依頼を送信';
+      hideLoading();
     }
 
-    /**
-     * LINE 共有 URL を開いてキャンセル依頼文を送信しやすくします。
-     *
-     * @param {string} reservationId 予約ID。
-     * @param {string} reason キャンセル理由。
-     */
     function sendLineNotification(reservationId, reason) {
       const spreadsheetUrl = appConfig && appConfig.settings && appConfig.settings.spreadsheetUrl
         ? appConfig.settings.spreadsheetUrl : '';
@@ -892,37 +481,16 @@
     // ============================================================
     // ユーティリティ
     // ============================================================
-    /**
-     * HH:mm 形式の時刻を分数へ変換します。
-     *
-     * @param {string} t 時刻文字列。
-     * @return {number} 0:00 からの分数。
-     */
     function toMin(t) {
       if (!t) return 0;
       const [h, m] = t.split(':').map(Number);
       return h * 60 + m;
     }
 
-    /**
-     * 2つの時間帯が重複しているか判定します。
-     *
-     * @param {string} s1 1つ目の開始時刻。
-     * @param {string} e1 1つ目の終了時刻。
-     * @param {string} s2 2つ目の開始時刻。
-     * @param {string} e2 2つ目の終了時刻。
-     * @return {boolean} 重複する場合は true。
-     */
     function timeOverlap(s1, e1, s2, e2) {
       return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1);
     }
 
-    /**
-     * 日付を画面表示用の短いラベルに変換します。
-     *
-     * @param {string} d yyyy-MM-dd 形式の日付。
-     * @return {string} 表示用日付。
-     */
     function fmtDate(d) {
       if (!d) return '';
       const dt = new Date(d + 'T00:00:00');
@@ -930,12 +498,6 @@
       return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
     }
 
-    /**
-     * HTML へ埋め込む文字列をエスケープします。
-     *
-     * @param {*} s 対象値。
-     * @return {string} エスケープ済み文字列。
-     */
     function esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
