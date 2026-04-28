@@ -964,7 +964,7 @@
     function renderReservationsTab() {
       const f = state.filters.reservations;
       const allRows = state.reservations
-        .slice()
+        .filter((r) => r.status !== '取消')
         .sort((a, b) => `${a.usageDate}${a.startTime}${a.roomName}`.localeCompare(`${b.usageDate}${b.startTime}${b.roomName}`));
       const roomOptions = [...new Set(allRows.map((r) => r.roomName).filter(Boolean))].sort();
       const statusOptions = [...new Set(allRows.map((r) => r.status).filter(Boolean))].sort();
