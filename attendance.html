@@ -56,7 +56,7 @@
       <div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700 leading-relaxed flex items-start">
         先に部局を選び、その部局に所属する人から回答者を選択します。内部ではメンバーIDで処理します。
       </div>
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="border border-slate-200 rounded-xl p-3 bg-white">
           <div class="text-xs text-gray-400 mb-1">所属部局</div>
           <div class="font-extrabold text-gray-900 text-sm" id="member-department">-</div>
@@ -445,14 +445,14 @@
               : `<div class="text-xs text-gray-400">未提出です。集計上は出席扱いですが、欠席する場合は理由を登録してください。</div>`
             }
             <div class="flex flex-col gap-3">
-              <div class="flex gap-2 flex-wrap">
-                <label class="flex-1 min-w-[140px] border border-slate-200 rounded-xl bg-white px-4 py-3 flex items-center gap-2.5 cursor-pointer has-[:checked]:bg-blue-50 has-[:checked]:border-blue-400 transition">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label class="min-w-0 border border-slate-200 rounded-xl bg-white px-4 py-3 flex items-center gap-2.5 cursor-pointer has-[:checked]:bg-blue-50 has-[:checked]:border-blue-400 transition">
                   <input type="radio" name="attendance-${escapeHtml(meeting.meetingId)}" value="出席"
                     ${existing && existing.attendance === '出席' ? 'checked' : ''} ${!existing ? 'checked' : ''} ${!editable ? 'disabled' : ''}
                     class="w-4 h-4 accent-blue-600">
                   <span class="text-sm font-bold text-gray-700">出席</span>
                 </label>
-                <label class="flex-1 min-w-[140px] border border-slate-200 rounded-xl bg-white px-4 py-3 flex items-center gap-2.5 cursor-pointer has-[:checked]:bg-red-50 has-[:checked]:border-red-400 transition">
+                <label class="min-w-0 border border-slate-200 rounded-xl bg-white px-4 py-3 flex items-center gap-2.5 cursor-pointer has-[:checked]:bg-red-50 has-[:checked]:border-red-400 transition">
                   <input type="radio" name="attendance-${escapeHtml(meeting.meetingId)}" value="欠席"
                     ${existing && existing.attendance === '欠席' ? 'checked' : ''} ${!editable ? 'disabled' : ''}
                     class="w-4 h-4 accent-red-500">

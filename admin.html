@@ -60,7 +60,7 @@
           <div class="text-xs text-gray-400 mt-0.5">CSV 直接読み込みで一覧を表示し、更新系だけ GAS API に送信します。</div>
         </div>
         <div class="flex gap-2 flex-wrap">
-          <button type="button" onclick="reloadAll(true)"
+          <button type="button" onclick="reloadAll(true, true)"
             class="min-h-[40px] px-4 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition">最新化</button>
           <button type="button" onclick="logout()"
             class="min-h-[40px] px-4 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition">ログアウト</button>
@@ -135,11 +135,12 @@
     // 初期化
     // ============================================================
     document.addEventListener('DOMContentLoaded', async () => {
-      await loadPublicSettings();
       if (sessionStorage.getItem(AUTH_KEY) === '1' && sessionStorage.getItem(PASSWORD_KEY)) {
         showAdmin();
-        await reloadAll(false);
+        await reloadAll(false, false);
+        return;
       }
+      await loadPublicSettings();
     });
 
     async function loadPublicSettings() {
@@ -187,7 +188,7 @@
         sessionStorage.setItem(AUTH_KEY, '1');
         sessionStorage.setItem(PASSWORD_KEY, password);
         showAdmin();
-        await reloadAll(false);
+        await reloadAll(false, false);
       } catch (_) {
         showMessage('login-message', '通信エラーが発生しました。', 'error');
       }
@@ -233,22 +234,23 @@
     // ============================================================
     // データ読み込み
     // ============================================================
-    async function reloadAll(showToast) {
+    async function reloadAll(showToast, bustCache = false) {
       showLoading('データを読み込み中...');
-      await loadPublicSettings();
       const results = await Promise.all([
-        fetchSheetCsv('reservations', reservationMapper),
-        fetchSheetCsv('rooms', roomMapper),
-        fetchSheetCsv('settings', settingMapper),
-        fetchSheetCsv('members', memberMapper),
-        fetchSheetCsv('meetings', meetingMapper),
-        fetchSheetCsv('attendanceResponses', attendanceMapper),
-        fetchSheetCsv('meetingAggregations', meetingAggregationMapper),
-        fetchSheetCsv('memberAggregations', memberAggregationMapper),
-        fetchSheetCsv('departmentAggregations', departmentAggregationMapper),
-        fetchSheetCsv('streaks', streakMapper),
+        loadPublicSettings(),
+        fetchSheetCsv('reservations', reservationMapper, bustCache),
+        fetchSheetCsv('rooms', roomMapper, bustCache),
+        fetchSheetCsv('settings', settingMapper, bustCache),
+        fetchSheetCsv('members', memberMapper, bustCache),
+        fetchSheetCsv('meetings', meetingMapper, bustCache),
+        fetchSheetCsv('attendanceResponses', attendanceMapper, bustCache),
+        fetchSheetCsv('meetingAggregations', meetingAggregationMapper, bustCache),
+        fetchSheetCsv('memberAggregations', memberAggregationMapper, bustCache),
+        fetchSheetCsv('departmentAggregations', departmentAggregationMapper, bustCache),
+        fetchSheetCsv('streaks', streakMapper, bustCache),
       ]);
       [
+        ,
         state.reservations,
         state.rooms,
         state.settings,
@@ -267,11 +269,11 @@
       }
     }
 
-    async function fetchSheetCsv(key, mapper) {
-      const url = CONFIG.buildSheetCsvUrl(key, true);
+    async function fetchSheetCsv(key, mapper, bustCache = false) {
+      const url = CONFIG.buildSheetCsvUrl(key, bustCache);
       if (!url) return [];
       try {
-        const text = CONFIG.fetchSheetCsvText ? await CONFIG.fetchSheetCsvText(key, true) : await fetch(url).then((res) => res.text());
+        const text = CONFIG.fetchSheetCsvText ? await CONFIG.fetchSheetCsvText(key, bustCache) : await fetch(url).then((res) => res.text());
         return parseCsv(text, mapper);
       } catch (_) {
         return [];
@@ -883,7 +885,7 @@
           hideLoading();
           return;
         }
-        await reloadAll(false);
+        await reloadAll(false, true);
         clearMeetingForm();
         showGlobal('会議を保存しました。', 'success');
       } catch (_) {
@@ -906,7 +908,7 @@
           hideLoading();
           return;
         }
-        await reloadAll(false);
+        await reloadAll(false, true);
         showGlobal('集計を更新しました。', 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
@@ -936,8 +938,11 @@
           hideLoading();
           return;
         }
+        if (CONFIG.invalidateSheetCsvCache) {
+          ['settings', 'rooms'].forEach((key) => CONFIG.invalidateSheetCsvCache(key));
+        }
         await loadPublicSettings();
-        await reloadAll(false);
+        await reloadAll(false, true);
         showGlobal(`${settingKey} を更新しました。`, 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
@@ -995,7 +1000,7 @@
           return;
         }
         state.selectedReservationIds = new Set();
-        await reloadAll(false);
+        await reloadAll(false, true);
         showGlobal(`${data.deleted.length}件の予約を取消に更新しました。`, 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');

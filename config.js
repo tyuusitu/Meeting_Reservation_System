@@ -37,7 +37,7 @@ window.APP_CONFIG = {
     logs: '操作ログ',
   },
   ABSENCE_REASONS: ['授業', 'アルバイト', '体調不良', '家庭の都合', 'その他'],
-  CSV_CACHE_TTL_MS: 30000,
+  CSV_CACHE_TTL_MS: 60000,
 };
 
 /**
@@ -79,4 +79,14 @@ window.APP_CONFIG.fetchSheetCsvText = async function fetchSheetCsvText(sheetKey,
     expiresAt: now + Number(this.CSV_CACHE_TTL_MS || 30000),
   };
   return text;
+};
+
+window.APP_CONFIG.invalidateSheetCsvCache = function invalidateSheetCsvCache(sheetKey) {
+  if (this._csvTextCache && this._csvTextCache[sheetKey]) {
+    delete this._csvTextCache[sheetKey];
+  }
+};
+
+window.APP_CONFIG.invalidateAllCsvCache = function invalidateAllCsvCache() {
+  this._csvTextCache = {};
 };
