@@ -12,8 +12,7 @@
   </style>
 </head>
 
-<body class="min-h-screen text-gray-800"
->
+<body class="min-h-screen text-gray-800">
 
   <!-- ローディングオーバーレイ -->
   <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
@@ -28,7 +27,7 @@
     <!-- ヒーロー -->
     <section class="bg-white/90 border border-slate-200 rounded-2xl shadow-md p-5 sm:p-6 flex flex-col gap-3">
       <h1 id="system-name" class="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">会議出欠登録</h1>
-      <p class="text-sm text-gray-500 leading-relaxed">名前を選ぶと、現在回答受付中の会議だけを表示します。未提出は集計上は出席扱いですが、欠席する場合は理由を必ず登録してください。</p>
+      <p class="text-sm text-gray-500 leading-relaxed">部局と名前を選ぶと、現在回答受付中の会議だけを表示します。欠席する場合は理由を必ず登録してください。</p>
       <div class="flex gap-2 flex-wrap">
         <a href="index.html" class="inline-flex items-center justify-center min-h-[44px] px-4 bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-sm transition">トップへ戻る</a>
         <a href="admin.html" class="inline-flex items-center justify-center min-h-[44px] px-4 bg-white border border-slate-200 text-gray-500 hover:bg-slate-50 rounded-xl font-bold text-sm transition">管理画面</a>
@@ -38,7 +37,14 @@
     <!-- メンバー選択 -->
     <section class="bg-white/90 border border-slate-200 rounded-2xl shadow-md p-5 sm:p-6 flex flex-col gap-4">
       <div class="font-extrabold text-gray-900 text-lg">メンバー選択</div>
-      <div class="grid sm:grid-cols-[1.2fr_.8fr] gap-4">
+      <div class="grid sm:grid-cols-2 gap-4">
+        <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
+          部局
+          <select id="department-select"
+            class="min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
+            <option value="">部局を選択してください</option>
+          </select>
+        </label>
         <label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
           名前
           <select id="member-select"
@@ -46,9 +52,9 @@
             <option value="">名前を選択してください</option>
           </select>
         </label>
-        <div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700 leading-relaxed flex items-start">
-          同名メンバーがいても内部ではメンバーIDで処理します。表示順はシートの「表示順」を使います。
-        </div>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700 leading-relaxed flex items-start">
+        先に部局を選び、その部局に所属する人から回答者を選択します。内部ではメンバーIDで処理します。
       </div>
       <div class="grid grid-cols-3 gap-3">
         <div class="border border-slate-200 rounded-xl p-3 bg-white">
@@ -78,23 +84,43 @@
   <script src="config.js"></script>
   <script>
     const CONFIG = window.APP_CONFIG;
+
+    /** @type {Object} 公開設定。 */
     let appSettings = {
       systemName: '会議出欠管理システム',
       otherReasonDetailRequired: true,
       absenceDetailAlwaysRequired: false,
     };
+    /** @type {Array<Object>} メンバー一覧。 */
     let members = [];
+    /** @type {Array<Object>} 会議一覧。 */
     let meetings = [];
+    /** @type {Array<Object>} 出欠回答一覧。 */
     let attendanceResponses = [];
+    /** @type {string} 選択中の部局名。 */
+    let selectedDepartment = '';
+    /** @type {string} 選択中のメンバーID。 */
     let selectedMemberId = '';
 
     // ============================================================
     // ローディング
     // ============================================================
+    /**
+     * ローディング表示を切り替えます。
+     *
+     * @param {string} text 表示文言。
+     * @return {void}
+     */
     function showLoading(text) {
       document.getElementById('loading-text').textContent = text || '処理中...';
       document.getElementById('loading-overlay').classList.remove('hidden');
     }
+
+    /**
+     * ローディング表示を閉じます。
+     *
+     * @return {void}
+     */
     function hideLoading() {
       document.getElementById('loading-overlay').classList.add('hidden');
     }
@@ -104,10 +130,18 @@
     // ============================================================
     document.addEventListener('DOMContentLoaded', async () => {
       await Promise.all([loadPublicSettings(), loadCsvData()]);
+      renderDepartments();
       renderMembers();
       renderMeetings();
+      document.getElementById('department-select').addEventListener('change', onDepartmentChange);
+      document.getElementById('member-select').addEventListener('change', onMemberChange);
     });
 
+    /**
+     * 公開設定を読み込みます。
+     *
+     * @return {Promise<void>} 完了Promise。
+     */
     async function loadPublicSettings() {
       try {
         const res = await fetch(`${CONFIG.GAS_API_URL}?action=get_public_settings`);
@@ -125,12 +159,25 @@
       document.getElementById('system-name').textContent = `${appSettings.systemName} - 出欠登録`;
     }
 
+    /**
+     * CSV データをまとめて読み込みます。
+     *
+     * @return {Promise<void>} 完了Promise。
+     */
     async function loadCsvData() {
       members = await fetchSheetCsv('members', memberMapper);
       meetings = await fetchSheetCsv('meetings', meetingMapper);
       attendanceResponses = await fetchSheetCsv('attendanceResponses', attendanceMapper);
     }
 
+    /**
+     * 指定シートの CSV を取得して変換します。
+     *
+     * @param {string} key シートキー。
+     * @param {Function} mapper 1行変換関数。
+     * @param {boolean} bustCache キャッシュ破棄有無。
+     * @return {Promise<Array<Object>>} 変換後配列。
+     */
     async function fetchSheetCsv(key, mapper, bustCache = false) {
       const url = CONFIG.buildSheetCsvUrl(key, bustCache);
       if (!url) {
@@ -146,6 +193,13 @@
       }
     }
 
+    /**
+     * CSV テキストをオブジェクト配列へ変換します。
+     *
+     * @param {string} text CSV文字列。
+     * @param {Function} mapper 1行変換関数。
+     * @return {Array<Object>} 変換後配列。
+     */
     function parseCsv(text, mapper) {
       const rows = parseCsvRows(text);
       if (rows.length < 2) return [];
@@ -156,6 +210,12 @@
         .filter(Boolean);
     }
 
+    /**
+     * CSV 文字列を二次元配列へ変換します。
+     *
+     * @param {string} text CSV文字列。
+     * @return {Array<Array<string>>} 行列データ。
+     */
     function parseCsvRows(text) {
       const rows = [];
       let row = [];
@@ -190,6 +250,13 @@
       return rows;
     }
 
+    /**
+     * ヘッダー配列と値配列から行オブジェクトを作ります。
+     *
+     * @param {Array<string>} headers ヘッダー一覧。
+     * @param {Array<string>} row 値一覧。
+     * @return {Object} 行オブジェクト。
+     */
     function rowToObject(headers, row) {
       const obj = {};
       headers.forEach((header, index) => {
@@ -198,6 +265,12 @@
       return obj;
     }
 
+    /**
+     * メンバーCSV行を変換します。
+     *
+     * @param {Object} row CSV行。
+     * @return {Object|null} メンバー情報。
+     */
     function memberMapper(row) {
       if (!row['メンバーID']) return null;
       return {
@@ -211,6 +284,12 @@
       };
     }
 
+    /**
+     * 会議CSV行を変換します。
+     *
+     * @param {Object} row CSV行。
+     * @return {Object|null} 会議情報。
+     */
     function meetingMapper(row) {
       if (!row['会議ID']) return null;
       return {
@@ -227,6 +306,12 @@
       };
     }
 
+    /**
+     * 出欠CSV行を変換します。
+     *
+     * @param {Object} row CSV行。
+     * @return {Object|null} 出欠情報。
+     */
     function attendanceMapper(row) {
       if (!row['回答ID']) return null;
       return {
@@ -244,24 +329,85 @@
     // ============================================================
     // 描画
     // ============================================================
+    /**
+     * 部局選択肢を描画します。
+     *
+     * @return {void}
+     */
+    function renderDepartments() {
+      const select = document.getElementById('department-select');
+      const departments = Array.from(new Set(
+        members
+          .filter((member) => member.status === '有効')
+          .map((member) => member.department)
+          .filter(Boolean)
+      )).sort((a, b) => a.localeCompare(b, 'ja'));
+      if (selectedDepartment && !departments.includes(selectedDepartment)) {
+        selectedDepartment = '';
+      }
+      select.innerHTML = '<option value="">部局を選択してください</option>' + departments.map((department) => `<option value="${escapeHtml(department)}">${escapeHtml(department)}</option>`).join('');
+      select.value = selectedDepartment;
+    }
+
+    /**
+     * メンバー選択肢を描画します。
+     *
+     * @return {void}
+     */
     function renderMembers() {
       const select = document.getElementById('member-select');
       const activeMembers = members
         .filter((member) => member.status === '有効')
+        .filter((member) => !selectedDepartment || member.department === selectedDepartment)
         .sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name, 'ja'));
-      select.innerHTML = '<option value="">名前を選択してください</option>' + activeMembers.map((member) => `<option value="${escapeHtml(member.memberId)}">${escapeHtml(member.name)} ${member.department ? `(${escapeHtml(member.department)})` : ''}</option>`).join('');
-      select.addEventListener('change', onMemberChange);
+      if (!activeMembers.some((member) => member.memberId === selectedMemberId)) {
+        selectedMemberId = '';
+      }
+      select.innerHTML = '<option value="">名前を選択してください</option>' + activeMembers.map((member) => `<option value="${escapeHtml(member.memberId)}">${escapeHtml(member.name)}</option>`).join('');
+      select.value = selectedMemberId;
+      updateSelectedMemberInfo();
     }
 
+    /**
+     * 部局変更時にメンバー一覧と会議一覧を更新します。
+     *
+     * @return {void}
+     */
+    function onDepartmentChange() {
+      selectedDepartment = document.getElementById('department-select').value;
+      selectedMemberId = '';
+      renderMembers();
+      renderMeetings();
+    }
+
+    /**
+     * メンバー変更時に会議一覧を更新します。
+     *
+     * @return {void}
+     */
     function onMemberChange() {
       selectedMemberId = document.getElementById('member-select').value;
+      updateSelectedMemberInfo();
+      renderMeetings();
+    }
+
+    /**
+     * 選択中メンバーの詳細表示を更新します。
+     *
+     * @return {void}
+     */
+    function updateSelectedMemberInfo() {
       const member = members.find((item) => item.memberId === selectedMemberId);
       document.getElementById('member-department').textContent = member ? member.department || '-' : '-';
       document.getElementById('member-grade').textContent = member ? member.grade || '-' : '-';
       document.getElementById('member-role').textContent = member ? member.role || '-' : '-';
-      renderMeetings();
     }
 
+    /**
+     * 会議一覧を描画します。
+     *
+     * @return {void}
+     */
     function renderMeetings() {
       const container = document.getElementById('meeting-list');
       const openMeetings = meetings
@@ -269,7 +415,7 @@
         .sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`));
 
       if (!selectedMemberId) {
-        container.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">先に名前を選択してください。</div>`;
+        container.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">${selectedDepartment ? '回答する人を選択してください。' : '先に部局を選択してください。'}</div>`;
         return;
       }
       if (openMeetings.length === 0) {
@@ -339,6 +485,12 @@
     // ============================================================
     // 出欠送信
     // ============================================================
+    /**
+     * 出欠回答を送信します。
+     *
+     * @param {string} meetingId 会議ID。
+     * @return {Promise<void>} 完了Promise。
+     */
     async function submitAttendance(meetingId) {
       const member = members.find((item) => item.memberId === selectedMemberId);
       if (!member) {
@@ -398,11 +550,23 @@
     // ============================================================
     // ユーティリティ
     // ============================================================
+    /**
+     * ラジオボタンの選択値を返します。
+     *
+     * @param {string} name ラジオグループ名。
+     * @return {string} 選択値。
+     */
     function getRadioValue(name) {
       const checked = document.querySelector(`input[name="${name}"]:checked`);
       return checked ? checked.value : '出席';
     }
 
+    /**
+     * 募集期間中か判定します。
+     *
+     * @param {Object} meeting 会議情報。
+     * @return {boolean} 募集期間中かどうか。
+     */
     function isOpenRecruitment(meeting) {
       const now = new Date();
       const start = new Date(meeting.recruitStartAt);
@@ -410,24 +574,54 @@
       return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= now && now <= end;
     }
 
+    /**
+     * 回答締切前か判定します。
+     *
+     * @param {string} value 回答締切日時。
+     * @return {boolean} 締切前かどうか。
+     */
     function isBeforeDeadline(value) {
       const deadline = new Date(value);
       return !Number.isNaN(deadline.getTime()) && new Date() <= deadline;
     }
 
+    /**
+     * 日付文字列を正規化します。
+     *
+     * @param {string} value 入力値。
+     * @return {string} 正規化後文字列。
+     */
     function normalizeDate(value) {
       return String(value || '').replace(/\//g, '-').slice(0, 10);
     }
 
+    /**
+     * 時刻文字列を正規化します。
+     *
+     * @param {string} value 入力値。
+     * @return {string} 正規化後文字列。
+     */
     function normalizeTime(value) {
       const match = String(value || '').trim().match(/^(\d{1,2}):(\d{1,2})/);
       return match ? `${String(match[1]).padStart(2, '0')}:${String(match[2]).padStart(2, '0')}` : String(value || '').trim();
     }
 
+    /**
+     * 日時文字列を正規化します。
+     *
+     * @param {string} value 入力値。
+     * @return {string} 正規化後文字列。
+     */
     function normalizeDateTime(value) {
       return String(value || '').trim().replace(/\//g, '-').replace(' ', 'T');
     }
 
+    /**
+     * 日付ラベルを整形します。
+     *
+     * @param {string} value 日付文字列。
+     * @return {string} 表示用日付。
+     */
     function formatDateLabel(value) {
       const date = new Date(`${value}T00:00:00`);
       if (Number.isNaN(date.getTime())) return value;
@@ -435,6 +629,12 @@
       return `${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]})`;
     }
 
+    /**
+     * 日時ラベルを整形します。
+     *
+     * @param {string} value 日時文字列。
+     * @return {string} 表示用日時。
+     */
     function formatDateTimeLabel(value) {
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return value;
@@ -442,6 +642,13 @@
       return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 
+    /**
+     * メッセージを表示します。
+     *
+     * @param {string} text 表示文言。
+     * @param {string} type 種別。
+     * @return {void}
+     */
     function showMessage(text, type) {
       const el = document.getElementById('global-message');
       el.className = type === 'error'
@@ -453,10 +660,22 @@
       showMessage.timer = window.setTimeout(() => el.classList.add('hidden'), 5000);
     }
 
+    /**
+     * HTML エスケープします。
+     *
+     * @param {string} text 入力値。
+     * @return {string} エスケープ後文字列。
+     */
     function escapeHtml(text) {
       return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    /**
+     * JavaScript 文字列としてエスケープします。
+     *
+     * @param {string} text 入力値。
+     * @return {string} エスケープ後文字列。
+     */
     function escapeJs(text) {
       return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
