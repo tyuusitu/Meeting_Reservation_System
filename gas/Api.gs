@@ -278,13 +278,18 @@ function handleSubmitAttendance_(payload) {
       writeOperationLog_('出欠更新', member.name, normalized.meetingId, `${meeting.meeting_name} の回答を更新しました。`, '成功', '');
     }
 
-    refreshAttendanceAggregations_();
     return {
       ok: true,
       answerId: record[0],
       updated: rowIndex !== -1,
       meetingId: normalized.meetingId,
       memberId: normalized.memberId,
+      attendance: normalized.attendance,
+      absenceReason: normalized.attendance === ATTENDANCE_OPTIONS.absence ? normalized.absenceReason : '',
+      absenceDetail: normalized.attendance === ATTENDANCE_OPTIONS.absence ? normalized.absenceDetail : '',
+      answeredAt: record[10],
+      updatedAt: record[11],
+      updateCount: record[12],
     };
   } finally {
     lock.releaseLock();

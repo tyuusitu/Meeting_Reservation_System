@@ -538,13 +538,37 @@
           hideLoading();
           return;
         }
-        attendanceResponses = await fetchSheetCsv('attendanceResponses', attendanceMapper, true);
+        upsertAttendanceResponse({
+          answerId: data.answerId,
+          meetingId: data.meetingId,
+          memberId: data.memberId,
+          name: member.name,
+          department: member.department,
+          grade: member.grade,
+          role: member.role,
+          attendance: data.attendance,
+          absenceReason: data.absenceReason,
+          absenceDetail: data.absenceDetail,
+          answeredAt: data.answeredAt,
+          updatedAt: data.updatedAt,
+          updateCount: data.updateCount,
+        });
         renderMeetings();
         showMessage(`${member.name} さんの回答を保存しました。`, 'success');
       } catch (_) {
         showMessage('通信エラーが発生しました。', 'error');
       }
       hideLoading();
+    }
+
+    function upsertAttendanceResponse(response) {
+      const nextResponse = response || {};
+      const index = attendanceResponses.findIndex((item) => item.meetingId === nextResponse.meetingId && item.memberId === nextResponse.memberId);
+      if (index === -1) {
+        attendanceResponses.push(nextResponse);
+        return;
+      }
+      attendanceResponses[index] = nextResponse;
     }
 
     // ============================================================

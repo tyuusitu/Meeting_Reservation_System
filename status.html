@@ -537,7 +537,10 @@
         if (data.ok) {
           closeCancelModal();
           sendLineNotification(reservationId, reason);
-          await loadReservations(true);
+          const target = allReservations.find((item) => item.reservation_id === reservationId);
+          if (target) {
+            target.status = 'キャンセル依頼';
+          }
           applyFilters();
           alert('キャンセル依頼を送信しました。管理者が確認後に対応します。');
         } else {

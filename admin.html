@@ -234,8 +234,10 @@
     // ============================================================
     // データ読み込み
     // ============================================================
-    async function reloadAll(showToast, bustCache = false) {
-      showLoading('データを読み込み中...');
+    async function reloadAll(showToast, bustCache = false, useOverlay = true) {
+      if (useOverlay) {
+        showLoading('データを読み込み中...');
+      }
       const results = await Promise.all([
         loadPublicSettings(),
         fetchSheetCsv('reservations', reservationMapper, bustCache),
@@ -263,7 +265,9 @@
         state.streaks,
       ] = results;
       renderAll();
-      hideLoading();
+      if (useOverlay) {
+        hideLoading();
+      }
       if (showToast) {
         showGlobal('最新データを再読み込みしました。', 'success');
       }
@@ -885,7 +889,7 @@
           hideLoading();
           return;
         }
-        await reloadAll(false, true);
+        reloadAll(false, true, false);
         clearMeetingForm();
         showGlobal('会議を保存しました。', 'success');
       } catch (_) {
@@ -908,7 +912,7 @@
           hideLoading();
           return;
         }
-        await reloadAll(false, true);
+        reloadAll(false, true, false);
         showGlobal('集計を更新しました。', 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
@@ -942,7 +946,7 @@
           ['settings', 'rooms'].forEach((key) => CONFIG.invalidateSheetCsvCache(key));
         }
         await loadPublicSettings();
-        await reloadAll(false, true);
+        reloadAll(false, true, false);
         showGlobal(`${settingKey} を更新しました。`, 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
@@ -1000,7 +1004,7 @@
           return;
         }
         state.selectedReservationIds = new Set();
-        await reloadAll(false, true);
+        reloadAll(false, true, false);
         showGlobal(`${data.deleted.length}件の予約を取消に更新しました。`, 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');

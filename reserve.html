@@ -394,7 +394,6 @@
       btn.disabled = true;
       showLoading('予約を送信中...');
       const { common, reservations } = collectFormData();
-      await loadReservations(true);
       const dupErrors = checkDuplicates(reservations);
       if (dupErrors.length > 0) {
         closeConfirm();
@@ -412,8 +411,8 @@
         const data = await res.json();
         if (data.ok) {
           closeConfirm();
+          mergeReservations(data.reservations || []);
           showDone(data.reservations);
-          await loadReservations(true);
         } else {
           closeConfirm();
           showGlobalError(data.error || '登録に失敗しました。');
@@ -438,6 +437,29 @@
       document.getElementById('done-list').innerHTML = (reservations || []).map(r =>
         `<div class="py-2">${esc(r.meeting_name)} — ${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)} / ${esc(r.room_name)}</div>`
       ).join('');
+    }
+
+    function mergeReservations(reservations) {
+      const incoming = Array.isArray(reservations) ? reservations : [];
+      if (!incoming.length) return;
+      const existingIds = new Set(allReservations.map((item) => item.reservation_id));
+      incoming.forEach((item) => {
+        if (!existingIds.has(item.reservation_id)) {
+          allReservations.push({
+            reservation_id: item.reservation_id,
+            organization_name: '',
+            meeting_name: item.meeting_name,
+            user_name: '',
+            room_id: item.room_id,
+            room_name: item.room_name,
+            usage_date: item.usage_date,
+            start_time: item.start_time,
+            end_time: item.end_time,
+            status: '有効',
+          });
+        }
+      });
+      reservationsLoaded = true;
     }
 
     function resetReserveForm() {
