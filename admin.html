@@ -122,7 +122,8 @@
         meetings:     { keyword: '', status: '' },
         attendance:   { keyword: '', department: '', answer: '' },
         members:      { keyword: '', department: '' },
-        streaks:      { keyword: '', level: '' },
+        departments:  { meetingId: '' },
+        streaks:      { keyword: '', minLevel: '' },
         reasons:      { keyword: '' },
         reservations: { keyword: '', roomId: '', status: '' },
       },
@@ -536,6 +537,7 @@
         meetings: renderMeetingsTab,
         attendance: renderAttendanceTab,
         members: renderMembersTab,
+        departments: renderDepartmentsTab,
         streaks: renderStreaksTab,
         reasons: renderReasonsTab,
         reservations: renderReservationsTab,
@@ -547,7 +549,8 @@
       Object.keys(state.filters[tab]).forEach((k) => { state.filters[tab][k] = ''; });
       const renderMap = {
         meetings: renderMeetingsTab, attendance: renderAttendanceTab, members: renderMembersTab,
-        streaks: renderStreaksTab, reasons: renderReasonsTab, reservations: renderReservationsTab,
+        departments: renderDepartmentsTab, streaks: renderStreaksTab, reasons: renderReasonsTab,
+        reservations: renderReservationsTab,
       };
       if (renderMap[tab]) renderMap[tab]();
     }
@@ -750,31 +753,90 @@
       `;
     }
 
+    function computeDepartmentStatsByMeeting(meetingId) {
+      const activeMembers = state.members.filter((m) => m.status === '有効');
+      const responses = state.attendanceResponses.filter((r) => r.meetingId === meetingId);
+      const responseMap = new Map(responses.map((r) => [r.memberId, r]));
+      const deptMap = new Map();
+      activeMembers.forEach((member) => {
+        if (!member.department) return;
+        if (!deptMap.has(member.department)) {
+          deptMap.set(member.department, { department: member.department, memberCount: 0, attendCount: 0, absenceCount: 0, unansweredCount: 0 });
+        }
+        const dept = deptMap.get(member.department);
+        dept.memberCount += 1;
+        const resp = responseMap.get(member.memberId);
+        if (resp && resp.attendance === '欠席') dept.absenceCount += 1;
+        else if (resp && resp.attendance === '出席') dept.attendCount += 1;
+        else dept.unansweredCount += 1;
+      });
+      return [...deptMap.values()]
+        .sort((a, b) => a.department.localeCompare(b.department, 'ja'))
+        .map((d) => ({
+          ...d,
+          targetMeetingCount: 1,
+          effectiveAttendCount: d.attendCount + d.unansweredCount,
+          attendanceRate: d.memberCount ? (d.attendCount + d.unansweredCount) / d.memberCount : 0,
+          absenceRate: d.memberCount ? d.absenceCount / d.memberCount : 0,
+        }));
+    }
+
     function renderDepartmentsTab() {
+      const f = state.filters.departments;
+      const meetingOptions = state.meetings
+        .filter((m) => m.status === '有効')
+        .sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`));
+      const rows = f.meetingId
+        ? computeDepartmentStatsByMeeting(f.meetingId)
+        : state.departmentAggregations;
+      const selectedMeeting = f.meetingId ? state.meetings.find((m) => m.meetingId === f.meetingId) : null;
+      const subtitle = selectedMeeting
+        ? `${escapeHtml(selectedMeeting.meetingName)}（${escapeHtml(formatDateLabel(selectedMeeting.meetingDate))}）`
+        : '全会議の通算集計';
+      const meetingSelectHtml = `<label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">会議で絞り込む<select onchange="setFilter('departments','meetingId',this.value)" class="min-h-[36px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"><option value="">全会議（通算）</option>${meetingOptions.map((m) => `<option value="${escapeAttr(m.meetingId)}" ${m.meetingId === f.meetingId ? 'selected' : ''}>${escapeHtml(m.meetingName)} / ${escapeHtml(formatDateLabel(m.meetingDate))}</option>`).join('')}</select></label>`;
       document.getElementById('tab-departments').innerHTML = `
         <div class="${panelCls}">
-          <div class="${panelTitleCls}">部局別集計</div>
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="${panelTitleCls}">部局別集計</div>
+            <span class="text-xs text-gray-400 self-end">${subtitle}</span>
+          </div>
+          <div class="flex flex-wrap gap-3 items-end p-3 bg-slate-50 rounded-xl border border-slate-100">
+            ${meetingSelectHtml}
+            ${f.meetingId ? `<button type="button" onclick="clearFilters('departments')" class="self-end min-h-[36px] px-3 bg-white border border-slate-200 text-gray-500 hover:bg-slate-100 rounded-xl text-xs font-bold transition">クリア</button>` : ''}
+          </div>
           <div class="${tableWrapCls}">${renderSimpleTable(
-            ['部局', '所属人数', '対象会議数', '出席扱い回数', '欠席回数', '未提出回数', '参加率', '欠席率'],
-            state.departmentAggregations.map((item) => [item.department, item.memberCount, item.targetMeetingCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), formatPercent(item.absenceRate)])
+            ['部局', '所属人数', f.meetingId ? '出席' : '出席扱い回数', '欠席回数', '未提出回数', '参加率', '欠席率'],
+            rows.map((item) => [item.department, item.memberCount, item.effectiveAttendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate), formatPercent(item.absenceRate)])
           )}</div>
         </div>
       `;
     }
 
+    // 注意レベルの優先度（高いほど重大）
+    const LEVEL_RANK = { '通常': 0, '注意': 1, '要確認': 2 };
+
+    function meetsMinLevel(itemLevel, minLevel) {
+      if (!minLevel) return true;
+      return (LEVEL_RANK[itemLevel] || 0) >= (LEVEL_RANK[minLevel] || 0);
+    }
+
     function renderStreaksTab() {
       const f = state.filters.streaks;
-      const levelOptions = [...new Set(state.streaks.map((s) => s.alertLevel).filter(Boolean))].sort();
+      // 実際に存在するレベルを収集し、優先度順に並べる
+      const existingLevels = [...new Set(state.streaks.map((s) => s.alertLevel).filter(Boolean))]
+        .sort((a, b) => (LEVEL_RANK[a] || 0) - (LEVEL_RANK[b] || 0));
+      const minLevelOptions = existingLevels.map((l) => ({ value: l, label: `${l}以上` }));
       const filtered = state.streaks.filter((item) =>
         matchesKeyword(f.keyword, item.name, item.department) &&
-        (!f.level || item.alertLevel === f.level)
+        meetsMinLevel(item.alertLevel, f.minLevel)
       );
+      const minLevelSelectHtml = `<label class="flex flex-col gap-1 text-xs font-semibold text-gray-500">注意レベル<select onchange="setFilter('streaks','minLevel',this.value)" class="min-h-[36px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"><option value="">すべて</option>${minLevelOptions.map((o) => `<option value="${escapeAttr(o.value)}" ${o.value === f.minLevel ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('')}</select></label>`;
       document.getElementById('tab-streaks').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">連続欠席チェック</div>
           ${renderFilterBar('streaks',
             renderSearchInput('streaks', 'keyword', 'キーワード検索', '名前・部局で検索', f.keyword) +
-            renderSearchSelect('streaks', 'level', '注意レベル', levelOptions, f.level),
+            minLevelSelectHtml,
             filtered.length, state.streaks.length
           )}
           <div class="${tableWrapCls}">${renderSimpleTable(
