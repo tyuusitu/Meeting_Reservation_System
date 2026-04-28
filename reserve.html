@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,96 +7,103 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .hidden { display: none !important; }
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    input[type="date"], input[type="time"] { color-scheme: light; }
+    body { -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
 
-<body class="bg-slate-50 text-gray-800 min-h-screen">
+<body class="bg-gray-50 min-h-screen text-gray-800">
 
   <!-- ローディングオーバーレイ -->
   <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
-      <div class="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-      <p id="loading-text" class="text-sm text-gray-600 font-semibold">処理中...</p>
+    <div class="bg-white rounded-2xl px-10 py-7 flex flex-col items-center gap-3 shadow-xl">
+      <div class="w-9 h-9 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin"></div>
+      <p id="loading-text" class="text-sm text-gray-500">処理中...</p>
     </div>
   </div>
 
-  <div class="max-w-2xl mx-auto px-4 pb-16">
+  <div class="max-w-lg mx-auto px-4">
     <!-- ヘッダー -->
-    <div class="sticky top-0 z-20 -mx-4 px-4 py-3 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200 mb-5">
-      <div class="flex items-center justify-between gap-2">
-        <h1 id="system-name" class="text-lg font-bold leading-tight text-gray-900">会議室予約</h1>
-        <nav class="flex items-center gap-1.5 flex-shrink-0">
-          <a href="index.html" class="text-xs font-semibold text-blue-600 border border-blue-300 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition">メニュー</a>
-          <a href="status.html" class="text-xs font-semibold text-blue-600 border border-blue-300 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition">利用状況</a>
-          <a href="admin.html" class="text-xs text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:text-blue-600 transition">管理者</a>
-        </nav>
-      </div>
+    <div class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur pt-4 pb-3 flex items-center justify-between border-b border-gray-200 mb-5">
+      <h1 id="system-name" class="text-lg font-bold text-gray-900">会議室予約</h1>
+      <a href="status.html" class="text-sm font-medium text-blue-600">利用状況 →</a>
     </div>
 
-    <!-- 読み込み中 -->
-    <div id="loading-msg" class="text-center py-12 text-gray-400 text-sm">読み込み中...</div>
+    <div id="loading-msg" class="py-16 text-center text-gray-400 text-sm">読み込み中...</div>
 
     <!-- 予約フォーム -->
-    <div id="screen-reserve" class="hidden flex flex-col gap-4">
+    <div id="screen-reserve" class="hidden pb-10 space-y-4">
+
       <!-- 予約者情報 -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
-        <div class="font-bold text-gray-900 mb-3">予約者情報</div>
-        <div id="common-fields" class="flex flex-col gap-3">
-          <div id="field-org-wrap">
-            <label id="label-org" class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
-              団体名&nbsp;<span class="text-red-500 inline">*</span>
-              <input type="text" id="input-org" autocomplete="organization"
-                class="min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
-              <span class="error-msg text-red-500 text-xs font-normal hidden" id="err-org"></span>
-            </label>
-          </div>
-          <div id="field-name-wrap">
-            <label id="label-name" class="flex flex-col gap-1 text-xs font-semibold text-gray-500">
-              お名前&nbsp;<span class="text-red-500 inline">*</span>
-              <input type="text" id="input-name" autocomplete="name"
-                class="min-h-[46px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full">
-              <span class="error-msg text-red-500 text-xs font-normal hidden" id="err-name"></span>
-            </label>
-          </div>
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider">予約者情報</h2>
+        <div id="field-org-wrap">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            <span id="label-org-text">団体名</span> <span class="text-red-500">*</span>
+          </label>
+          <input type="text" id="input-org" autocomplete="organization"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <p class="error-msg hidden text-xs text-red-500 mt-1" id="err-org"></p>
+        </div>
+        <div id="field-name-wrap">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            <span id="label-name-text">お名前</span> <span class="text-red-500">*</span>
+          </label>
+          <input type="text" id="input-name" autocomplete="name"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <p class="error-msg hidden text-xs text-red-500 mt-1" id="err-name"></p>
         </div>
       </div>
 
       <!-- グローバルエラー -->
       <div id="global-error" class="hidden bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm"></div>
 
-      <!-- 予約カード一覧 -->
+      <!-- 予約カード -->
       <div id="reserve-cards"></div>
 
-      <!-- 追加・送信 -->
-      <div class="flex flex-wrap gap-2">
-        <button onclick="addReserveCard()" class="flex-1 min-w-[140px] min-h-[46px] bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl px-4 font-bold text-sm transition">＋ 予約を追加</button>
-        <button id="btn-confirm" onclick="goToConfirm()" class="flex-1 min-w-[140px] min-h-[46px] bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 font-bold text-sm transition shadow-sm">確認へ進む</button>
+      <!-- ボタン -->
+      <div class="flex gap-3">
+        <button type="button" onclick="addReserveCard()"
+          class="flex-1 py-3.5 bg-gray-100 active:bg-gray-200 text-gray-700 rounded-2xl font-semibold text-sm transition">
+          ＋ 予約を追加
+        </button>
+        <button type="button" onclick="goToConfirm()"
+          class="flex-[2] py-3.5 bg-blue-600 active:bg-blue-700 text-white rounded-2xl font-bold text-sm shadow-sm transition">
+          確認へ進む →
+        </button>
       </div>
     </div>
 
     <!-- 完了画面 -->
-    <div id="screen-done" class="hidden">
-      <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex flex-col gap-3">
-        <h3 class="font-bold text-emerald-700 text-base">予約が完了しました</h3>
-        <div id="done-list" class="flex flex-col divide-y divide-slate-200"></div>
-        <div class="flex flex-wrap gap-2 mt-2">
-          <a href="status.html" class="flex-1 flex items-center justify-center min-h-[46px] bg-white border border-blue-500 text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50 transition">利用状況を確認</a>
-          <button onclick="resetReserveForm()" class="flex-1 min-h-[46px] bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition">続けて予約</button>
+    <div id="screen-done" class="hidden pb-10">
+      <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-3">
+        <p class="font-bold text-emerald-700">予約が完了しました</p>
+        <div id="done-list" class="divide-y divide-emerald-100 text-sm text-gray-700"></div>
+        <div class="flex gap-3 pt-2">
+          <a href="status.html"
+            class="flex-1 text-center py-3 bg-white border border-blue-400 text-blue-600 rounded-xl font-semibold text-sm">
+            利用状況を確認
+          </a>
+          <button type="button" onclick="resetReserveForm()"
+            class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm">
+            続けて予約
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 確認モーダル -->
-  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-5 w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col gap-4 shadow-2xl">
-      <h2 class="text-lg font-bold text-gray-900">予約内容の確認</h2>
-      <div id="confirm-content"></div>
-      <div class="flex flex-wrap gap-2">
-        <button onclick="closeConfirm()" class="flex-1 min-h-[46px] bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-bold text-sm transition">戻る</button>
-        <button id="btn-submit" onclick="submitReservations()" class="flex-1 min-h-[46px] bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition shadow-sm">予約確定</button>
+  <!-- 確認モーダル（スマホ: 下から / PC: 中央） -->
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-end sm:items-center justify-center">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl p-5 w-full sm:max-w-lg max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl">
+      <h2 class="text-base font-bold text-gray-900">予約内容の確認</h2>
+      <div id="confirm-content" class="text-sm"></div>
+      <div class="flex gap-3 pb-2">
+        <button type="button" onclick="closeConfirm()"
+          class="flex-1 py-3.5 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm">戻る</button>
+        <button type="button" id="btn-submit" onclick="submitReservations()"
+          class="flex-[2] py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-sm disabled:opacity-50">
+          予約確定
+        </button>
       </div>
     </div>
   </div>
@@ -129,44 +135,41 @@
       applyConfig(defaultConfig());
       document.getElementById('loading-msg').classList.add('hidden');
       document.getElementById('screen-reserve').classList.remove('hidden');
-      Promise.allSettled([loadConfig(), loadReservations()]).then(() => {
-        reservationsLoaded = true;
-      });
+      Promise.allSettled([loadConfig(), loadReservations()]);
     });
 
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
 
-    // ============================================================
-    // GAS から設定取得
-    // ============================================================
+    function defaultStartTime() {
+      const s = appConfig ? appConfig.settings : defaultConfig().settings;
+      const now = new Date();
+      const [bh, bm] = (s.businessStartTime || '09:00').split(':').map(Number);
+      let h = now.getHours(), m = Math.ceil(now.getMinutes() / 5) * 5;
+      if (m >= 60) { h++; m = 0; }
+      if (h * 60 + m < bh * 60 + bm) { h = bh; m = bm; }
+      return minToTime(h * 60 + m);
+    }
+
     async function loadConfig() {
       try {
-        const url = CONFIG.GAS_API_URL + '?action=get_config';
-        const res = await fetch(url);
+        const res = await fetch(CONFIG.GAS_API_URL + '?action=get_config');
         const data = await res.json();
-        if (data.ok) {
-          appConfig = data;
-          applyConfig(data);
-        }
+        if (data.ok) { appConfig = data; applyConfig(data); }
       } catch (e) {
-        console.warn('設定の取得に失敗しました（デフォルト値を使用）', e);
+        console.warn('設定取得失敗、デフォルト使用', e);
         appConfig = defaultConfig();
-        applyConfig(appConfig);
       }
     }
 
     function defaultConfig() {
       return {
-        ok: true,
-        today: todayStr(),
+        ok: true, today: todayStr(),
         settings: {
           systemName: '会議室予約システム',
-          businessStartTime: '09:00',
-          businessEndTime: '22:00',
-          timeSlotMinutes: 5,
-          maxReservationsPerSubmit: 10,
+          businessStartTime: '09:00', businessEndTime: '22:00',
+          timeSlotMinutes: 5, maxReservationsPerSubmit: 10,
           labels: { organizationName: '団体名', userName: 'お名前', meetingName: '会議名', room: '会議室' },
           fieldConfig: { organizationName: true, userName: true },
         },
@@ -174,65 +177,53 @@
       };
     }
 
-    function applyConfig(cfg) {
-      const s = cfg.settings;
-      document.getElementById('system-name').textContent = s.systemName + ' - 予約';
+    function applyConfig(data) {
+      const s = data.settings;
+      document.getElementById('system-name').textContent = s.systemName;
       document.title = s.systemName + ' - 予約';
-      document.getElementById('label-org').childNodes[0].textContent = s.labels.organizationName + ' ';
-      document.getElementById('label-name').childNodes[0].textContent = s.labels.userName + ' ';
+      document.getElementById('label-org-text').textContent = s.labels.organizationName;
+      document.getElementById('label-name-text').textContent = s.labels.userName;
       if (!s.fieldConfig.organizationName) document.getElementById('field-org-wrap').classList.add('hidden');
       if (!s.fieldConfig.userName) document.getElementById('field-name-wrap').classList.add('hidden');
       if (reserveCards.length === 0) addReserveCard();
+      else renderReserveCards();
     }
 
     // ============================================================
     // CSV 取得
     // ============================================================
     async function loadReservations(bustCache = false) {
-      const url = CONFIG.buildSheetCsvUrl('reservations', bustCache);
       try {
-        const text = CONFIG.fetchSheetCsvText ? await CONFIG.fetchSheetCsvText('reservations', bustCache) : await fetch(url).then((res) => res.text());
+        const text = CONFIG.fetchSheetCsvText
+          ? await CONFIG.fetchSheetCsvText('reservations', bustCache)
+          : await fetch(CONFIG.buildSheetCsvUrl('reservations', bustCache)).then(r => r.text());
         allReservations = parseCSV(text).filter(r =>
           r.reservation_id && (r.status === '有効' || r.status === 'キャンセル依頼')
         );
         reservationsLoaded = true;
       } catch (e) {
-        console.warn('予約データの取得に失敗しました', e);
         allReservations = [];
         reservationsLoaded = true;
       }
     }
 
-    // ============================================================
-    // CSV パーサー
-    // ============================================================
-    const CSV_NEEDED = new Set(['予約ID', '団体名', '会議名', 'お名前', '会議室ID', '会議室名', '利用日', '開始時間', '終了時間', 'ステータス']);
     const CSV_KEY_MAP = {
-      '予約ID': 'reservation_id',
-      '団体名': 'organization_name', '会議名': 'meeting_name', 'お名前': 'user_name',
-      '会議室ID': 'room_id', '会議室名': 'room_name', '利用日': 'usage_date',
-      '開始時間': 'start_time', '終了時間': 'end_time', 'ステータス': 'status',
+      '予約ID': 'reservation_id', '団体名': 'organization_name', '会議名': 'meeting_name',
+      'お名前': 'user_name', '会議室ID': 'room_id', '会議室名': 'room_name',
+      '利用日': 'usage_date', '開始時間': 'start_time', '終了時間': 'end_time', 'ステータス': 'status',
     };
 
     function parseCSV(text) {
       const lines = text.trim().split('\n');
       if (lines.length < 2) return [];
       const headers = parseCSVRow(lines[0]);
-      const colMap = [];
-      headers.forEach((h, i) => {
-        if (CSV_NEEDED.has(h)) colMap.push({ i, key: CSV_KEY_MAP[h] });
-      });
-      const result = [];
-      for (let li = 1; li < lines.length; li++) {
-        if (!lines[li].trim()) continue;
-        const vals = parseCSVRow(lines[li]);
+      const colMap = headers.map((h, i) => CSV_KEY_MAP[h] ? { i, key: CSV_KEY_MAP[h] } : null).filter(Boolean);
+      return lines.slice(1).filter(l => l.trim()).map(line => {
+        const vals = parseCSVRow(line);
         const obj = {};
-        for (let ci = 0; ci < colMap.length; ci++) {
-          obj[colMap[ci].key] = (vals[colMap[ci].i] || '').trim();
-        }
-        if (obj.reservation_id) result.push(obj);
-      }
-      return result;
+        colMap.forEach(({ i, key }) => obj[key] = (vals[i] || '').trim());
+        return obj.reservation_id ? obj : null;
+      }).filter(Boolean);
     }
 
     function parseCSVRow(line) {
@@ -251,141 +242,143 @@
     }
 
     // ============================================================
-    // 予約フォーム
+    // 予約カード
     // ============================================================
     function addReserveCard() {
-      const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
-      if (reserveCards.length >= cfg.maxReservationsPerSubmit) {
-        alert(`一度に登録できる予約は${cfg.maxReservationsPerSubmit}件までです。`);
+      const s = appConfig ? appConfig.settings : defaultConfig().settings;
+      if (reserveCards.length >= s.maxReservationsPerSubmit) {
+        alert(`一度に${s.maxReservationsPerSubmit}件までです。`);
         return;
       }
-      const id = ++cardIdCounter;
-      reserveCards.push(id);
+      reserveCards.push(++cardIdCounter);
       renderReserveCards();
     }
 
     function removeReserveCard(id) {
       reserveCards = reserveCards.filter(c => c !== id);
-      if (reserveCards.length === 0) addReserveCard();
+      if (!reserveCards.length) addReserveCard();
       else renderReserveCards();
     }
 
-    const inputCls = 'w-full min-h-[44px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition';
-    const labelCls = 'flex flex-col gap-1 text-xs font-semibold text-gray-500';
-
     function renderReserveCards() {
-      const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
-      const container = document.getElementById('reserve-cards');
-      container.innerHTML = reserveCards.map((id, idx) => `
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col gap-3 mb-3" id="card-${id}">
+      const s = appConfig ? appConfig.settings : defaultConfig().settings;
+      const startDef = defaultStartTime();
+      const endDef = minToTime(Math.min(toMin(startDef) + 60, toMin(s.businessEndTime || '22:00')));
+      const startOpts = generateTimeOptions(toMin(s.businessStartTime || '09:00'), toMin(s.businessEndTime || '22:00') - 5, startDef);
+
+      document.getElementById('reserve-cards').innerHTML = reserveCards.map((id, idx) => `
+        <div id="card-${id}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 mb-3">
           <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">${idx + 1}件目</span>
-            ${reserveCards.length > 1 ? `<button class="text-xs bg-slate-100 hover:bg-red-50 hover:text-red-600 text-gray-500 rounded-lg px-3 py-1.5 font-semibold transition" onclick="removeReserveCard(${id})">削除</button>` : ''}
+            <span class="text-sm font-bold text-gray-800">${reserveCards.length > 1 ? `${idx + 1}件目` : '予約内容'}</span>
+            ${reserveCards.length > 1 ? `<button onclick="removeReserveCard(${id})" class="text-xs text-gray-400 hover:text-red-500 transition py-1 px-2">削除</button>` : ''}
           </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">利用日 <span class="text-red-500">*</span></label>
+            <input type="date" id="card-date-${id}" onchange="searchAvailable(${id})"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-date-${id}"></p>
+          </div>
+
           <div class="grid grid-cols-2 gap-3">
-            <label class="${labelCls}" onclick="openInputPicker('card-date-${id}', event)">
-              利用日&nbsp;<span class="text-red-500 inline">*</span>
-              <div class="border border-slate-200 rounded-xl bg-white px-3 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition cursor-pointer min-h-[44px] flex flex-col justify-center">
-                <input type="date" id="card-date-${id}" onchange="searchAvailable(${id})" class="w-full text-sm text-gray-900 bg-transparent border-0 outline-none cursor-pointer font-normal">
-              </div>
-              <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-date-${id}"></span>
-            </label>
-            <div></div>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <label class="${labelCls}">
-              開始時間&nbsp;<span class="text-red-500 inline">*</span>
-              <select id="card-start-${id}" onchange="updateEndTimeOptions(${id}); searchAvailable(${id})" class="${inputCls}">
-                ${generateTimeOptions(toMin(cfg.businessStartTime || '09:00'), toMin(cfg.businessEndTime || '22:00') - 5, '')}
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">開始時間 <span class="text-red-500">*</span></label>
+              <select id="card-start-${id}" onchange="updateEndTimeOptions(${id}); searchAvailable(${id})"
+                class="w-full border border-gray-200 rounded-xl px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                ${startOpts}
               </select>
-              <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-start-${id}"></span>
-            </label>
-            <label class="${labelCls}">
-              終了時間&nbsp;<span class="text-red-500 inline">*</span>
-              <select id="card-end-${id}" onchange="searchAvailable(${id})" class="${inputCls}">
-                <option value="">開始時間を先に選択してください</option>
+              <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-start-${id}"></p>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">終了時間 <span class="text-red-500">*</span></label>
+              <select id="card-end-${id}" onchange="searchAvailable(${id})"
+                class="w-full border border-gray-200 rounded-xl px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                ${generateTimeOptions(toMin(startDef) + 5, toMin(s.businessEndTime || '22:00'), endDef)}
               </select>
-              <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-end-${id}"></span>
-            </label>
+              <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-end-${id}"></p>
+            </div>
           </div>
-          <label class="${labelCls}">
-            ${esc(cfg.labels.room)}&nbsp;<span class="text-red-500 inline">*</span>
-            <select id="card-room-${id}" class="${inputCls}">
-              <option value="">日付・時間を先に入力してください</option>
-            </select>
-            <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-room-${id}"></span>
-          </label>
-          <label class="${labelCls}">
-            ${esc(cfg.labels.meetingName)}&nbsp;<span class="text-red-500 inline">*</span>
-            <input type="text" id="card-meeting-${id}" placeholder="${esc(cfg.labels.meetingName)}を入力" class="${inputCls}">
-            <span class="error-msg text-red-500 text-xs font-normal hidden" id="card-err-meeting-${id}"></span>
-          </label>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">${esc(s.labels.room)} <span class="text-red-500">*</span></label>
+            <div id="card-rooms-${id}" class="text-sm text-gray-400 py-1">利用日を選択すると空き室を表示します</div>
+            <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-room-${id}"></p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">${esc(s.labels.meetingName)} <span class="text-red-500">*</span></label>
+            <input type="text" id="card-meeting-${id}" placeholder="${esc(s.labels.meetingName)}を入力"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-meeting-${id}"></p>
+          </div>
         </div>
       `).join('');
     }
 
-    async function searchAvailable(id) {
+    function searchAvailable(id) {
       const date = document.getElementById(`card-date-${id}`).value;
       const start = document.getElementById(`card-start-${id}`).value;
       const end = document.getElementById(`card-end-${id}`).value;
-      const sel = document.getElementById(`card-room-${id}`);
-      if (!date || !start || !end) return;
-      if (toMin(start) >= toMin(end)) return;
+      const container = document.getElementById(`card-rooms-${id}`);
+
+      if (!date || !start || !end || toMin(start) >= toMin(end)) {
+        container.innerHTML = '<span class="text-gray-400 text-sm">利用日・時間を選択すると空き室を表示します</span>';
+        return;
+      }
       if (!reservationsLoaded) {
-        sel.innerHTML = '<option value="">予約情報を読み込み中です...</option>';
-        sel.disabled = true;
+        container.innerHTML = '<span class="text-gray-400 text-sm">予約情報を読み込み中...</span>';
         return;
       }
 
-      sel.innerHTML = '<option value="">検索中...</option>';
-      sel.disabled = true;
-
       const rooms = appConfig ? appConfig.rooms : [];
-      const busy = new Set(
+      if (!rooms.length) {
+        container.innerHTML = '<span class="text-gray-400 text-sm">会議室情報がありません</span>';
+        return;
+      }
+
+      const busyIds = new Set(
         allReservations.filter(r =>
           r.usage_date === date && r.status === '有効' &&
           timeOverlap(r.start_time, r.end_time, start, end)
         ).map(r => r.room_id)
       );
 
-      const available = rooms.filter(r => !busy.has(r.room_id));
-      sel.disabled = false;
-      sel.innerHTML = available.length === 0
-        ? '<option value="">空き会議室なし</option>'
-        : '<option value="">会議室を選択</option>' + available.map(r =>
-          `<option value="${esc(r.room_id)}">${esc(r.room_name)}</option>`
-        ).join('');
+      container.innerHTML = `<div class="grid grid-cols-2 gap-2">${rooms.map(r => {
+        const busy = busyIds.has(r.room_id);
+        if (busy) {
+          return `<div class="px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-center opacity-40 cursor-not-allowed">
+            <div class="text-sm font-semibold text-gray-500">${esc(r.room_name)}</div>
+            <div class="text-xs text-gray-400 mt-0.5">予約済</div>
+          </div>`;
+        }
+        return `<label class="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition active:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+          <input type="radio" name="room-${id}" value="${esc(r.room_id)}" class="accent-blue-600 w-4 h-4 flex-shrink-0">
+          <span class="text-sm font-semibold text-gray-800">${esc(r.room_name)}</span>
+        </label>`;
+      }).join('')}</div>`;
     }
 
     // ============================================================
-    // 確認画面
+    // 確認・送信
     // ============================================================
     function goToConfirm() {
       clearErrors();
       const { ok, common, reservations, errors } = collectFormData();
-      if (!ok) {
-        showErrors(errors);
-        return;
-      }
+      if (!ok) { showErrors(errors); return; }
 
-      const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
-      const thCls = 'border border-slate-200 bg-slate-50 px-3 py-2 text-left font-semibold text-xs text-gray-600 w-1/3';
-      const tdCls = 'border border-slate-200 px-3 py-2 text-sm text-gray-800';
-
-      let html = `<h3 class="text-sm font-bold text-gray-700 mb-2">予約者情報</h3>
-        <table class="w-full border-collapse text-sm mb-4"><tbody>`;
-      if (cfg.fieldConfig.organizationName) html += `<tr><th class="${thCls}">${esc(cfg.labels.organizationName)}</th><td class="${tdCls}">${esc(common.organization_name)}</td></tr>`;
-      if (cfg.fieldConfig.userName) html += `<tr><th class="${thCls}">${esc(cfg.labels.userName)}</th><td class="${tdCls}">${esc(common.user_name)}</td></tr>`;
-      html += '</tbody></table>';
+      const s = (appConfig || defaultConfig()).settings;
+      let html = `<div class="space-y-2 pb-3 border-b border-gray-100">`;
+      if (s.fieldConfig.organizationName) html += `<div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">${esc(s.labels.organizationName)}</span><span class="font-semibold">${esc(common.organization_name)}</span></div>`;
+      if (s.fieldConfig.userName) html += `<div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">${esc(s.labels.userName)}</span><span class="font-semibold">${esc(common.user_name)}</span></div>`;
+      html += `</div>`;
 
       reservations.forEach((r, i) => {
-        html += `<h3 class="text-sm font-bold text-gray-700 mt-4 mb-2">${i + 1}件目</h3>
-          <table class="w-full border-collapse text-sm"><tbody>
-            <tr><th class="${thCls}">${esc(cfg.labels.meetingName)}</th><td class="${tdCls}">${esc(r.meeting_name)}</td></tr>
-            <tr><th class="${thCls}">利用日</th><td class="${tdCls}">${fmtDate(r.usage_date)}</td></tr>
-            <tr><th class="${thCls}">時間</th><td class="${tdCls}">${esc(r.start_time)}〜${esc(r.end_time)}</td></tr>
-            <tr><th class="${thCls}">${esc(cfg.labels.room)}</th><td class="${tdCls}">${esc(r.room_name)}</td></tr>
-          </tbody></table>`;
+        html += `<div class="space-y-2 py-3 ${i < reservations.length - 1 ? 'border-b border-gray-100' : ''}">
+          ${reservations.length > 1 ? `<p class="text-xs font-bold text-gray-400">${i + 1}件目</p>` : ''}
+          <div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">${esc(s.labels.meetingName)}</span><span class="font-semibold">${esc(r.meeting_name)}</span></div>
+          <div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">日時</span><span class="font-semibold">${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)}</span></div>
+          <div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">${esc(s.labels.room)}</span><span class="font-semibold">${esc(r.room_name)}</span></div>
+        </div>`;
       });
 
       document.getElementById('confirm-content').innerHTML = html;
@@ -400,9 +393,7 @@
       const btn = document.getElementById('btn-submit');
       btn.disabled = true;
       showLoading('予約を送信中...');
-
       const { common, reservations } = collectFormData();
-
       await loadReservations(true);
       const dupErrors = checkDuplicates(reservations);
       if (dupErrors.length > 0) {
@@ -412,7 +403,6 @@
         showErrors(dupErrors);
         return;
       }
-
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
@@ -426,26 +416,27 @@
           await loadReservations(true);
         } else {
           closeConfirm();
-          document.getElementById('global-error').textContent = data.error || '登録に失敗しました。';
-          document.getElementById('global-error').classList.remove('hidden');
+          showGlobalError(data.error || '登録に失敗しました。');
         }
       } catch (e) {
         closeConfirm();
-        document.getElementById('global-error').textContent = '通信エラーが発生しました。';
-        document.getElementById('global-error').classList.remove('hidden');
+        showGlobalError('通信エラーが発生しました。');
       }
       btn.disabled = false;
       hideLoading();
     }
 
+    function showGlobalError(msg) {
+      const el = document.getElementById('global-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
     function showDone(reservations) {
       document.getElementById('screen-reserve').classList.add('hidden');
-      const done = document.getElementById('screen-done');
-      done.classList.remove('hidden');
+      document.getElementById('screen-done').classList.remove('hidden');
       document.getElementById('done-list').innerHTML = (reservations || []).map(r =>
-        `<div class="text-sm py-2 text-gray-700">
-          ${esc(r.meeting_name)} / ${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)} / ${esc(r.room_name)}
-        </div>`
+        `<div class="py-2">${esc(r.meeting_name)} — ${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)} / ${esc(r.room_name)}</div>`
       ).join('');
     }
 
@@ -463,14 +454,12 @@
     // バリデーション
     // ============================================================
     function collectFormData() {
-      const cfg = appConfig ? appConfig.settings : defaultConfig().settings;
+      const s = appConfig ? appConfig.settings : defaultConfig().settings;
       const errors = [];
-
       const org = document.getElementById('input-org').value.trim();
       const name = document.getElementById('input-name').value.trim();
-
-      if (cfg.fieldConfig.organizationName && !org) errors.push({ field: 'org', message: `${cfg.labels.organizationName}を入力してください。` });
-      if (cfg.fieldConfig.userName && !name) errors.push({ field: 'name', message: `${cfg.labels.userName}を入力してください。` });
+      if (s.fieldConfig.organizationName && !org) errors.push({ field: 'org', message: `${s.labels.organizationName}を入力してください。` });
+      if (s.fieldConfig.userName && !name) errors.push({ field: 'name', message: `${s.labels.userName}を入力してください。` });
 
       const rooms = appConfig ? appConfig.rooms : [];
       const roomMap = Object.fromEntries(rooms.map(r => [r.room_id, r]));
@@ -479,7 +468,8 @@
         const date = document.getElementById(`card-date-${id}`).value;
         const start = document.getElementById(`card-start-${id}`).value;
         const end = document.getElementById(`card-end-${id}`).value;
-        const roomId = document.getElementById(`card-room-${id}`).value;
+        const roomRadio = document.querySelector(`input[name="room-${id}"]:checked`);
+        const roomId = roomRadio ? roomRadio.value : '';
         const meeting = document.getElementById(`card-meeting-${id}`).value.trim();
 
         if (!date) errors.push({ index: idx, field: `date-${id}`, message: '利用日を入力してください。' });
@@ -487,33 +477,22 @@
         if (!end) errors.push({ index: idx, field: `end-${id}`, message: '終了時間を入力してください。' });
         if (start && end && toMin(start) >= toMin(end)) errors.push({ index: idx, field: `end-${id}`, message: '終了時間は開始時間より後にしてください。' });
         if (!roomId) errors.push({ index: idx, field: `room-${id}`, message: '会議室を選択してください。' });
-        if (!meeting) errors.push({ index: idx, field: `meeting-${id}`, message: `${cfg.labels.meetingName}を入力してください。` });
+        if (!meeting) errors.push({ index: idx, field: `meeting-${id}`, message: `${s.labels.meetingName}を入力してください。` });
 
         return { meeting_name: meeting, usage_date: date, start_time: start, end_time: end, room_id: roomId, room_name: roomMap[roomId] ? roomMap[roomId].room_name : '' };
       });
 
-      return {
-        ok: errors.length === 0,
-        common: { organization_name: org, user_name: name },
-        reservations,
-        errors,
-      };
+      return { ok: errors.length === 0, common: { organization_name: org, user_name: name }, reservations, errors };
     }
 
     function checkDuplicates(reservations) {
-      const errors = [];
-      reservations.forEach((r, idx) => {
-        const dup = allReservations.find(existing =>
-          existing.room_id === r.room_id &&
-          existing.usage_date === r.usage_date &&
-          existing.status === '有効' &&
-          timeOverlap(existing.start_time, existing.end_time, r.start_time, r.end_time)
+      return reservations.flatMap((r, idx) => {
+        const dup = allReservations.find(e =>
+          e.room_id === r.room_id && e.usage_date === r.usage_date && e.status === '有効' &&
+          timeOverlap(e.start_time, e.end_time, r.start_time, r.end_time)
         );
-        if (dup) {
-          errors.push({ index: idx, field: `room-${reserveCards[idx]}`, message: `${r.room_name}は${r.start_time}〜${r.end_time}に予約が入っています。` });
-        }
+        return dup ? [{ index: idx, field: `room-${reserveCards[idx]}`, message: `${r.room_name}は${r.start_time}〜${r.end_time}に予約が入っています。` }] : [];
       });
-      return errors;
     }
 
     function clearErrors() {
@@ -526,12 +505,8 @@
         const el = document.getElementById(`err-${e.field}`) || document.getElementById(`card-err-${e.field}`);
         if (el) { el.textContent = e.message; el.classList.remove('hidden'); }
       });
-      if (errors.length > 0) {
-        document.getElementById('global-error').textContent = '入力内容を確認してください。';
-        document.getElementById('global-error').classList.remove('hidden');
-      }
-      const first = document.querySelector('.error-msg:not(.hidden)');
-      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (errors.length > 0) showGlobalError('入力内容を確認してください。');
+      document.querySelector('.error-msg:not(.hidden)')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     // ============================================================
@@ -540,9 +515,7 @@
     function generateTimeOptions(startMin, endMin, selectedVal) {
       let html = '';
       for (let m = startMin; m <= endMin; m += 5) {
-        const h = String(Math.floor(m / 60)).padStart(2, '0');
-        const min = String(m % 60).padStart(2, '0');
-        const val = `${h}:${min}`;
+        const val = minToTime(m);
         html += `<option value="${val}"${val === selectedVal ? ' selected' : ''}>${val}</option>`;
       }
       return html;
@@ -552,10 +525,13 @@
       const startSel = document.getElementById(`card-start-${id}`);
       const endSel = document.getElementById(`card-end-${id}`);
       if (!startSel || !endSel) return;
-      const startMin = toMin(startSel.value);
-      const endMax = toMin(cfg.businessEndTime || '22:00');
+      const s = appConfig ? appConfig.settings : defaultConfig().settings;
       const prevEnd = endSel.value;
-      endSel.innerHTML = generateTimeOptions(startMin + 5, endMax, prevEnd);
+      endSel.innerHTML = generateTimeOptions(toMin(startSel.value) + 5, toMin(s.businessEndTime || '22:00'), prevEnd);
+    }
+
+    function minToTime(m) {
+      return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
     }
 
     function toMin(t) {
@@ -578,15 +554,6 @@
     function esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
-
-    function openInputPicker(id, event) {
-      if (event && event.target && /input/i.test(event.target.tagName)) return;
-      const input = document.getElementById(id);
-      if (!input) return;
-      input.focus();
-      if (typeof input.showPicker === 'function') input.showPicker();
-    }
   </script>
 </body>
-
 </html>
