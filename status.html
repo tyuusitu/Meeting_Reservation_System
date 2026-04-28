@@ -33,8 +33,8 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-semibold text-gray-500 mb-1">日付</label>
-          <input type="date" id="filter-date" onchange="applyFilters()" title="日付"
-            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <div onclick="openNativePicker('filter-date')"><input type="date" id="filter-date" onchange="applyFilters()" title="日付"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-500 mb-1">会議室</label>
@@ -146,6 +146,15 @@
     // ============================================================
     // ローディング
     // ============================================================
+    function openNativePicker(id) {
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.focus();
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      }
+    }
+
     function showLoading(text) {
       document.getElementById('loading-text').textContent = text || '処理中...';
       document.getElementById('loading-overlay').classList.remove('hidden');

@@ -513,6 +513,38 @@
     const btnSmGhost = 'min-h-[32px] px-3 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg font-bold text-xs transition';
     const btnSmDanger = 'min-h-[32px] px-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition';
 
+    function openNativePicker(id) {
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.focus();
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      }
+    }
+
+    function renderTimeOptions(selectedValue = '') {
+      let html = '';
+      for (let hour = 0; hour < 24; hour += 1) {
+        for (let minute = 0; minute < 60; minute += 5) {
+          const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+          html += `<option value="${value}"${value === selectedValue ? ' selected' : ''}>${value}</option>`;
+        }
+      }
+      return html;
+    }
+
+    function splitDateTimeValue(value) {
+      const normalized = String(value || '').trim().replace(' ', 'T');
+      const [date = '', time = ''] = normalized.split('T');
+      return { date, time: time.slice(0, 5) };
+    }
+
+    function joinDateTimeValue(dateId, timeId) {
+      const date = (document.getElementById(dateId)?.value || '').trim();
+      const time = (document.getElementById(timeId)?.value || '').trim();
+      return date && time ? `${date}T${time}` : '';
+    }
+
     function renderDashboard() {
       const openMeetings = state.meetings.filter((m) => m.status === '有効' && isRecruiting(m));
       const upcomingMeetings = state.meetings
@@ -566,18 +598,18 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <label class="${labelCls}">会議ID<input id="meeting-id" placeholder="未入力なら自動採番" class="${inputCls}"></label>
             <label class="${labelCls}">会議名<input id="meeting-name" class="${inputCls}"></label>
-            <label class="${labelCls}">会議日<input id="meeting-date" type="date" class="${inputCls}"></label>
-            <label class="${labelCls}">開始時間<input id="meeting-start" type="time" class="${inputCls}"></label>
-            <label class="${labelCls}">終了時間<input id="meeting-end" type="time" class="${inputCls}"></label>
+            <label class="${labelCls}">会議日<div onclick="openNativePicker('meeting-date')"><input id="meeting-date" type="date" class="${inputCls} cursor-pointer"></div></label>
+            <label class="${labelCls}">開始時間<select id="meeting-start" class="${inputCls}">${renderTimeOptions()}</select></label>
+            <label class="${labelCls}">終了時間<select id="meeting-end" class="${inputCls}">${renderTimeOptions()}</select></label>
             <label class="${labelCls}">有効状態
               <select id="meeting-status" class="${inputCls}">
                 <option value="有効">有効</option>
                 <option value="無効">無効</option>
               </select>
             </label>
-            <label class="${labelCls}">募集開始日時<input id="meeting-recruit-start" type="datetime-local" class="${inputCls}"></label>
-            <label class="${labelCls}">募集終了日時<input id="meeting-recruit-end" type="datetime-local" class="${inputCls}"></label>
-            <label class="${labelCls}">回答締切日時<input id="meeting-deadline" type="datetime-local" class="${inputCls}"></label>
+            <label class="${labelCls}">募集開始日時<div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-2"><div onclick="openNativePicker('meeting-recruit-start-date')"><input id="meeting-recruit-start-date" type="date" class="${inputCls} cursor-pointer"></div><select id="meeting-recruit-start-time" class="${inputCls}">${renderTimeOptions()}</select></div></label>
+            <label class="${labelCls}">募集終了日時<div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-2"><div onclick="openNativePicker('meeting-recruit-end-date')"><input id="meeting-recruit-end-date" type="date" class="${inputCls} cursor-pointer"></div><select id="meeting-recruit-end-time" class="${inputCls}">${renderTimeOptions()}</select></div></label>
+            <label class="${labelCls}">回答締切日時<div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-2"><div onclick="openNativePicker('meeting-deadline-date')"><input id="meeting-deadline-date" type="date" class="${inputCls} cursor-pointer"></div><select id="meeting-deadline-time" class="${inputCls}">${renderTimeOptions()}</select></div></label>
           </div>
           <label class="${labelCls}">備考
             <textarea id="meeting-note" class="min-h-[80px] border border-slate-200 rounded-xl bg-white text-gray-900 px-3 py-2.5 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-vertical w-full"></textarea>
@@ -846,15 +878,21 @@
       document.getElementById('meeting-start').value = meeting.startTime;
       document.getElementById('meeting-end').value = meeting.endTime;
       document.getElementById('meeting-status').value = meeting.status;
-      document.getElementById('meeting-recruit-start').value = toDateTimeLocal(meeting.recruitStartAt);
-      document.getElementById('meeting-recruit-end').value = toDateTimeLocal(meeting.recruitEndAt);
-      document.getElementById('meeting-deadline').value = toDateTimeLocal(meeting.answerDeadlineAt);
+      const recruitStart = splitDateTimeValue(meeting.recruitStartAt);
+      const recruitEnd = splitDateTimeValue(meeting.recruitEndAt);
+      const deadline = splitDateTimeValue(meeting.answerDeadlineAt);
+      document.getElementById('meeting-recruit-start-date').value = recruitStart.date;
+      document.getElementById('meeting-recruit-start-time').value = recruitStart.time;
+      document.getElementById('meeting-recruit-end-date').value = recruitEnd.date;
+      document.getElementById('meeting-recruit-end-time').value = recruitEnd.time;
+      document.getElementById('meeting-deadline-date').value = deadline.date;
+      document.getElementById('meeting-deadline-time').value = deadline.time;
       document.getElementById('meeting-note').value = meeting.note;
       switchTab('meetings');
     }
 
     function clearMeetingForm() {
-      ['meeting-id', 'meeting-name', 'meeting-date', 'meeting-start', 'meeting-end', 'meeting-recruit-start', 'meeting-recruit-end', 'meeting-deadline', 'meeting-note'].forEach((id) => {
+      ['meeting-id', 'meeting-name', 'meeting-date', 'meeting-start', 'meeting-end', 'meeting-recruit-start-date', 'meeting-recruit-start-time', 'meeting-recruit-end-date', 'meeting-recruit-end-time', 'meeting-deadline-date', 'meeting-deadline-time', 'meeting-note'].forEach((id) => {
         document.getElementById(id).value = '';
       });
       document.getElementById('meeting-status').value = '有効';
@@ -875,9 +913,9 @@
               meetingDate: document.getElementById('meeting-date').value,
               startTime: document.getElementById('meeting-start').value,
               endTime: document.getElementById('meeting-end').value,
-              recruitStartAt: document.getElementById('meeting-recruit-start').value,
-              recruitEndAt: document.getElementById('meeting-recruit-end').value,
-              answerDeadlineAt: document.getElementById('meeting-deadline').value,
+              recruitStartAt: joinDateTimeValue('meeting-recruit-start-date', 'meeting-recruit-start-time'),
+              recruitEndAt: joinDateTimeValue('meeting-recruit-end-date', 'meeting-recruit-end-time'),
+              answerDeadlineAt: joinDateTimeValue('meeting-deadline-date', 'meeting-deadline-time'),
               note: document.getElementById('meeting-note').value.trim(),
               status: document.getElementById('meeting-status').value,
             },
