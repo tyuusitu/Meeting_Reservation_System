@@ -486,7 +486,7 @@
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({ action: 'verifyAdminPassword', payload: { adminPassword: password } }),
         });
         const data = await res.json();
@@ -1159,7 +1159,7 @@
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             action: 'saveMeeting',
             payload: {
@@ -1199,7 +1199,7 @@
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({ action: 'refreshAggregations', payload: { adminPassword: getAdminPassword() } }),
         });
         const data = await res.json();
@@ -1225,7 +1225,7 @@
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             action: 'updateSetting',
             payload: {
@@ -1297,7 +1297,7 @@
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             action: 'admin_delete',
             payload: { adminPassword: getAdminPassword(), reservation_ids: ids },
