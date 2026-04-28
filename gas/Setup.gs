@@ -454,8 +454,8 @@ const RESERVATION_STATUS = { active: '有効', cancelRequested: 'キャンセル
  *
  * @return {Object} 初期化結果。
  */
-function setupSpreadsheet() {
-  return initializeSpreadsheet();
+function setupSpreadsheet(forceDefaultMembers) {
+  return initializeSpreadsheet(forceDefaultMembers);
 }
 
 /**
@@ -463,12 +463,12 @@ function setupSpreadsheet() {
  *
  * @return {Object} 初期化結果。
  */
-function initializeSpreadsheet() {
+function initializeSpreadsheet(forceDefaultMembers) {
   const spreadsheet = getSpreadsheet_();
   Object.keys(SHEET_NAMES).forEach((schemaKey) => ensureSheetAndHeader_(spreadsheet, schemaKey));
   ensureDefaultSettings_();
   ensureDefaultRooms_();
-  ensureDefaultMembers_();
+  ensureDefaultMembers_(forceDefaultMembers);
   ensureDefaultMeetings_();
   applySheetFormatting_();
   refreshAttendanceAggregations_();
@@ -479,6 +479,22 @@ function initializeSpreadsheet() {
     spreadsheetId: spreadsheet.getId(),
     spreadsheetUrl: spreadsheet.getUrl(),
     sheets: Object.keys(SHEET_NAMES).map((schemaKey) => SHEET_NAMES[schemaKey]),
+  };
+}
+
+/**
+ * メンバー一覧を初期データ 52 名で強制上書きします。
+ *
+ * @return {Object} 実行結果。
+ */
+function resetMembersToDefault() {
+  ensureDefaultMembers_(true);
+  applyFormattingForSheet_(SHEET_NAMES.members, ['created_at', 'updated_at']);
+  refreshAttendanceAggregations_();
+  writeOperationLog_('メンバー初期化', '管理者', '', 'メンバー一覧を初期データで上書きしました。', '成功', '');
+  return {
+    ok: true,
+    memberCount: DEFAULT_MEMBER_ROWS.length,
   };
 }
 
@@ -638,13 +654,30 @@ function ensureDefaultRooms_() {
 /**
  * メンバー一覧シートが空の場合だけ、サンプルメンバーを追加します。
  */
-function ensureDefaultMembers_() {
+function ensureDefaultMembers_(forceReset) {
   const existingRows = selectSheetObjects_(SHEET_NAMES.members).filter((row) => normalizeString_(row.member_id));
-  if (existingRows.length > 0) {
+  if (existingRows.length > 0 && !forceReset) {
     return;
+  }
+  if (forceReset) {
+    replaceMembersSheetRows_();
   }
   const now = formatDate_(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
   appendSheetRows_(SHEET_NAMES.members, DEFAULT_MEMBER_ROWS.map((row) => [row[0], row[1], row[2], row[3], row[4], row[5], row[6], now, now]));
+}
+
+/**
+ * メンバー一覧シートの既存データ行を削除します。
+ *
+ * @return {void}
+ */
+function replaceMembersSheetRows_() {
+  const sheet = getSheet_(SHEET_NAMES.members);
+  const headers = SHEET_HEADERS.members;
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.getRange(2, 1, lastRow - 1, headers.length).clearContent();
+  }
 }
 
 /**
