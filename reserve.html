@@ -4,106 +4,297 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>会議室予約</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
     .hidden { display: none !important; }
-    body { -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --primary: #1a73e8;
+      --primary-hover: #1557b0;
+      --primary-light: #e8f0fe;
+      --surface: #ffffff;
+      --bg: #f0f4f9;
+      --on-surface: #202124;
+      --muted: #5f6368;
+      --muted-light: #9aa0a6;
+      --border: #e8eaed;
+      --error: #c5221f;
+      --error-bg: #fce8e6;
+      --error-border: #f5c6c4;
+      --success: #137333;
+      --success-bg: #e6f4ea;
+      --success-border: #a8d5b5;
+      --shadow-md: 0 1px 3px rgba(60,64,67,.12), 0 2px 8px rgba(60,64,67,.10);
+    }
+
+    body { min-height: 100vh; background: var(--bg); color: var(--on-surface); }
+
+    /* Loading */
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.35); z-index: 50;
+      display: none; align-items: center; justify-content: center;
+    }
+    .loading-overlay.visible { display: flex; }
+    .loading-box {
+      background: var(--surface); border-radius: 14px; padding: 28px 36px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.15);
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .loading-spinner {
+      width: 40px; height: 40px; border: 4px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      will-change: transform;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin .8s linear infinite; }
+    .loading-text { font-size: 14px; font-weight: 500; color: var(--muted); }
+
+    /* App bar */
+    .app-bar {
+      position: sticky; top: 0; z-index: 20;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .app-bar-icon {
+      width: 32px; height: 32px; background: var(--primary);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .app-bar-title { font-size: 16px; font-weight: 700; color: var(--on-surface); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .app-bar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .app-bar-btn {
+      height: 34px; padding: 0 14px; border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    }
+    .app-bar-btn:hover { background: #f8f9fa; border-color: var(--primary); color: var(--primary); }
+    .app-bar-btn-primary { border-color: var(--primary); color: var(--primary); }
+    .app-bar-btn-primary:hover { background: var(--primary-light); }
+
+    /* Page */
+    .page { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; display: flex; flex-direction: column; gap: 16px; }
+    .loading-msg { text-align: center; padding: 64px 0; font-size: 14px; color: var(--muted-light); }
+
+    /* Cards */
+    .card { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-md); padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+    .card-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+    /* Form elements */
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--on-surface); margin-bottom: 6px; }
+    .req { color: var(--error); }
+    .form-input, .form-select {
+      width: 100%; height: 46px; border: 1.5px solid var(--border); border-radius: 8px;
+      background: var(--surface); color: var(--on-surface); padding: 0 14px;
+      font-size: 14px; outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,.18); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .error-msg { display: none; font-size: 12px; color: var(--error); margin-top: 4px; }
+    .error-msg.visible { display: block; }
+
+    /* Reserve card (JS-generated) */
+    .card-no-bottom { margin-bottom: 0; }
+    .reserve-cards-wrap { display: flex; flex-direction: column; gap: 16px; }
+    .date-input { cursor: pointer; }
+    .reserve-card { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-md); padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+    .reserve-card-header { display: flex; justify-content: space-between; align-items: center; }
+    .reserve-card-label { font-size: 14px; font-weight: 700; color: var(--on-surface); }
+    .reserve-card-remove { font-size: 12px; color: var(--muted-light); font-weight: 600; background: none; border: none; cursor: pointer; padding: 6px 8px; border-radius: 6px; transition: all .15s; }
+    .reserve-card-remove:hover { color: var(--error); background: var(--error-bg); }
+
+    /* Room selection */
+    .room-placeholder { font-size: 13px; color: var(--muted-light); padding: 4px 0; }
+    .room-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .room-radio {
+      display: flex; align-items: center; gap: 10px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      background: var(--surface); padding: 12px 14px; cursor: pointer; transition: all .15s;
+    }
+    .room-radio:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
+    .room-radio input { width: 16px; height: 16px; accent-color: var(--primary); flex-shrink: 0; }
+    .room-radio span { font-size: 13px; font-weight: 600; color: var(--on-surface); }
+    .room-busy {
+      border: 1.5px solid var(--border); border-radius: 10px;
+      background: #f8f9fa; padding: 12px 14px; text-align: center;
+      opacity: .5; cursor: not-allowed;
+    }
+    .room-busy-name { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .room-busy-tag { font-size: 11px; color: var(--muted-light); margin-top: 2px; }
+
+    /* Action buttons */
+    .btn-stack { display: flex; gap: 10px; flex-direction: column; }
+    .btn-add {
+      width: 100%; height: 46px; border-radius: 10px; border: 1.5px dashed var(--border);
+      background: var(--surface); color: var(--muted); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-add:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .btn-confirm {
+      width: 100%; height: 50px; border-radius: 10px; border: none;
+      background: var(--primary); color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: background .15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-confirm:hover { background: var(--primary-hover); }
+
+    /* Global error */
+    .global-error {
+      background: var(--error-bg); border: 1px solid var(--error-border);
+      border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--error);
+    }
+
+    /* Done screen */
+    .done-card {
+      background: var(--success-bg); border: 1.5px solid var(--success-border);
+      border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
+    }
+    .done-title { font-size: 16px; font-weight: 800; color: var(--success); display: flex; align-items: center; gap: 8px; }
+    .done-list { display: flex; flex-direction: column; gap: 0; }
+    .done-list-item { padding: 10px 0; border-bottom: 1px solid rgba(19,115,51,.12); font-size: 13px; color: var(--on-surface); }
+    .done-list-item:last-child { border-bottom: none; }
+    .done-actions { display: flex; gap: 10px; }
+    .btn-done-primary { flex: 2; height: 44px; border-radius: 8px; border: 1.5px solid var(--primary); background: var(--surface); color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+    .btn-done-primary:hover { background: var(--primary-light); }
+    .btn-done-ghost { flex: 1; height: 44px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .btn-done-ghost:hover { background: #f8f9fa; }
+
+    /* Confirm modal */
+    .modal-backdrop {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.45); z-index: 40;
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal-backdrop.visible { display: flex; }
+    .modal-sheet {
+      background: var(--surface); width: 100%; max-height: 88vh;
+      overflow-y: auto; padding: 20px;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .modal-title { font-size: 16px; font-weight: 800; color: var(--on-surface); }
+    .modal-row { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .modal-row:last-child { border-bottom: none; }
+    .modal-row-label { width: 72px; flex-shrink: 0; font-size: 13px; color: var(--muted); }
+    .modal-row-value { font-size: 13px; font-weight: 600; color: var(--on-surface); }
+    .modal-section-head { font-size: 11px; font-weight: 700; color: var(--muted-light); text-transform: uppercase; letter-spacing: .06em; padding-top: 8px; }
+    .modal-actions { display: flex; gap: 10px; padding-top: 4px; }
+    .btn-modal-back { flex: 1; height: 46px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .btn-modal-back:hover { background: #f8f9fa; }
+    .btn-modal-submit { flex: 2; height: 46px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s; }
+    .btn-modal-submit:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-modal-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+    @media (min-width: 600px) {
+      .modal-backdrop { align-items: center; }
+      .modal-sheet { max-width: 480px; border-radius: 16px; }
+    }
+    @media (max-width: 520px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .room-grid { grid-template-columns: 1fr; }
+      .card, .reserve-card { padding: 16px; }
+    }
   </style>
 </head>
+<body>
 
-<body class="bg-gray-50 min-h-screen text-gray-800">
-
-  <!-- ローディングオーバーレイ -->
-  <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl px-10 py-7 flex flex-col items-center gap-3 shadow-xl">
-      <div class="w-9 h-9 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin"></div>
-      <p id="loading-text" class="text-sm text-gray-500">処理中...</p>
+  <!-- Loading -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-box">
+      <div class="loading-spinner spin"></div>
+      <p id="loading-text" class="loading-text">処理中...</p>
     </div>
   </div>
 
-  <div class="max-w-6xl mx-auto px-4">
-    <!-- ヘッダー -->
-    <div class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur pt-4 pb-3 flex items-center justify-between border-b border-gray-200 mb-5">
-      <h1 id="system-name" class="text-lg font-bold text-gray-900">会議室予約</h1>
-      <a href="status.html" class="text-sm font-medium text-blue-600">利用状況 →</a>
+  <!-- App bar -->
+  <header class="app-bar">
+    <div class="app-bar-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+        <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+      </svg>
     </div>
+    <h1 id="system-name" class="app-bar-title">会議室予約</h1>
+    <div class="app-bar-actions">
+      <a href="index.html" class="app-bar-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        ホームに戻る
+      </a>
+      <a href="status.html" class="app-bar-btn app-bar-btn-primary">利用状況 →</a>
+    </div>
+  </header>
 
-    <div id="loading-msg" class="py-16 text-center text-gray-400 text-sm">読み込み中...</div>
+  <div class="page">
+    <p id="loading-msg" class="loading-msg">読み込み中...</p>
 
     <!-- 予約フォーム -->
-    <div id="screen-reserve" class="hidden pb-10 space-y-4">
+    <div id="screen-reserve" class="hidden">
 
       <!-- 予約者情報 -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider">予約者情報</h2>
+      <div class="card card-no-bottom">
+        <div class="card-title">予約者情報</div>
         <div id="field-org-wrap">
-          <label class="block text-sm font-semibold text-gray-700 mb-1">
-            <span id="label-org-text">団体名</span> <span class="text-red-500">*</span>
-          </label>
-          <input type="text" id="input-org" autocomplete="organization"
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <p class="error-msg hidden text-xs text-red-500 mt-1" id="err-org"></p>
+          <label class="form-label"><span id="label-org-text">団体名</span> <span class="req">*</span></label>
+          <input type="text" id="input-org" autocomplete="organization" class="form-input">
+          <p class="error-msg" id="err-org"></p>
         </div>
         <div id="field-name-wrap">
-          <label class="block text-sm font-semibold text-gray-700 mb-1">
-            <span id="label-name-text">お名前</span> <span class="text-red-500">*</span>
-          </label>
-          <input type="text" id="input-name" autocomplete="name"
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <p class="error-msg hidden text-xs text-red-500 mt-1" id="err-name"></p>
+          <label class="form-label"><span id="label-name-text">お名前</span> <span class="req">*</span></label>
+          <input type="text" id="input-name" autocomplete="name" class="form-input">
+          <p class="error-msg" id="err-name"></p>
         </div>
       </div>
 
-      <!-- グローバルエラー -->
-      <div id="global-error" class="hidden bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm"></div>
+      <!-- Global error -->
+      <div id="global-error" class="hidden global-error"></div>
 
-      <!-- 予約カード -->
-      <div id="reserve-cards"></div>
+      <!-- 予約カード (JS) -->
+      <div id="reserve-cards" class="reserve-cards-wrap"></div>
 
-      <!-- ボタン -->
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button type="button" onclick="addReserveCard()"
-          class="flex-1 py-3.5 bg-gray-100 active:bg-gray-200 text-gray-700 rounded-2xl font-semibold text-sm transition">
-          ＋ 予約を追加
+      <!-- アクションボタン -->
+      <div class="btn-stack">
+        <button type="button" onclick="addReserveCard()" class="btn-add">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          予約を追加
         </button>
-        <button type="button" onclick="goToConfirm()"
-          class="flex-[2] py-3.5 bg-blue-600 active:bg-blue-700 text-white rounded-2xl font-bold text-sm shadow-sm transition">
-          確認へ進む →
+        <button type="button" onclick="goToConfirm()" class="btn-confirm">
+          確認へ進む
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </button>
       </div>
     </div>
 
     <!-- 完了画面 -->
-    <div id="screen-done" class="hidden pb-10">
-      <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-3">
-        <p class="font-bold text-emerald-700">予約が完了しました</p>
-        <div id="done-list" class="divide-y divide-emerald-100 text-sm text-gray-700"></div>
-        <div class="flex gap-3 pt-2">
-          <a href="status.html"
-            class="flex-1 text-center py-3 bg-white border border-blue-400 text-blue-600 rounded-xl font-semibold text-sm">
-            利用状況を確認
-          </a>
-          <button type="button" onclick="resetReserveForm()"
-            class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm">
-            続けて予約
-          </button>
+    <div id="screen-done" class="hidden">
+      <div class="done-card">
+        <div class="done-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          予約が完了しました
+        </div>
+        <div id="done-list" class="done-list"></div>
+        <div class="done-actions">
+          <a href="status.html" class="btn-done-primary">利用状況を確認</a>
+          <button type="button" onclick="resetReserveForm()" class="btn-done-ghost">続けて予約</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 確認モーダル（スマホ: 下から / PC: 中央） -->
-  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-end sm:items-center justify-center">
-    <div class="bg-white rounded-t-3xl sm:rounded-2xl p-5 w-full sm:max-w-lg max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl">
-      <h2 class="text-base font-bold text-gray-900">予約内容の確認</h2>
-      <div id="confirm-content" class="text-sm"></div>
-      <div class="flex gap-3 pb-2">
-        <button type="button" onclick="closeConfirm()"
-          class="flex-1 py-3.5 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm">戻る</button>
-        <button type="button" id="btn-submit" onclick="submitReservations()"
-          class="flex-[2] py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-sm disabled:opacity-50">
-          予約確定
-        </button>
+  <!-- 確認モーダル -->
+  <div id="confirm-modal" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-title">予約内容の確認</div>
+      <div id="confirm-content"></div>
+      <div class="modal-actions">
+        <button type="button" onclick="closeConfirm()" class="btn-modal-back">戻る</button>
+        <button type="button" id="btn-submit" onclick="submitReservations()" class="btn-modal-submit">予約確定</button>
       </div>
     </div>
   </div>
@@ -117,29 +308,23 @@
     let cardIdCounter = 0;
     let reservationsLoaded = false;
 
-    // ============================================================
-    // ローディング
-    // ============================================================
+    // Loading
+    function showLoading(text) {
+      document.getElementById('loading-text').textContent = text || '処理中...';
+      document.getElementById('loading-overlay').classList.add('visible');
+    }
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.remove('visible');
+    }
+
     function openNativePicker(id) {
       const input = document.getElementById(id);
       if (!input) return;
       input.focus();
-      if (typeof input.showPicker === 'function') {
-        input.showPicker();
-      }
+      if (typeof input.showPicker === 'function') input.showPicker();
     }
 
-    function showLoading(text) {
-      document.getElementById('loading-text').textContent = text || '処理中...';
-      document.getElementById('loading-overlay').classList.remove('hidden');
-    }
-    function hideLoading() {
-      document.getElementById('loading-overlay').classList.add('hidden');
-    }
-
-    // ============================================================
-    // 初期化
-    // ============================================================
+    // Init
     document.addEventListener('DOMContentLoaded', async () => {
       applyConfig(defaultConfig());
       document.getElementById('loading-msg').classList.add('hidden');
@@ -147,9 +332,7 @@
       Promise.allSettled([loadConfig(), loadReservations()]);
     });
 
-    function todayStr() {
-      return new Date().toISOString().slice(0, 10);
-    }
+    function todayStr() { return new Date().toISOString().slice(0, 10); }
 
     function defaultStartTime() {
       const s = appConfig ? appConfig.settings : defaultConfig().settings;
@@ -198,9 +381,7 @@
       else renderReserveCards();
     }
 
-    // ============================================================
-    // CSV 取得
-    // ============================================================
+    // CSV
     async function loadReservations(bustCache = false) {
       try {
         const text = CONFIG.fetchSheetCsvText
@@ -250,9 +431,7 @@
       return result;
     }
 
-    // ============================================================
-    // 予約カード
-    // ============================================================
+    // Reserve cards
     function addReserveCard() {
       const s = appConfig ? appConfig.settings : defaultConfig().settings;
       if (reserveCards.length >= s.maxReservationsPerSubmit) {
@@ -276,49 +455,41 @@
       const startOpts = generateTimeOptions(toMin(s.businessStartTime || '09:00'), toMin(s.businessEndTime || '22:00') - 5, startDef);
 
       document.getElementById('reserve-cards').innerHTML = reserveCards.map((id, idx) => `
-        <div id="card-${id}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 mb-3">
-          <div class="flex justify-between items-center">
-            <span class="text-sm font-bold text-gray-800">${reserveCards.length > 1 ? `${idx + 1}件目` : '予約内容'}</span>
-            ${reserveCards.length > 1 ? `<button onclick="removeReserveCard(${id})" class="text-xs text-gray-400 hover:text-red-500 transition py-1 px-2">削除</button>` : ''}
+        <div id="card-${id}" class="reserve-card">
+          <div class="reserve-card-header">
+            <span class="reserve-card-label">${reserveCards.length > 1 ? `${idx + 1}件目` : '予約内容'}</span>
+            ${reserveCards.length > 1 ? `<button onclick="removeReserveCard(${id})" class="reserve-card-remove">削除</button>` : ''}
           </div>
-
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">利用日 <span class="text-red-500">*</span></label>
-            <div onclick="openNativePicker('card-date-${id}')"><input type="date" id="card-date-${id}" onchange="searchAvailable(${id})"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
-            <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-date-${id}"></p>
+            <label class="form-label">利用日 <span class="req">*</span></label>
+            <div onclick="openNativePicker('card-date-${id}')">
+              <input type="date" id="card-date-${id}" onchange="searchAvailable(${id})" class="form-input date-input">
+            </div>
+            <p class="error-msg" id="card-err-date-${id}"></p>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="form-grid">
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">開始時間 <span class="text-red-500">*</span></label>
-              <select id="card-start-${id}" onchange="updateEndTimeOptions(${id}); searchAvailable(${id})"
-                class="w-full border border-gray-200 rounded-xl px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                ${startOpts}
-              </select>
-              <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-start-${id}"></p>
+              <label class="form-label">開始時間 <span class="req">*</span></label>
+              <select id="card-start-${id}" onchange="updateEndTimeOptions(${id}); searchAvailable(${id})" class="form-select">${startOpts}</select>
+              <p class="error-msg" id="card-err-start-${id}"></p>
             </div>
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">終了時間 <span class="text-red-500">*</span></label>
-              <select id="card-end-${id}" onchange="searchAvailable(${id})"
-                class="w-full border border-gray-200 rounded-xl px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <label class="form-label">終了時間 <span class="req">*</span></label>
+              <select id="card-end-${id}" onchange="searchAvailable(${id})" class="form-select">
                 ${generateTimeOptions(toMin(startDef) + 5, toMin(s.businessEndTime || '22:00'), endDef)}
               </select>
-              <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-end-${id}"></p>
+              <p class="error-msg" id="card-err-end-${id}"></p>
             </div>
           </div>
-
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">${esc(s.labels.room)} <span class="text-red-500">*</span></label>
-            <div id="card-rooms-${id}" class="text-sm text-gray-400 py-1">利用日を選択すると空き室を表示します</div>
-            <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-room-${id}"></p>
+            <label class="form-label">${esc(s.labels.room)} <span class="req">*</span></label>
+            <div id="card-rooms-${id}" class="room-placeholder">利用日を選択すると空き室を表示します</div>
+            <p class="error-msg" id="card-err-room-${id}"></p>
           </div>
-
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">${esc(s.labels.meetingName)} <span class="text-red-500">*</span></label>
-            <input type="text" id="card-meeting-${id}" placeholder="${esc(s.labels.meetingName)}を入力"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <p class="error-msg hidden text-xs text-red-500 mt-1" id="card-err-meeting-${id}"></p>
+            <label class="form-label">${esc(s.labels.meetingName)} <span class="req">*</span></label>
+            <input type="text" id="card-meeting-${id}" placeholder="${esc(s.labels.meetingName)}を入力" class="form-input">
+            <p class="error-msg" id="card-err-meeting-${id}"></p>
           </div>
         </div>
       `).join('');
@@ -331,17 +502,20 @@
       const container = document.getElementById(`card-rooms-${id}`);
 
       if (!date || !start || !end || toMin(start) >= toMin(end)) {
-        container.innerHTML = '<span class="text-gray-400 text-sm">利用日・時間を選択すると空き室を表示します</span>';
+        container.className = 'room-placeholder';
+        container.innerHTML = '利用日・時間を選択すると空き室を表示します';
         return;
       }
       if (!reservationsLoaded) {
-        container.innerHTML = '<span class="text-gray-400 text-sm">予約情報を読み込み中...</span>';
+        container.className = 'room-placeholder';
+        container.innerHTML = '予約情報を読み込み中...';
         return;
       }
 
       const rooms = appConfig ? appConfig.rooms : [];
       if (!rooms.length) {
-        container.innerHTML = '<span class="text-gray-400 text-sm">会議室情報がありません</span>';
+        container.className = 'room-placeholder';
+        container.innerHTML = '会議室情報がありません';
         return;
       }
 
@@ -352,50 +526,46 @@
         ).map(r => r.room_id)
       );
 
-      container.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">${rooms.map(r => {
+      container.className = 'room-grid';
+      container.innerHTML = rooms.map(r => {
         const busy = busyIds.has(r.room_id);
         if (busy) {
-          return `<div class="px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-center opacity-40 cursor-not-allowed">
-            <div class="text-sm font-semibold text-gray-500">${esc(r.room_name)}</div>
-            <div class="text-xs text-gray-400 mt-0.5">予約済</div>
+          return `<div class="room-busy">
+            <div class="room-busy-name">${esc(r.room_name)}</div>
+            <div class="room-busy-tag">予約済</div>
           </div>`;
         }
-        return `<label class="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition active:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-          <input type="radio" name="room-${id}" value="${esc(r.room_id)}" class="accent-blue-600 w-4 h-4 flex-shrink-0">
-          <span class="text-sm font-semibold text-gray-800">${esc(r.room_name)}</span>
+        return `<label class="room-radio">
+          <input type="radio" name="room-${id}" value="${esc(r.room_id)}" class="room-radio-input">
+          <span>${esc(r.room_name)}</span>
         </label>`;
-      }).join('')}</div>`;
+      }).join('');
     }
 
-    // ============================================================
-    // 確認・送信
-    // ============================================================
+    // Confirm & Submit
     function goToConfirm() {
       clearErrors();
       const { ok, common, reservations, errors } = collectFormData();
       if (!ok) { showErrors(errors); return; }
 
       const s = (appConfig || defaultConfig()).settings;
-      let html = `<div class="space-y-2 pb-3 border-b border-gray-100">`;
-      if (s.fieldConfig.organizationName) html += `<div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">${esc(s.labels.organizationName)}</span><span class="font-semibold">${esc(common.organization_name)}</span></div>`;
-      if (s.fieldConfig.userName) html += `<div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">${esc(s.labels.userName)}</span><span class="font-semibold">${esc(common.user_name)}</span></div>`;
-      html += `</div>`;
+      let html = '';
+      if (s.fieldConfig.organizationName) html += `<div class="modal-row"><span class="modal-row-label">${esc(s.labels.organizationName)}</span><span class="modal-row-value">${esc(common.organization_name)}</span></div>`;
+      if (s.fieldConfig.userName) html += `<div class="modal-row"><span class="modal-row-label">${esc(s.labels.userName)}</span><span class="modal-row-value">${esc(common.user_name)}</span></div>`;
 
       reservations.forEach((r, i) => {
-        html += `<div class="space-y-2 py-3 ${i < reservations.length - 1 ? 'border-b border-gray-100' : ''}">
-          ${reservations.length > 1 ? `<p class="text-xs font-bold text-gray-400">${i + 1}件目</p>` : ''}
-          <div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">${esc(s.labels.meetingName)}</span><span class="font-semibold">${esc(r.meeting_name)}</span></div>
-          <div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">日時</span><span class="font-semibold">${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)}</span></div>
-          <div class="flex gap-3"><span class="text-gray-400 w-16 flex-shrink-0">${esc(s.labels.room)}</span><span class="font-semibold">${esc(r.room_name)}</span></div>
-        </div>`;
+        html += `<div class="modal-section-head">${reservations.length > 1 ? `${i + 1}件目` : '予約内容'}</div>`;
+        html += `<div class="modal-row"><span class="modal-row-label">${esc(s.labels.meetingName)}</span><span class="modal-row-value">${esc(r.meeting_name)}</span></div>`;
+        html += `<div class="modal-row"><span class="modal-row-label">日時</span><span class="modal-row-value">${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)}</span></div>`;
+        html += `<div class="modal-row"><span class="modal-row-label">${esc(s.labels.room)}</span><span class="modal-row-value">${esc(r.room_name)}</span></div>`;
       });
 
       document.getElementById('confirm-content').innerHTML = html;
-      document.getElementById('confirm-modal').classList.remove('hidden');
+      document.getElementById('confirm-modal').classList.add('visible');
     }
 
     function closeConfirm() {
-      document.getElementById('confirm-modal').classList.add('hidden');
+      document.getElementById('confirm-modal').classList.remove('visible');
     }
 
     async function submitReservations() {
@@ -444,7 +614,7 @@
       document.getElementById('screen-reserve').classList.add('hidden');
       document.getElementById('screen-done').classList.remove('hidden');
       document.getElementById('done-list').innerHTML = (reservations || []).map(r =>
-        `<div class="py-2">${esc(r.meeting_name)} — ${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)} / ${esc(r.room_name)}</div>`
+        `<div class="done-list-item">${esc(r.meeting_name)} — ${fmtDate(r.usage_date)} ${esc(r.start_time)}〜${esc(r.end_time)} / ${esc(r.room_name)}</div>`
       ).join('');
     }
 
@@ -454,18 +624,7 @@
       const existingIds = new Set(allReservations.map((item) => item.reservation_id));
       incoming.forEach((item) => {
         if (!existingIds.has(item.reservation_id)) {
-          allReservations.push({
-            reservation_id: item.reservation_id,
-            organization_name: '',
-            meeting_name: item.meeting_name,
-            user_name: '',
-            room_id: item.room_id,
-            room_name: item.room_name,
-            usage_date: item.usage_date,
-            start_time: item.start_time,
-            end_time: item.end_time,
-            status: '有効',
-          });
+          allReservations.push({ reservation_id: item.reservation_id, organization_name: '', meeting_name: item.meeting_name, user_name: '', room_id: item.room_id, room_name: item.room_name, usage_date: item.usage_date, start_time: item.start_time, end_time: item.end_time, status: '有効' });
         }
       });
       reservationsLoaded = true;
@@ -481,9 +640,7 @@
       addReserveCard();
     }
 
-    // ============================================================
-    // バリデーション
-    // ============================================================
+    // Validation
     function collectFormData() {
       const s = appConfig ? appConfig.settings : defaultConfig().settings;
       const errors = [];
@@ -527,22 +684,20 @@
     }
 
     function clearErrors() {
-      document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.classList.add('hidden'); });
+      document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.classList.remove('visible'); });
       document.getElementById('global-error').classList.add('hidden');
     }
 
     function showErrors(errors) {
       errors.forEach(e => {
         const el = document.getElementById(`err-${e.field}`) || document.getElementById(`card-err-${e.field}`);
-        if (el) { el.textContent = e.message; el.classList.remove('hidden'); }
+        if (el) { el.textContent = e.message; el.classList.add('visible'); }
       });
       if (errors.length > 0) showGlobalError('入力内容を確認してください。');
-      document.querySelector('.error-msg:not(.hidden)')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.querySelector('.error-msg.visible')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // ============================================================
-    // ユーティリティ
-    // ============================================================
+    // Utils
     function generateTimeOptions(startMin, endMin, selectedVal) {
       let html = '';
       for (let m = startMin; m <= endMin; m += 5) {
@@ -561,19 +716,9 @@
       endSel.innerHTML = generateTimeOptions(toMin(startSel.value) + 5, toMin(s.businessEndTime || '22:00'), prevEnd);
     }
 
-    function minToTime(m) {
-      return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-    }
-
-    function toMin(t) {
-      if (!t) return 0;
-      const [h, m] = t.split(':').map(Number);
-      return h * 60 + m;
-    }
-
-    function timeOverlap(s1, e1, s2, e2) {
-      return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1);
-    }
+    function minToTime(m) { return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
+    function toMin(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+    function timeOverlap(s1, e1, s2, e2) { return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1); }
 
     function fmtDate(d) {
       if (!d) return '';
@@ -582,9 +727,7 @@
       return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
     }
 
-    function esc(s) {
-      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   </script>
 </body>
 </html>

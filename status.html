@@ -4,132 +4,310 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>利用状況</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
     .hidden { display: none !important; }
-    body { -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --primary: #1a73e8;
+      --primary-hover: #1557b0;
+      --primary-light: #e8f0fe;
+      --surface: #ffffff;
+      --bg: #f0f4f9;
+      --on-surface: #202124;
+      --muted: #5f6368;
+      --muted-light: #9aa0a6;
+      --border: #e8eaed;
+      --error: #c5221f;
+      --error-bg: #fce8e6;
+      --error-border: #f5c6c4;
+      --success: #137333;
+      --success-bg: #e6f4ea;
+      --success-border: #a8d5b5;
+      --warn-text: #7c4b00;
+      --warn-bg: #fef7e0;
+      --warn-border: #fde68a;
+      --shadow-md: 0 1px 3px rgba(60,64,67,.12), 0 2px 8px rgba(60,64,67,.10);
+    }
+
+    body { min-height: 100vh; background: var(--bg); color: var(--on-surface); }
+
+    /* Loading */
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.35); z-index: 50;
+      display: none; align-items: center; justify-content: center;
+    }
+    .loading-overlay.visible { display: flex; }
+    .loading-box {
+      background: var(--surface); border-radius: 14px; padding: 28px 36px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.15);
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .loading-spinner {
+      width: 40px; height: 40px; border: 4px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      will-change: transform;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin .8s linear infinite; }
+    .loading-text { font-size: 14px; font-weight: 500; color: var(--muted); }
+
+    /* App bar */
+    .app-bar {
+      position: sticky; top: 0; z-index: 20;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .app-bar-icon {
+      width: 32px; height: 32px; background: var(--primary);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .app-bar-title { font-size: 16px; font-weight: 700; color: var(--on-surface); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .app-bar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .app-bar-btn {
+      height: 34px; padding: 0 14px; border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    }
+    .app-bar-btn:hover { background: #f8f9fa; border-color: var(--primary); color: var(--primary); }
+    .app-bar-btn-primary { border-color: var(--primary); color: var(--primary); }
+    .app-bar-btn-primary:hover { background: var(--primary-light); }
+
+    /* Page */
+    .page { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Card */
+    .card { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-md); padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--on-surface); }
+    .card-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+
+    /* Filter panel */
+    .filter-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .filter-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+    .filter-input, .filter-select {
+      height: 38px; border: 1.5px solid var(--border); border-radius: 7px;
+      background: var(--surface); color: var(--on-surface); padding: 0 12px;
+      font-size: 13px; outline: none; width: 100%; transition: border-color .15s, box-shadow .15s;
+      cursor: pointer;
+    }
+    .filter-input:focus, .filter-select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,.18); }
+    .filter-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    /* View toggle */
+    .view-toggle { display: flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .view-btn { padding: 6px 16px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all .15s; background: var(--surface); color: var(--muted); }
+    .view-btn.active { background: var(--primary); color: #fff; }
+    .view-btn:not(.active):hover { background: #f8f9fa; color: var(--primary); }
+
+    /* Action buttons */
+    .btn-sm {
+      height: 34px; padding: 0 14px; border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
+      border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    }
+    .btn-sm:hover { background: #f8f9fa; }
+
+    /* Calendar viewer */
+    .calendar-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .calendar-grid { display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: start; }
+    .calendar-iframe { width: 100%; height: 420px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); display: block; }
+    .calendar-placeholder { min-height: 200px; border-radius: 10px; border: 1.5px dashed var(--border); background: #fafafa; display: flex; align-items: center; justify-content: center; padding: 20px; font-size: 13px; color: var(--muted-light); text-align: center; }
+    .calendar-open-btn { height: 32px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--primary); background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .calendar-open-btn:hover { background: #d2e3fc; }
+
+    /* List view */
+    .res-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 16px; }
+    .res-empty { text-align: center; padding: 40px 0; font-size: 14px; color: var(--muted-light); }
+    .res-card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-md); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+    .res-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .res-card-name { font-size: 14px; font-weight: 700; color: var(--on-surface); }
+    .res-card-meta { font-size: 13px; color: var(--muted); }
+    .res-card-sub { font-size: 12px; color: var(--muted-light); }
+    .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 700; border-width: 1px; border-style: solid; }
+    .badge-green { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+    .badge-warn { background: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); }
+    .btn-cancel-req { margin-top: 4px; align-self: flex-start; height: 30px; padding: 0 12px; border-radius: 6px; background: none; border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .btn-cancel-req:hover { border-color: var(--error); color: var(--error); background: var(--error-bg); }
+
+    /* Timeline */
+    .timeline-day { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-md); padding: 14px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
+    .timeline-day-title { font-size: 13px; font-weight: 700; color: var(--primary); }
+    .timeline-room-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    .timeline-bar-wrap { position: relative; height: 34px; background: #f1f3f4; border-radius: 6px; overflow: hidden; }
+    .timeline-bar { position: absolute; top: 0; height: 100%; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; overflow: hidden; }
+    .timeline-bar-available { background: #1a73e8; }
+    .timeline-bar-pending { background: #f29900; }
+    .timeline-bar-label { color: #fff; font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .timeline-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted-light); margin-top: 2px; }
+
+    /* Cancel modal */
+    .modal-backdrop {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.45); z-index: 40;
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal-backdrop.visible { display: flex; }
+    .modal-sheet {
+      background: var(--surface); width: 100%; max-height: 80vh;
+      overflow-y: auto; padding: 20px;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .modal-title { font-size: 16px; font-weight: 800; color: var(--on-surface); }
+    .modal-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .modal-label { display: block; font-size: 13px; font-weight: 600; color: var(--on-surface); margin-bottom: 6px; }
+    .modal-textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; outline: none; resize: none; transition: border-color .15s, box-shadow .15s; }
+    .modal-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,.18); }
+    .modal-actions { display: flex; gap: 10px; }
+    .btn-modal-back { flex: 1; height: 46px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .btn-modal-back:hover { background: #f8f9fa; }
+    .btn-modal-danger { flex: 2; height: 46px; border-radius: 8px; border: none; background: #d93025; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s; }
+    .btn-modal-danger:hover:not(:disabled) { background: #b0261c; }
+    .btn-modal-danger:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-icon { vertical-align: -2px; }
+
+    @media (min-width: 600px) {
+      .modal-backdrop { align-items: center; }
+      .modal-sheet { max-width: 440px; border-radius: 16px; }
+    }
+    @media (max-width: 640px) {
+      .filter-grid { grid-template-columns: 1fr; }
+      .calendar-grid { grid-template-columns: 1fr; }
+      .calendar-iframe { height: 300px; }
+    }
   </style>
 </head>
+<body>
 
-<body class="bg-gray-50 min-h-screen text-gray-800">
-
-  <!-- ローディングオーバーレイ -->
-  <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl px-10 py-7 flex flex-col items-center gap-3 shadow-xl">
-      <div class="w-9 h-9 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin"></div>
-      <p id="loading-text" class="text-sm text-gray-500">処理中...</p>
+  <!-- Loading -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-box">
+      <div class="loading-spinner spin"></div>
+      <p id="loading-text" class="loading-text">処理中...</p>
     </div>
   </div>
 
-  <div class="max-w-6xl mx-auto px-4">
-    <!-- ヘッダー -->
-    <div class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur pt-4 pb-3 flex items-center justify-between border-b border-gray-200 mb-5">
-      <h1 id="system-name" class="text-lg font-bold text-gray-900">利用状況</h1>
-      <a href="reserve.html" class="text-sm font-medium text-blue-600">予約する →</a>
+  <!-- App bar -->
+  <header class="app-bar">
+    <div class="app-bar-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+      </svg>
     </div>
+    <h1 id="system-name" class="app-bar-title">利用状況</h1>
+    <div class="app-bar-actions">
+      <a href="index.html" class="app-bar-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        ホームに戻る
+      </a>
+      <a href="reserve.html" class="app-bar-btn app-bar-btn-primary">予約する →</a>
+    </div>
+  </header>
 
-    <!-- フィルター -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="cursor-pointer" onclick="openNativePicker('filter-date')">
-          <label class="block text-xs font-semibold text-gray-500 mb-1 cursor-pointer">日付</label>
-          <input type="date" id="filter-date" onchange="applyFilters()" title="日付"
-            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500">
+  <div class="page">
+
+    <!-- フィルターパネル -->
+    <div class="card">
+      <div class="filter-grid">
+        <div class="filter-label">
+          日付
+          <input type="date" id="filter-date" title="日付でフィルター" onchange="applyFilters()" class="filter-input" onclick="openNativePicker('filter-date')">
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">会議室</label>
-          <select id="filter-room" onchange="applyFilters()" title="会議室"
-            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="filter-label">
+          会議室
+          <select id="filter-room" title="会議室でフィルター" onchange="applyFilters()" class="filter-select">
             <option value="">すべて</option>
           </select>
         </div>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">開始時間以降</label>
-          <select id="filter-start" onchange="applyFilters()" title="開始時間以降"
-            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="filter-label">
+          開始時間以降
+          <select id="filter-start" title="開始時間以降でフィルター" onchange="applyFilters()" class="filter-select">
             <option value="">指定なし</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">終了時間以前</label>
-          <select id="filter-end" onchange="applyFilters()" title="終了時間以前"
-            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="filter-label">
+          終了時間以前
+          <select id="filter-end" title="終了時間以前でフィルター" onchange="applyFilters()" class="filter-select">
             <option value="">指定なし</option>
           </select>
         </div>
       </div>
-      <div class="flex gap-2 flex-wrap">
-        <div class="flex rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
-          <button type="button" id="view-list-btn" onclick="setView('list')"
-            class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white transition">一覧</button>
-          <button type="button" id="view-timeline-btn" onclick="setView('timeline')"
-            class="px-4 py-2 text-sm font-semibold bg-white text-gray-500 transition">タイムライン</button>
+      <div class="filter-actions">
+        <div class="view-toggle">
+          <button type="button" id="view-list-btn" onclick="setView('list')" class="view-btn active">一覧</button>
+          <button type="button" id="view-timeline-btn" onclick="setView('timeline')" class="view-btn">タイムライン</button>
         </div>
-        <button type="button" onclick="resetFilters()"
-          class="px-4 py-2 text-sm font-semibold rounded-xl bg-gray-100 text-gray-600 transition">リセット</button>
-        <button type="button" onclick="reloadData()"
-          class="px-4 py-2 text-sm font-semibold rounded-xl bg-gray-100 text-gray-600 transition">更新</button>
+        <button type="button" onclick="resetFilters()" class="btn-sm">リセット</button>
+        <button type="button" onclick="reloadData()" class="btn-sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="btn-icon"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          更新
+        </button>
       </div>
     </div>
 
-    <!-- 一覧表示 -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
-      <div class="flex items-start justify-between gap-3">
+    <!-- Googleカレンダー -->
+    <div class="card">
+      <div class="calendar-header">
         <div>
-          <h2 class="text-sm font-bold text-gray-900">Googleカレンダー</h2>
-          <p class="text-xs text-gray-500 mt-1">会議室を選ぶと、対応するGoogleカレンダーをこの画面で確認できます。</p>
+          <div class="card-title">Googleカレンダー</div>
+          <div class="card-subtitle">会議室を選ぶと対応するGoogleカレンダーをここで確認できます。</div>
         </div>
-        <a id="calendar-open-link" href="#" target="_blank" rel="noopener noreferrer"
-          class="hidden px-3 py-2 text-xs font-semibold rounded-xl bg-blue-50 text-blue-600">
+        <a id="calendar-open-link" href="#" target="_blank" rel="noopener noreferrer" class="calendar-open-btn hidden">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
           別タブで開く
         </a>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,220px)_1fr] gap-3 items-start">
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">表示する会議室</label>
-          <select id="calendar-room" onchange="handleCalendarRoomChange()" title="表示する会議室"
-            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <div class="calendar-grid">
+        <div class="filter-label">
+          表示する会議室
+          <select id="calendar-room" title="カレンダーに表示する会議室を選択" onchange="handleCalendarRoomChange()" class="filter-select">
             <option value="">会議室を選択</option>
           </select>
         </div>
-        <div id="calendar-viewer" class="min-h-[220px] rounded-2xl border border-dashed border-gray-200 bg-gray-50"></div>
+        <div id="calendar-viewer" class="calendar-placeholder">会議室を選択するとGoogleカレンダーを表示します。</div>
       </div>
     </div>
 
+    <!-- 一覧 -->
     <div id="view-list">
-      <div id="res-list-container" class="space-y-2 pb-10">
-        <div class="text-center py-10 text-gray-400 text-sm">読み込み中...</div>
+      <div id="res-list-container" class="res-list">
+        <div class="res-empty">読み込み中...</div>
       </div>
     </div>
 
-    <!-- タイムライン表示 -->
-    <div id="view-timeline" class="hidden pb-10">
+    <!-- タイムライン -->
+    <div id="view-timeline" class="hidden">
       <div id="timeline-container">
-        <div class="text-center py-10 text-gray-400 text-sm">読み込み中...</div>
+        <div class="res-empty">読み込み中...</div>
       </div>
     </div>
   </div>
 
-  <!-- キャンセル依頼モーダル（スマホ: 下から / PC: 中央） -->
-  <div id="cancel-modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-end sm:items-center justify-center">
-    <div class="bg-white rounded-t-3xl sm:rounded-2xl p-5 w-full sm:max-w-md space-y-4 shadow-2xl">
-      <h2 class="text-base font-bold text-gray-900">キャンセル依頼</h2>
-      <p class="text-sm text-gray-500">依頼を送信します。管理者が確認後に対応します。</p>
+  <!-- キャンセル依頼モーダル -->
+  <div id="cancel-modal" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-title">キャンセル依頼</div>
+      <div class="modal-desc">依頼を送信します。管理者が確認後に対応します。</div>
       <input type="hidden" id="cancel-res-id">
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1">理由（任意）</label>
-        <textarea id="cancel-reason" placeholder="例：都合が悪くなったため" rows="3"
-          class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+        <label class="modal-label">理由（任意）</label>
+        <textarea id="cancel-reason" placeholder="例：都合が悪くなったため" rows="3" class="modal-textarea"></textarea>
       </div>
-      <div class="flex gap-3 pb-2">
-        <button type="button" onclick="closeCancelModal()"
-          class="flex-1 py-3.5 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm">戻る</button>
-        <button type="button" onclick="submitCancelRequest()" id="btn-cancel-submit"
-          class="flex-[2] py-3.5 bg-red-500 text-white rounded-xl font-bold text-sm disabled:opacity-50">
-          キャンセル依頼を送信
-        </button>
+      <div class="modal-actions">
+        <button type="button" onclick="closeCancelModal()" class="btn-modal-back">戻る</button>
+        <button type="button" onclick="submitCancelRequest()" id="btn-cancel-submit" class="btn-modal-danger">キャンセル依頼を送信</button>
       </div>
     </div>
   </div>
@@ -143,29 +321,23 @@
     let currentView = 'list';
     let selectedCalendarRoomId = '';
 
-    // ============================================================
-    // ローディング
-    // ============================================================
+    // Loading
+    function showLoading(text) {
+      document.getElementById('loading-text').textContent = text || '処理中...';
+      document.getElementById('loading-overlay').classList.add('visible');
+    }
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.remove('visible');
+    }
+
     function openNativePicker(id) {
       const input = document.getElementById(id);
       if (!input) return;
       input.focus();
-      if (typeof input.showPicker === 'function') {
-        input.showPicker();
-      }
+      if (typeof input.showPicker === 'function') input.showPicker();
     }
 
-    function showLoading(text) {
-      document.getElementById('loading-text').textContent = text || '処理中...';
-      document.getElementById('loading-overlay').classList.remove('hidden');
-    }
-    function hideLoading() {
-      document.getElementById('loading-overlay').classList.add('hidden');
-    }
-
-    // ============================================================
-    // 初期化
-    // ============================================================
+    // Init
     document.addEventListener('DOMContentLoaded', async () => {
       populateTimeFilters('09:00', '22:00');
       document.getElementById('filter-date').value = todayStr();
@@ -175,15 +347,12 @@
       renderCalendarViewer();
     });
 
-    function todayStr() {
-      return new Date().toISOString().slice(0, 10);
-    }
+    function todayStr() { return new Date().toISOString().slice(0, 10); }
 
     function populateTimeFilters(businessStart, businessEnd) {
       const start = document.getElementById('filter-start');
       const end = document.getElementById('filter-end');
-      const prevStart = start.value;
-      const prevEnd = end.value;
+      const prevStart = start.value, prevEnd = end.value;
       const opts = generateTimeOptions(toMin(businessStart), toMin(businessEnd), '');
       start.innerHTML = `<option value="">指定なし</option>${opts}`;
       end.innerHTML = `<option value="">指定なし</option>${opts}`;
@@ -191,9 +360,7 @@
       end.value = prevEnd;
     }
 
-    // ============================================================
-    // 設定取得
-    // ============================================================
+    // Config
     async function loadConfig() {
       try {
         const res = await fetch(CONFIG.GAS_API_URL + '?action=get_config');
@@ -211,11 +378,7 @@
     }
 
     function defaultConfig() {
-      return {
-        ok: true, today: todayStr(),
-        settings: { systemName: '会議室予約システム', businessStartTime: '09:00', businessEndTime: '22:00', spreadsheetUrl: '' },
-        rooms: [],
-      };
+      return { ok: true, today: todayStr(), settings: { systemName: '会議室予約システム', businessStartTime: '09:00', businessEndTime: '22:00', spreadsheetUrl: '' }, rooms: [] };
     }
 
     function applyConfig(data) {
@@ -223,7 +386,6 @@
       document.getElementById('system-name').textContent = s.systemName + ' - 利用状況';
       document.title = s.systemName + ' - 利用状況';
       populateTimeFilters(s.businessStartTime || '09:00', s.businessEndTime || '22:00');
-
       const sel = document.getElementById('filter-room');
       const prevRoom = sel.value;
       sel.innerHTML = '<option value="">すべて</option>';
@@ -236,36 +398,23 @@
       sel.value = prevRoom;
     }
 
-    /**
-     * Googleカレンダー表示用の会議室選択肢を同期します。
-     *
-     * @param {Array<Object>} rooms 会議室一覧。
-     * @return {void}
-     */
     function syncCalendarRoomOptions(rooms) {
-      /** @type {HTMLSelectElement} カレンダー表示用の会議室セレクト。 */
       const calendarSelect = document.getElementById('calendar-room');
-      /** @type {string} 直前に選択されていた会議室ID。 */
       const previousRoomId = selectedCalendarRoomId || calendarSelect.value;
-
       calendarSelect.innerHTML = '<option value="">会議室を選択</option>';
       rooms.filter((room) => room.calendar_url).forEach((room) => {
-        /** @type {HTMLOptionElement} カレンダー表示用の選択肢。 */
         const option = document.createElement('option');
         option.value = room.room_id;
         option.textContent = room.room_name;
         calendarSelect.appendChild(option);
       });
-
       selectedCalendarRoomId = rooms.some((room) => room.room_id === previousRoomId && room.calendar_url)
         ? previousRoomId
         : (rooms.find((room) => room.calendar_url) || {}).room_id || '';
       calendarSelect.value = selectedCalendarRoomId;
     }
 
-    // ============================================================
-    // CSV 取得
-    // ============================================================
+    // CSV
     async function loadReservations(bustCache = false) {
       try {
         const text = CONFIG.fetchSheetCsvText
@@ -288,9 +437,6 @@
       renderCalendarViewer();
     }
 
-    // ============================================================
-    // CSV パーサー
-    // ============================================================
     const CSV_KEY_MAP = {
       '予約ID': 'reservation_id', '団体名': 'organization_name', '会議名': 'meeting_name',
       'お名前': 'user_name', '会議室ID': 'room_id', '会議室名': 'room_name',
@@ -325,9 +471,7 @@
       return result;
     }
 
-    // ============================================================
-    // フィルター・表示
-    // ============================================================
+    // Filters & View
     function resetFilters() {
       document.getElementById('filter-date').value = appConfig ? appConfig.today : todayStr();
       document.getElementById('filter-room').value = '';
@@ -341,7 +485,6 @@
       const room = document.getElementById('filter-room').value;
       const start = document.getElementById('filter-start').value;
       const end = document.getElementById('filter-end').value;
-
       filteredReservations = allReservations.filter(r => {
         if (date && r.usage_date !== date) return false;
         if (room && r.room_id !== room) return false;
@@ -350,25 +493,16 @@
         if (!start && end && toMin(r.start_time) >= toMin(end)) return false;
         return true;
       });
-
       filteredReservations.sort((a, b) =>
         (a.usage_date + a.start_time + a.room_name).localeCompare(b.usage_date + b.start_time + b.room_name)
       );
-
       renderCurrentView();
     }
 
     function setView(v) {
       currentView = v;
-      const listBtn = document.getElementById('view-list-btn');
-      const tlBtn = document.getElementById('view-timeline-btn');
-      if (v === 'list') {
-        listBtn.className = 'px-4 py-2 text-sm font-semibold bg-blue-600 text-white transition';
-        tlBtn.className = 'px-4 py-2 text-sm font-semibold bg-white text-gray-500 transition';
-      } else {
-        tlBtn.className = 'px-4 py-2 text-sm font-semibold bg-blue-600 text-white transition';
-        listBtn.className = 'px-4 py-2 text-sm font-semibold bg-white text-gray-500 transition';
-      }
+      document.getElementById('view-list-btn').className = `view-btn${v === 'list' ? ' active' : ''}`;
+      document.getElementById('view-timeline-btn').className = `view-btn${v === 'timeline' ? ' active' : ''}`;
       document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
       document.getElementById('view-timeline').classList.toggle('hidden', v !== 'timeline');
       renderCurrentView();
@@ -379,88 +513,66 @@
       else renderTimeline();
     }
 
-    // ---- 一覧 ----
-    /**
-     * カレンダー表示用の会議室選択を反映します。
-     *
-     * @return {void}
-     */
+    // Calendar viewer
     function handleCalendarRoomChange() {
-      /** @type {HTMLSelectElement} カレンダー表示用の会議室セレクト。 */
-      const calendarSelect = document.getElementById('calendar-room');
-      selectedCalendarRoomId = calendarSelect.value;
+      selectedCalendarRoomId = document.getElementById('calendar-room').value;
       renderCalendarViewer();
     }
 
-    /**
-     * 選択した会議室のGoogleカレンダーを埋め込み表示します。
-     *
-     * @return {void}
-     */
     function renderCalendarViewer() {
-      /** @type {HTMLElement} カレンダー描画先。 */
       const viewer = document.getElementById('calendar-viewer');
-      /** @type {HTMLAnchorElement} Googleカレンダーの別タブリンク。 */
       const openLink = document.getElementById('calendar-open-link');
-      /** @type {Array<Object>} 現在の会議室一覧。 */
       const rooms = appConfig && Array.isArray(appConfig.rooms) ? appConfig.rooms : [];
-      /** @type {Object|undefined} 選択中の会議室。 */
       const selectedRoom = rooms.find((room) => room.room_id === selectedCalendarRoomId && room.calendar_url);
 
       if (!rooms.some((room) => room.calendar_url)) {
-        viewer.innerHTML = '<div class="h-full min-h-[220px] flex items-center justify-center px-4 text-sm text-gray-400">Googleカレンダーが設定された会議室がありません。</div>';
+        viewer.className = 'calendar-placeholder';
+        viewer.textContent = 'Googleカレンダーが設定された会議室がありません。';
         openLink.classList.add('hidden');
         openLink.removeAttribute('href');
         return;
       }
-
       if (!selectedRoom) {
-        viewer.innerHTML = '<div class="h-full min-h-[220px] flex items-center justify-center px-4 text-sm text-gray-400">会議室を選択するとGoogleカレンダーを表示します。</div>';
+        viewer.className = 'calendar-placeholder';
+        viewer.textContent = '会議室を選択するとGoogleカレンダーを表示します。';
         openLink.classList.add('hidden');
         openLink.removeAttribute('href');
         return;
       }
-
       openLink.href = selectedRoom.calendar_url;
       openLink.classList.remove('hidden');
-      viewer.innerHTML = `<iframe
-        src="${esc(selectedRoom.calendar_url)}"
-        title="${esc(selectedRoom.room_name)} のGoogleカレンダー"
-        class="w-full h-[420px] rounded-2xl bg-white"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+      viewer.className = '';
+      viewer.innerHTML = `<iframe src="${esc(selectedRoom.calendar_url)}" title="${esc(selectedRoom.room_name)} のGoogleカレンダー" class="calendar-iframe" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
     }
 
+    // List view
     function renderList() {
       const container = document.getElementById('res-list-container');
       if (!filteredReservations.length) {
-        container.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">該当する予約はありません</div>';
+        container.innerHTML = '<div class="res-empty">該当する予約はありません</div>';
         return;
       }
       container.innerHTML = filteredReservations.map(r => {
-        const badge = r.status === '有効'
-          ? '<span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">有効</span>'
-          : '<span class="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">キャンセル依頼中</span>';
-        const cancelBtn = r.status === '有効'
-          ? `<button type="button" onclick="openCancelModal('${esc(r.reservation_id)}')"
-               class="mt-3 text-xs text-gray-400 hover:text-red-500 font-semibold transition py-1">
-               キャンセル依頼
-             </button>`
+        const isValid = r.status === '有効';
+        const badge = isValid
+          ? '<span class="badge badge-green">有効</span>'
+          : '<span class="badge badge-warn">キャンセル依頼中</span>';
+        const cancelBtn = isValid
+          ? `<button type="button" onclick="openCancelModal('${esc(r.reservation_id)}')" class="btn-cancel-req">キャンセル依頼</button>`
           : '';
-        return `<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div class="flex items-start justify-between gap-2">
-            <span class="font-bold text-gray-900 text-sm">${esc(r.meeting_name)}</span>
+        return `<div class="res-card">
+          <div class="res-card-top">
+            <span class="res-card-name">${esc(r.meeting_name)}</span>
             ${badge}
           </div>
-          <div class="text-sm text-gray-600 mt-1.5">${fmtDate(r.usage_date)}　${esc(r.start_time)}〜${esc(r.end_time)}</div>
-          <div class="text-sm text-gray-600">${esc(r.room_name)}</div>
-          <div class="text-xs text-gray-400 mt-0.5">${esc(r.organization_name)}　${esc(r.user_name)}</div>
+          <div class="res-card-meta">${fmtDate(r.usage_date)}　${esc(r.start_time)}〜${esc(r.end_time)}　${esc(r.room_name)}</div>
+          <div class="res-card-sub">${esc(r.organization_name)}　${esc(r.user_name)}</div>
           ${cancelBtn}
         </div>`;
       }).join('');
     }
 
-    // ---- タイムライン ----
+    // Timeline view
     function renderTimeline() {
       const container = document.getElementById('timeline-container');
       const s = appConfig ? appConfig.settings : defaultConfig().settings;
@@ -469,7 +581,7 @@
       const totalMin = endMin - startMin;
 
       if (!filteredReservations.length) {
-        container.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">該当する予約はありません</div>';
+        container.innerHTML = '<div class="res-empty">該当する予約はありません</div>';
         return;
       }
 
@@ -481,32 +593,29 @@
       });
 
       const rooms = appConfig ? appConfig.rooms : [];
-
       let html = '';
       Object.keys(days).sort().forEach(date => {
         const dayRooms = days[date];
         const roomOrder = rooms.length > 0 ? rooms : Object.keys(dayRooms).map(id => ({ room_id: id, room_name: dayRooms[id].room_name }));
-        html += `<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3">
-          <div class="font-bold text-blue-600 text-sm mb-3">${fmtDate(date)}</div>`;
+        html += `<div class="timeline-day"><div class="timeline-day-title">${fmtDate(date)}</div>`;
         roomOrder.forEach(room => {
           const roomData = dayRooms[room.room_id];
           if (!roomData) return;
-          html += `<div class="mb-3">
-            <div class="text-xs font-semibold text-gray-500 mb-1">${esc(room.room_name)}</div>
-            <div class="relative h-9 bg-gray-100 rounded-lg overflow-hidden">`;
+          html += `<div>
+            <div class="timeline-room-label">${esc(room.room_name)}</div>
+            <div class="timeline-bar-wrap">`;
           roomData.reservations.forEach(r => {
             const rStart = Math.max(toMin(r.start_time), startMin);
             const rEnd = Math.min(toMin(r.end_time), endMin);
             const left = ((rStart - startMin) / totalMin * 100).toFixed(2);
             const width = ((rEnd - rStart) / totalMin * 100).toFixed(2);
-            const bg = r.status === '有効' ? 'bg-blue-500' : 'bg-amber-400';
-            html += `<div class="absolute top-0 h-full ${bg} flex items-center px-2 overflow-hidden rounded"
-              style="left:${left}%;width:${width}%" title="${esc(r.meeting_name)} ${r.start_time}〜${r.end_time}">
-              <span class="text-white text-xs font-bold truncate">${esc(r.meeting_name)}</span>
+            const cls = r.status === '有効' ? 'timeline-bar-available' : 'timeline-bar-pending';
+            html += `<div class="timeline-bar ${cls}" style="left:${left}%;width:${width}%" title="${esc(r.meeting_name)} ${r.start_time}〜${r.end_time}">
+              <span class="timeline-bar-label">${esc(r.meeting_name)}</span>
             </div>`;
           });
           html += `</div>
-            <div class="flex justify-between text-xs text-gray-400 mt-0.5">
+            <div class="timeline-scale">
               <span>${s.businessStartTime || '09:00'}</span>
               <span>${s.businessEndTime || '22:00'}</span>
             </div>
@@ -517,17 +626,15 @@
       container.innerHTML = html;
     }
 
-    // ============================================================
-    // キャンセル依頼
-    // ============================================================
+    // Cancel modal
     function openCancelModal(reservationId) {
       document.getElementById('cancel-res-id').value = reservationId;
       document.getElementById('cancel-reason').value = '';
-      document.getElementById('cancel-modal').classList.remove('hidden');
+      document.getElementById('cancel-modal').classList.add('visible');
     }
 
     function closeCancelModal() {
-      document.getElementById('cancel-modal').classList.add('hidden');
+      document.getElementById('cancel-modal').classList.remove('visible');
     }
 
     async function submitCancelRequest() {
@@ -547,9 +654,7 @@
           closeCancelModal();
           sendLineNotification(reservationId, reason);
           const target = allReservations.find((item) => item.reservation_id === reservationId);
-          if (target) {
-            target.status = 'キャンセル依頼';
-          }
+          if (target) target.status = 'キャンセル依頼';
           applyFilters();
           alert('キャンセル依頼を送信しました。管理者が確認後に対応します。');
         } else {
@@ -568,9 +673,7 @@
       window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, '_blank');
     }
 
-    // ============================================================
-    // ユーティリティ
-    // ============================================================
+    // Utils
     function generateTimeOptions(startMin, endMin, selectedVal) {
       let html = '';
       for (let m = startMin; m <= endMin; m += 5) {
@@ -580,19 +683,9 @@
       return html;
     }
 
-    function minToTime(m) {
-      return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-    }
-
-    function toMin(t) {
-      if (!t) return 0;
-      const [h, m] = t.split(':').map(Number);
-      return h * 60 + m;
-    }
-
-    function timeOverlap(s1, e1, s2, e2) {
-      return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1);
-    }
+    function minToTime(m) { return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
+    function toMin(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+    function timeOverlap(s1, e1, s2, e2) { return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1); }
 
     function fmtDate(d) {
       if (!d) return '';
@@ -601,9 +694,7 @@
       return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
     }
 
-    function esc(s) {
-      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   </script>
 </body>
 </html>
