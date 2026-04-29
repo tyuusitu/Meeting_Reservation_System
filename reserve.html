@@ -445,33 +445,18 @@
     }
 
     // Reserve cards
-    function addReserveCard() {
-      const s = appConfig ? appConfig.settings : defaultConfig().settings;
-      if (reserveCards.length >= s.maxReservationsPerSubmit) {
-        showToast(`一度に${s.maxReservationsPerSubmit}件までです。`);
-        return;
-      }
-      reserveCards.push(++cardIdCounter);
-      renderReserveCards();
-    }
-
-    function removeReserveCard(id) {
-      reserveCards = reserveCards.filter(c => c !== id);
-      if (!reserveCards.length) addReserveCard();
-      else renderReserveCards();
-    }
-
-    function renderReserveCards() {
-      const s = appConfig ? appConfig.settings : defaultConfig().settings;
+    // Build HTML for a single card (uses cached time options)
+    function buildOneCardHTML(id, s) {
+      const idx = reserveCards.indexOf(id);
+      const isMulti = reserveCards.length > 1;
       const startDef = defaultStartTime();
       const endDef = minToTime(Math.min(toMin(startDef) + 60, toMin(s.businessEndTime || '22:00')));
       const startOpts = generateTimeOptions(toMin(s.businessStartTime || '09:00'), toMin(s.businessEndTime || '22:00') - 5, startDef);
-
-      document.getElementById('reserve-cards').innerHTML = reserveCards.map((id, idx) => `
-        <div id="card-${id}" class="reserve-card">
+      const endOpts = generateTimeOptions(toMin(startDef) + 5, toMin(s.businessEndTime || '22:00'), endDef);
+      return `<div id="card-${id}" class="reserve-card">
           <div class="reserve-card-header">
-            <span class="reserve-card-label">${reserveCards.length > 1 ? `${idx + 1}件目` : '予約内容'}</span>
-            ${reserveCards.length > 1 ? `<button onclick="removeReserveCard(${id})" class="reserve-card-remove">削除</button>` : ''}
+            <span class="reserve-card-label">${isMulti ? `${idx + 1}件目` : '予約内容'}</span>
+            ${isMulti ? `<button type="button" onclick="removeReserveCard(${id})" class="reserve-card-remove">削除</button>` : ''}
           </div>
           <div>
             <label class="form-label">利用日 <span class="req">*</span></label>
@@ -488,9 +473,7 @@
             </div>
             <div>
               <label class="form-label">終了時間 <span class="req">*</span></label>
-              <select id="card-end-${id}" onchange="searchAvailable(${id})" class="form-select">
-                ${generateTimeOptions(toMin(startDef) + 5, toMin(s.businessEndTime || '22:00'), endDef)}
-              </select>
+              <select id="card-end-${id}" onchange="searchAvailable(${id})" class="form-select">${endOpts}</select>
               <p class="error-msg" id="card-err-end-${id}"></p>
             </div>
           </div>
@@ -504,8 +487,74 @@
             <input type="text" id="card-meeting-${id}" placeholder="${esc(s.labels.meetingName)}を入力" class="form-input">
             <p class="error-msg" id="card-err-meeting-${id}"></p>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+    }
+
+    // Update labels/remove-buttons without touching form values
+    function updateCardLabels(s) {
+      const isMulti = reserveCards.length > 1;
+      reserveCards.forEach((id, idx) => {
+        const card = document.getElementById('card-' + id);
+        if (!card) return;
+        const labelEl = card.querySelector('.reserve-card-label');
+        if (labelEl) labelEl.textContent = isMulti ? `${idx + 1}件目` : '予約内容';
+        const rmBtn = card.querySelector('.reserve-card-remove');
+        if (isMulti && !rmBtn) {
+          card.querySelector('.reserve-card-header').insertAdjacentHTML('beforeend',
+            `<button type="button" onclick="removeReserveCard(${id})" class="reserve-card-remove">削除</button>`);
+        } else if (!isMulti && rmBtn) {
+          rmBtn.remove();
+        }
+      });
+    }
+
+    // Save/restore form state across full re-renders (e.g. on config load)
+    function saveCardData() {
+      return reserveCards.map(id => ({
+        id,
+        date:    document.getElementById(`card-date-${id}`)?.value ?? '',
+        start:   document.getElementById(`card-start-${id}`)?.value ?? '',
+        end:     document.getElementById(`card-end-${id}`)?.value ?? '',
+        meeting: document.getElementById(`card-meeting-${id}`)?.value ?? '',
+      }));
+    }
+    function restoreCardData(saved) {
+      saved.forEach(({ id, date, start, end, meeting }) => {
+        if (date)    { const el = document.getElementById(`card-date-${id}`);    if (el) { el.value = date;    searchAvailable(id); } }
+        if (start)   { const el = document.getElementById(`card-start-${id}`);   if (el) el.value = start; }
+        if (end)     { const el = document.getElementById(`card-end-${id}`);     if (el) el.value = end; }
+        if (meeting) { const el = document.getElementById(`card-meeting-${id}`); if (el) el.value = meeting; }
+      });
+    }
+
+    // Incremental add — only appends new card, preserves existing cards' data
+    function addReserveCard() {
+      const s = appConfig ? appConfig.settings : defaultConfig().settings;
+      if (reserveCards.length >= s.maxReservationsPerSubmit) {
+        showToast(`一度に${s.maxReservationsPerSubmit}件までです。`);
+        return;
+      }
+      const id = ++cardIdCounter;
+      reserveCards.push(id);
+      document.getElementById('reserve-cards').insertAdjacentHTML('beforeend', buildOneCardHTML(id, s));
+      if (reserveCards.length === 2) updateCardLabels(s); // first card needs remove-btn + "1件目" label
+    }
+
+    // Incremental remove — only removes target card, preserves others' data
+    function removeReserveCard(id) {
+      reserveCards = reserveCards.filter(c => c !== id);
+      if (!reserveCards.length) { addReserveCard(); return; }
+      document.getElementById('card-' + id)?.remove();
+      const s = appConfig ? appConfig.settings : defaultConfig().settings;
+      updateCardLabels(s);
+    }
+
+    // Full rebuild with save/restore (called only from applyConfig)
+    function renderReserveCards() {
+      const s = appConfig ? appConfig.settings : defaultConfig().settings;
+      const saved = saveCardData();
+      document.getElementById('reserve-cards').innerHTML = reserveCards.map(id => buildOneCardHTML(id, s)).join('');
+      restoreCardData(saved);
     }
 
     function searchAvailable(id) {
@@ -724,13 +773,19 @@
     }
 
     // Utils
+    const _toCache = Object.create(null);
     function generateTimeOptions(startMin, endMin, selectedVal) {
-      let html = '';
-      for (let m = startMin; m <= endMin; m += 5) {
-        const val = minToTime(m);
-        html += `<option value="${val}"${val === selectedVal ? ' selected' : ''}>${val}</option>`;
+      const key = `${startMin},${endMin}`;
+      if (!_toCache[key]) {
+        let html = '';
+        for (let m = startMin; m <= endMin; m += 5) {
+          const v = minToTime(m);
+          html += `<option value="${v}">${v}</option>`;
+        }
+        _toCache[key] = html;
       }
-      return html;
+      if (!selectedVal) return _toCache[key];
+      return _toCache[key].replace(`value="${selectedVal}"`, `value="${selectedVal}" selected`);
     }
 
     function updateEndTimeOptions(id) {
@@ -746,11 +801,13 @@
     function toMin(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
     function timeOverlap(s1, e1, s2, e2) { return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1); }
 
+    const _DAYS = ['日', '月', '火', '水', '木', '金', '土'];
+    const _fmtCache = Object.create(null);
     function fmtDate(d) {
       if (!d) return '';
+      if (_fmtCache[d]) return _fmtCache[d];
       const dt = new Date(d + 'T00:00:00');
-      const days = ['日', '月', '火', '水', '木', '金', '土'];
-      return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
+      return (_fmtCache[d] = `${dt.getMonth() + 1}/${dt.getDate()}(${_DAYS[dt.getDay()]})`);
     }
 
     function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }

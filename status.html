@@ -373,9 +373,15 @@
         const text = CONFIG.fetchSheetCsvText
           ? await CONFIG.fetchSheetCsvText('reservations', bustCache)
           : await fetch(CONFIG.buildSheetCsvUrl('reservations', bustCache)).then(r => r.text());
+        // Precompute toMin and sort key once per record to avoid repeated parsing in filter/sort
         allReservations = parseCSV(text).filter(r =>
           r.reservation_id && r.status === '有効'
-        );
+        ).map(r => {
+          r._sm = toMin(r.start_time);
+          r._em = toMin(r.end_time);
+          r._sk = r.usage_date + r.start_time + r.room_name;
+          return r;
+        });
       } catch (e) {
         console.warn('予約データ取得失敗', e);
         allReservations = [];
@@ -438,17 +444,17 @@
       const room = document.getElementById('filter-room').value;
       const start = document.getElementById('filter-start').value;
       const end = document.getElementById('filter-end').value;
+      const sm = start ? toMin(start) : 0;
+      const em = end   ? toMin(end)   : Infinity;
       filteredReservations = allReservations.filter(r => {
         if (date && r.usage_date !== date) return false;
         if (room && r.room_id !== room) return false;
-        if (start && end && !timeOverlap(r.start_time, r.end_time, start, end)) return false;
-        if (start && !end && toMin(r.end_time) <= toMin(start)) return false;
-        if (!start && end && toMin(r.start_time) >= toMin(end)) return false;
+        if (start && end   && !(r._sm < em && sm < r._em)) return false;
+        if (start && !end  && r._em <= sm) return false;
+        if (!start && end  && r._sm >= em) return false;
         return true;
       });
-      filteredReservations.sort((a, b) =>
-        (a.usage_date + a.start_time + a.room_name).localeCompare(b.usage_date + b.start_time + b.room_name)
-      );
+      filteredReservations.sort((a, b) => a._sk < b._sk ? -1 : a._sk > b._sk ? 1 : 0);
       renderCurrentView();
     }
 
@@ -572,24 +578,32 @@
     }
 
     // Utils
+    const _toCache = Object.create(null);
     function generateTimeOptions(startMin, endMin, selectedVal) {
-      let html = '';
-      for (let m = startMin; m <= endMin; m += 5) {
-        const val = minToTime(m);
-        html += `<option value="${val}"${val === selectedVal ? ' selected' : ''}>${val}</option>`;
+      const key = `${startMin},${endMin}`;
+      if (!_toCache[key]) {
+        let html = '';
+        for (let m = startMin; m <= endMin; m += 5) {
+          const v = minToTime(m);
+          html += `<option value="${v}">${v}</option>`;
+        }
+        _toCache[key] = html;
       }
-      return html;
+      if (!selectedVal) return _toCache[key];
+      return _toCache[key].replace(`value="${selectedVal}"`, `value="${selectedVal}" selected`);
     }
 
     function minToTime(m) { return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
     function toMin(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
     function timeOverlap(s1, e1, s2, e2) { return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1); }
 
+    const _DAYS = ['日', '月', '火', '水', '木', '金', '土'];
+    const _fmtCache = Object.create(null);
     function fmtDate(d) {
       if (!d) return '';
+      if (_fmtCache[d]) return _fmtCache[d];
       const dt = new Date(d + 'T00:00:00');
-      const days = ['日', '月', '火', '水', '木', '金', '土'];
-      return `${dt.getMonth() + 1}/${dt.getDate()}(${days[dt.getDay()]})`;
+      return (_fmtCache[d] = `${dt.getMonth() + 1}/${dt.getDate()}(${_DAYS[dt.getDay()]})`);
     }
 
     function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
