@@ -136,9 +136,6 @@
     .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 700; border-width: 1px; border-style: solid; }
     .badge-green { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
     .badge-warn { background: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); }
-    .btn-cancel-req { margin-top: 4px; align-self: flex-start; height: 30px; padding: 0 12px; border-radius: 6px; background: none; border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
-    .btn-cancel-req:hover { border-color: var(--error); color: var(--error); background: var(--error-bg); }
-
     /* Timeline */
     .timeline-day { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-md); padding: 14px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
     .timeline-day-title { font-size: 13px; font-weight: 700; color: var(--primary); }
@@ -150,45 +147,8 @@
     .timeline-bar-label { color: #fff; font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .timeline-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted-light); margin-top: 2px; }
 
-    /* Cancel modal */
-    .modal-backdrop {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,.45); z-index: 40;
-      display: none; align-items: flex-end; justify-content: center;
-    }
-    .modal-backdrop.visible { display: flex; }
-    .modal-sheet {
-      background: var(--surface); width: 100%; max-height: 80vh;
-      overflow-y: auto; padding: 20px;
-      border-radius: 20px 20px 0 0;
-      box-shadow: 0 -4px 24px rgba(0,0,0,.15);
-      display: flex; flex-direction: column; gap: 14px;
-    }
-    .modal-title { font-size: 16px; font-weight: 800; color: var(--on-surface); }
-    .modal-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
-    .modal-label { display: block; font-size: 13px; font-weight: 600; color: var(--on-surface); margin-bottom: 6px; }
-    .modal-textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; outline: none; resize: none; transition: border-color .15s, box-shadow .15s; }
-    .modal-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,.18); }
-    .modal-actions { display: flex; gap: 10px; }
-    .btn-modal-back { flex: 1; height: 46px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s; }
-    .btn-modal-back:hover { background: #f8f9fa; }
-    .btn-modal-danger { flex: 2; height: 46px; border-radius: 8px; border: none; background: #d93025; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s; }
-    .btn-modal-danger:hover:not(:disabled) { background: #b0261c; }
-    .btn-modal-danger:disabled { opacity: .5; cursor: not-allowed; }
-
     .btn-icon { vertical-align: -2px; }
 
-    /* Toast */
-    .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
-    .toast { padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,.2); white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; pointer-events: auto; animation: toastIn .2s ease; transition: opacity .3s; will-change: opacity, transform; }
-    .toast-success { background: #202124; color: #fff; }
-    .toast-error { background: #d93025; color: #fff; }
-    @keyframes toastIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-    @media (min-width: 600px) {
-      .modal-backdrop { align-items: center; }
-      .modal-sheet { max-width: 440px; border-radius: 16px; }
-    }
     @media (max-width: 640px) {
       .filter-grid { grid-template-columns: 1fr; }
       .calendar-grid { grid-template-columns: 1fr; }
@@ -302,26 +262,6 @@
     </div>
   </div>
 
-  <!-- Toast -->
-  <div id="toast-wrap" class="toast-wrap"></div>
-
-  <!-- キャンセル依頼モーダル -->
-  <div id="cancel-modal" class="modal-backdrop">
-    <div class="modal-sheet">
-      <div class="modal-title">キャンセル依頼</div>
-      <div class="modal-desc">依頼を送信します。管理者が確認後に対応します。</div>
-      <input type="hidden" id="cancel-res-id">
-      <div>
-        <label class="modal-label">理由（任意）</label>
-        <textarea id="cancel-reason" placeholder="例：都合が悪くなったため" rows="3" class="modal-textarea"></textarea>
-      </div>
-      <div class="modal-actions">
-        <button type="button" onclick="closeCancelModal()" class="btn-modal-back">戻る</button>
-        <button type="button" onclick="submitCancelRequest()" id="btn-cancel-submit" class="btn-modal-danger">キャンセル依頼を送信</button>
-      </div>
-    </div>
-  </div>
-
   <script src="config.js"></script>
   <script>
     const CONFIG = window.APP_CONFIG;
@@ -431,7 +371,7 @@
           ? await CONFIG.fetchSheetCsvText('reservations', bustCache)
           : await fetch(CONFIG.buildSheetCsvUrl('reservations', bustCache)).then(r => r.text());
         allReservations = parseCSV(text).filter(r =>
-          r.reservation_id && (r.status === '有効' || r.status === 'キャンセル依頼')
+          r.reservation_id && r.status === '有効'
         );
       } catch (e) {
         console.warn('予約データ取得失敗', e);
@@ -563,21 +503,13 @@
         return;
       }
       container.innerHTML = filteredReservations.map(r => {
-        const isValid = r.status === '有効';
-        const badge = isValid
-          ? '<span class="badge badge-green">有効</span>'
-          : '<span class="badge badge-warn">キャンセル依頼中</span>';
-        const cancelBtn = isValid
-          ? `<button type="button" onclick="openCancelModal('${esc(r.reservation_id)}')" class="btn-cancel-req">キャンセル依頼</button>`
-          : '';
         return `<div class="res-card">
           <div class="res-card-top">
             <span class="res-card-name">${esc(r.meeting_name)}</span>
-            ${badge}
+            <span class="badge badge-green">有効</span>
           </div>
           <div class="res-card-meta">${fmtDate(r.usage_date)}　${esc(r.start_time)}〜${esc(r.end_time)}　${esc(r.room_name)}</div>
           <div class="res-card-sub">${esc(r.organization_name)}　${esc(r.user_name)}</div>
-          ${cancelBtn}
         </div>`;
       }).join('');
     }
@@ -634,66 +566,6 @@
         html += '</div>';
       });
       container.innerHTML = html;
-    }
-
-    // Cancel modal
-    function openCancelModal(reservationId) {
-      document.getElementById('cancel-res-id').value = reservationId;
-      document.getElementById('cancel-reason').value = '';
-      document.getElementById('cancel-modal').classList.add('visible');
-    }
-
-    function closeCancelModal() {
-      document.getElementById('cancel-modal').classList.remove('visible');
-    }
-
-    async function submitCancelRequest() {
-      const reservationId = document.getElementById('cancel-res-id').value;
-      const reason = document.getElementById('cancel-reason').value;
-      const btn = document.getElementById('btn-cancel-submit');
-      btn.disabled = true;
-      showLoading('キャンセル依頼を送信中...');
-      try {
-        const res = await fetch(CONFIG.GAS_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'cancel_request', payload: { reservation_id: reservationId, reason } }),
-        });
-        const data = await res.json();
-        if (data.ok) {
-          closeCancelModal();
-          sendLineNotification(reservationId, reason);
-          const target = allReservations.find((item) => item.reservation_id === reservationId);
-          if (target) target.status = 'キャンセル依頼';
-          applyFilters();
-          showToast('キャンセル依頼を送信しました。管理者が確認後に対応します。');
-        } else {
-          showToast(data.error || 'キャンセル依頼の送信に失敗しました。', 'error');
-        }
-      } catch (e) {
-        showToast('通信エラーが発生しました。', 'error');
-      }
-      btn.disabled = false;
-      hideLoading();
-    }
-
-    function sendLineNotification(reservationId, reason) {
-      const spreadsheetUrl = appConfig?.settings?.spreadsheetUrl || '';
-      const text = `【キャンセル依頼】\n予約ID: ${reservationId}\n理由: ${reason || 'なし'}\nスプレッドシート: ${spreadsheetUrl}`;
-      window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, '_blank');
-    }
-
-    // Toast
-    function showToast(msg, type = 'success') {
-      const wrap = document.getElementById('toast-wrap');
-      const el = document.createElement('div');
-      el.className = `toast toast-${type}`;
-      el.textContent = msg;
-      wrap.appendChild(el);
-      setTimeout(() => {
-        el.style.opacity = '0';
-        setTimeout(() => el.remove(), 300);
-      }, 3000);
     }
 
     // Utils
