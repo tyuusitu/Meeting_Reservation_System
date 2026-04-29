@@ -178,6 +178,13 @@
 
     .btn-icon { vertical-align: -2px; }
 
+    /* Toast */
+    .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+    .toast { padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,.2); white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; pointer-events: auto; animation: toastIn .2s ease; transition: opacity .3s; will-change: opacity, transform; }
+    .toast-success { background: #202124; color: #fff; }
+    .toast-error { background: #d93025; color: #fff; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
     @media (min-width: 600px) {
       .modal-backdrop { align-items: center; }
       .modal-sheet { max-width: 440px; border-radius: 16px; }
@@ -294,6 +301,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast -->
+  <div id="toast-wrap" class="toast-wrap"></div>
 
   <!-- キャンセル依頼モーダル -->
   <div id="cancel-modal" class="modal-backdrop">
@@ -656,12 +666,12 @@
           const target = allReservations.find((item) => item.reservation_id === reservationId);
           if (target) target.status = 'キャンセル依頼';
           applyFilters();
-          alert('キャンセル依頼を送信しました。管理者が確認後に対応します。');
+          showToast('キャンセル依頼を送信しました。管理者が確認後に対応します。');
         } else {
-          alert(data.error || 'キャンセル依頼の送信に失敗しました。');
+          showToast(data.error || 'キャンセル依頼の送信に失敗しました。', 'error');
         }
       } catch (e) {
-        alert('通信エラーが発生しました。');
+        showToast('通信エラーが発生しました。', 'error');
       }
       btn.disabled = false;
       hideLoading();
@@ -671,6 +681,19 @@
       const spreadsheetUrl = appConfig?.settings?.spreadsheetUrl || '';
       const text = `【キャンセル依頼】\n予約ID: ${reservationId}\n理由: ${reason || 'なし'}\nスプレッドシート: ${spreadsheetUrl}`;
       window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, '_blank');
+    }
+
+    // Toast
+    function showToast(msg, type = 'success') {
+      const wrap = document.getElementById('toast-wrap');
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
     }
 
     // Utils

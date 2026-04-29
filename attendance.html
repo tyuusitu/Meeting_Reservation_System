@@ -13,6 +13,7 @@
     *, *::before, *::after {
       box-sizing: border-box; margin: 0; padding: 0;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     :root {
@@ -65,9 +66,6 @@
     .app-bar-btn:hover { background: #f8f9fa; border-color: var(--primary); color: var(--primary); }
 
     /* Loading overlay */
-    .loading-overlay-bg {
-      background: rgba(0,0,0,.35);
-    }
     .loading-box {
       background: var(--surface); border-radius: 14px; padding: 28px 36px;
       box-shadow: 0 8px 30px rgba(0,0,0,.15);
@@ -76,6 +74,7 @@
     .loading-spinner {
       width: 40px; height: 40px; border: 4px solid var(--border);
       border-top-color: var(--primary); border-radius: 50%;
+      will-change: transform;
     }
     .loading-text { font-size: 14px; font-weight: 500; color: var(--muted); }
 
@@ -124,6 +123,13 @@
       border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--warn-text); line-height: 1.6;
     }
 
+    /* Meeting card sub-elements */
+    .meeting-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .meeting-meta-sub { font-size: 11px; color: var(--muted-light); }
+    .meeting-form-group { display: flex; flex-direction: column; gap: 10px; }
+    .meeting-card-footer { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .icon-shrink { flex-shrink: 0; }
+
     /* Meeting card */
     .meeting-card {
       background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px;
@@ -132,7 +138,7 @@
     }
     .meeting-card:hover { box-shadow: var(--shadow-md); }
     .meeting-title { font-size: 15px; font-weight: 700; color: var(--on-surface); }
-    .meeting-meta { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+    .meeting-meta { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
     .meeting-meta-row { display: flex; align-items: center; gap: 6px; }
     .status-badge {
       display: inline-flex; align-items: center; border-radius: 999px;
@@ -158,9 +164,8 @@
     }
     .radio-card:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
     .radio-card input { width: 16px; height: 16px; accent-color: var(--primary); flex-shrink: 0; }
-    .radio-card-attend { }
-    .radio-card-attend:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
     .radio-card-absent:has(input:checked) { border-color: var(--error); background: var(--error-bg); }
+    .radio-card-absent input { accent-color: var(--error); }
     .radio-card span { font-size: 14px; font-weight: 700; color: var(--on-surface); }
 
     /* Submit button */
@@ -176,11 +181,12 @@
     /* Loading */
     .loading-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      display: none; align-items: center; justify-content: center; z-index: 50;
+      background: rgba(0,0,0,.35); z-index: 50;
+      display: none; align-items: center; justify-content: center;
     }
     .loading-overlay.visible { display: flex; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .spin { animation: spin .8s linear infinite; will-change: transform; }
+    .spin { animation: spin .8s linear infinite; }
 
     /* Hero section */
     .hero-title { font-size: 17px; font-weight: 700; color: var(--on-surface); margin-bottom: 6px; }
@@ -207,7 +213,7 @@
 <body>
 
   <!-- ローディングオーバーレイ -->
-  <div id="loading-overlay" class="loading-overlay loading-overlay-bg">
+  <div id="loading-overlay" class="loading-overlay">
     <div class="loading-box">
       <div class="loading-spinner spin"></div>
       <p id="loading-text" class="loading-text">処理中...</p>
@@ -448,15 +454,15 @@
         const editable = isBeforeDeadline(meeting.answerDeadlineAt);
         return `
           <article class="meeting-card">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div class="meeting-card-header">
               <div>
                 <div class="meeting-title">${escapeHtml(meeting.meetingName)}</div>
-                <div class="meeting-meta" style="margin-top:4px">
+                <div class="meeting-meta">
                   <span class="meeting-meta-row">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="icon-shrink"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
                     ${formatDateLabel(meeting.meetingDate)} ${escapeHtml(meeting.startTime)}〜${escapeHtml(meeting.endTime)}
                   </span>
-                  <span style="font-size:11px;color:var(--muted-light)">募集終了: ${escapeHtml(formatDateTimeLabel(meeting.recruitEndAt))} / 回答締切: ${escapeHtml(formatDateTimeLabel(meeting.answerDeadlineAt))}</span>
+                  <span class="meeting-meta-sub">募集終了: ${escapeHtml(formatDateTimeLabel(meeting.recruitEndAt))} / 回答締切: ${escapeHtml(formatDateTimeLabel(meeting.answerDeadlineAt))}</span>
                 </div>
               </div>
               <span class="status-badge ${editable ? 'badge-open' : 'badge-closed'}">${editable ? '回答可能' : '締切後'}</span>
@@ -466,17 +472,16 @@
               ? `<div class="registered-box">登録済み: <strong>${escapeHtml(existing.attendance)}</strong>${existing.updatedAt ? ` &nbsp;|&nbsp; 更新日時: ${escapeHtml(formatDateTimeLabel(existing.updatedAt))}` : ''}</div>`
               : `<div class="unregistered-note">未提出です。集計上は出席扱いですが、欠席する場合は理由を登録してください。</div>`
             }
-            <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="meeting-form-group">
               <div class="radio-grid">
-                <label class="radio-card radio-card-attend">
+                <label class="radio-card">
                   <input type="radio" name="attendance-${escapeHtml(meeting.meetingId)}" value="出席"
                     ${existing && existing.attendance === '出席' ? 'checked' : ''} ${!existing ? 'checked' : ''} ${!editable ? 'disabled' : ''}>
                   <span>出席</span>
                 </label>
                 <label class="radio-card radio-card-absent">
                   <input type="radio" name="attendance-${escapeHtml(meeting.meetingId)}" value="欠席"
-                    ${existing && existing.attendance === '欠席' ? 'checked' : ''} ${!editable ? 'disabled' : ''}
-                    style="accent-color:var(--error)">
+                    ${existing && existing.attendance === '欠席' ? 'checked' : ''} ${!editable ? 'disabled' : ''}>
                   <span>欠席</span>
                 </label>
               </div>
@@ -492,7 +497,7 @@
                 <textarea id="detail-${escapeHtml(meeting.meetingId)}" placeholder="必要な場合のみ入力してください。" ${!editable ? 'disabled' : ''} class="form-textarea">${existing ? escapeHtml(existing.absenceDetail) : ''}</textarea>
               </label>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="meeting-card-footer">
               <button type="button" class="btn-primary" ${!editable ? 'disabled' : ''} onclick="submitAttendance('${escapeJs(meeting.meetingId)}')">この会議の回答を保存</button>
               <span class="submit-hint">${editable ? '締切までは上書き更新できます。' : '締切後は管理者による直接修正のみです。'}</span>
             </div>

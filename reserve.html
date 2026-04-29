@@ -193,6 +193,13 @@
     .btn-modal-submit:hover:not(:disabled) { background: var(--primary-hover); }
     .btn-modal-submit:disabled { opacity: .5; cursor: not-allowed; }
 
+    /* Toast */
+    .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+    .toast { padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,.2); white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; pointer-events: auto; animation: toastIn .2s ease; transition: opacity .3s; will-change: opacity, transform; }
+    .toast-warn { background: #202124; color: #fff; }
+    .toast-error { background: #d93025; color: #fff; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
     @media (min-width: 600px) {
       .modal-backdrop { align-items: center; }
       .modal-sheet { max-width: 480px; border-radius: 16px; }
@@ -286,6 +293,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast -->
+  <div id="toast-wrap" class="toast-wrap"></div>
 
   <!-- 確認モーダル -->
   <div id="confirm-modal" class="modal-backdrop">
@@ -435,7 +445,7 @@
     function addReserveCard() {
       const s = appConfig ? appConfig.settings : defaultConfig().settings;
       if (reserveCards.length >= s.maxReservationsPerSubmit) {
-        alert(`一度に${s.maxReservationsPerSubmit}件までです。`);
+        showToast(`一度に${s.maxReservationsPerSubmit}件までです。`);
         return;
       }
       reserveCards.push(++cardIdCounter);
@@ -695,6 +705,19 @@
       });
       if (errors.length > 0) showGlobalError('入力内容を確認してください。');
       document.querySelector('.error-msg.visible')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Toast
+    function showToast(msg, type = 'warn') {
+      const wrap = document.getElementById('toast-wrap');
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
     }
 
     // Utils
