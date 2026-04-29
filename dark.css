@@ -1,0 +1,148 @@
+/* Dark mode CSS overrides — shared across all pages */
+
+html.dark {
+  --primary: #8ab4f8;
+  --primary-hover: #669df6;
+  --primary-light: #1a3a5c;
+  --surface: #2d2e31;
+  --surface-var: #35363a;
+  --bg: #202124;
+  --on-surface: #e8eaed;
+  --muted: #9aa0a6;
+  --muted-light: #5f6368;
+  --border: #3c4043;
+  --success: #81c995;
+  --success-bg: #1a3328;
+  --success-border: #2d5a3a;
+  --error: #f28b82;
+  --error-bg: #3b1f1d;
+  --error-border: #5a2e2a;
+  --warn-text: #fdd663;
+  --warn-bg: #35300a;
+  --warn-border: #5a4a20;
+  --shadow-md: 0 1px 3px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.3);
+  --shadow-hover: 0 2px 6px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.4);
+  color-scheme: dark;
+}
+
+/* Dark toggle button */
+.dark-toggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted, #5f6368);
+  transition: background .15s ease, color .15s ease;
+  flex-shrink: 0;
+}
+.dark-toggle:hover {
+  background: var(--primary-light, #e8f0fe);
+  color: var(--primary, #1a73e8);
+}
+
+/* Fix hardcoded hover bg on .app-bar-btn */
+html.dark .app-bar-btn:hover {
+  background: var(--surface-var) !important;
+}
+
+/* Fix hardcoded colors in status.html timeline */
+html.dark .timeline-room-label {
+  background: var(--surface-var) !important;
+  color: var(--on-surface) !important;
+}
+html.dark .timeline-track {
+  background: var(--surface-var) !important;
+}
+
+/* Fix hardcoded colors in attendance.html .notice-info */
+html.dark .notice-info {
+  background: #1a3a5c !important;
+  border-color: #2e5799 !important;
+  color: #8ab4f8 !important;
+}
+
+/* Admin page dark mode overrides */
+html.dark body { background: #202124 !important; color: #e8eaed !important; }
+
+/* Tab buttons */
+html.dark .tab-btn { color: #9aa0a6 !important; }
+html.dark .tab-btn:hover { color: #8ab4f8 !important; background: rgba(138,180,248,0.08) !important; }
+html.dark .tab-btn.active { color: #8ab4f8 !important; border-bottom-color: #8ab4f8 !important; }
+
+/* Data table */
+html.dark .data-table th { background: #35363a !important; color: #9aa0a6 !important; border-color: #3c4043 !important; }
+html.dark .data-table td { border-color: #3c4043 !important; color: #e8eaed !important; }
+html.dark .data-table tr:hover td { background: #35363a !important; }
+html.dark .data-table input { background: #202124 !important; border-color: #3c4043 !important; color: #e8eaed !important; }
+
+/* Loading */
+html.dark .loading-box { background: #2d2e31 !important; }
+html.dark .loading-spinner { border-color: #3c4043 !important; border-top-color: #8ab4f8 !important; }
+html.dark .loading-text { color: #9aa0a6 !important; }
+html.dark .g-overlay-bg { background: rgba(0,0,0,0.6) !important; }
+
+/* Login */
+html.dark .login-card { background: #2d2e31 !important; }
+html.dark .login-input { background: #202124 !important; border-color: #3c4043 !important; color: #e8eaed !important; }
+html.dark .login-title { color: #e8eaed !important; }
+html.dark .login-subtitle { color: #9aa0a6 !important; }
+html.dark .login-link { color: #8ab4f8 !important; }
+
+/* Admin card / header */
+html.dark .admin-card { background: #2d2e31 !important; }
+html.dark .admin-header { border-color: #3c4043 !important; }
+html.dark .admin-header-title { color: #e8eaed !important; }
+html.dark .admin-tab-nav { border-color: #3c4043 !important; }
+html.dark .header-btn-ghost { background: #2d2e31 !important; border-color: #3c4043 !important; color: #9aa0a6 !important; }
+html.dark .header-btn-ghost:hover { background: #35363a !important; }
+html.dark .header-btn-outline { background: #2d2e31 !important; }
+html.dark .header-btn-outline:hover { background: #1a3a5c !important; }
+
+/* Panels / inputs */
+html.dark .g-panel { background: #2d2e31 !important; border-color: #3c4043 !important; }
+html.dark .g-panel-title { color: #e8eaed !important; }
+html.dark .g-table-wrap { border-color: #3c4043 !important; }
+html.dark .g-notice { background: #1a3a5c !important; border-color: #2e5799 !important; color: #8ab4f8 !important; }
+html.dark .g-input { background: #202124 !important; border-color: #3c4043 !important; color: #e8eaed !important; }
+html.dark .g-textarea { background: #202124 !important; border-color: #3c4043 !important; color: #e8eaed !important; }
+html.dark .g-label { color: #9aa0a6 !important; }
+html.dark .g-body-text { color: #bdc1c6 !important; }
+html.dark .g-muted { color: #5f6368 !important; }
+html.dark .g-calendar-iframe { border-color: #3c4043 !important; }
+
+/* Buttons */
+html.dark .g-btn-secondary { background: #2d2e31 !important; }
+html.dark .g-btn-secondary:hover { background: #1a3a5c !important; }
+html.dark .g-btn-ghost { background: #35363a !important; color: #bdc1c6 !important; }
+html.dark .g-btn-ghost:hover { background: #3c4043 !important; }
+html.dark .g-btn-sm-secondary { background: #2d2e31 !important; }
+html.dark .g-btn-sm-secondary:hover { background: #1a3a5c !important; }
+html.dark .g-btn-sm-ghost { background: #35363a !important; color: #bdc1c6 !important; }
+html.dark .g-btn-sm-ghost:hover { background: #3c4043 !important; }
+
+/* Filter bar */
+html.dark .g-filter-bar { background: #35363a !important; border-color: #3c4043 !important; }
+html.dark .g-filter-input { background: #202124 !important; border-color: #3c4043 !important; color: #e8eaed !important; }
+html.dark .g-filter-select { background: #202124 !important; border-color: #3c4043 !important; color: #e8eaed !important; }
+html.dark .g-filter-clear { background: #2d2e31 !important; border-color: #3c4043 !important; color: #9aa0a6 !important; }
+html.dark .g-filter-clear:hover { background: #35363a !important; }
+
+/* Stat cards */
+html.dark .g-stat-card { background: #2d2e31 !important; border-color: #3c4043 !important; }
+html.dark .g-stat-label { color: #9aa0a6 !important; }
+html.dark .g-stat-value { color: #e8eaed !important; }
+
+/* Badges */
+html.dark .badge-green  { background: #1a3328 !important; color: #81c995 !important; border-color: #2d5a3a !important; }
+html.dark .badge-blue   { background: #1a3a5c !important; color: #8ab4f8 !important; border-color: #2e5799 !important; }
+html.dark .badge-gray   { background: #35363a !important; color: #9aa0a6 !important; border-color: #3c4043 !important; }
+html.dark .badge-red    { background: #3b1f1d !important; color: #f28b82 !important; border-color: #5a2e2a !important; }
+html.dark .badge-yellow { background: #35300a !important; color: #fdd663 !important; border-color: #5a4a20 !important; }
+
+/* Empty cell */
+html.dark .g-empty-cell { color: #5f6368 !important; }

@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script>
+  <link href="dark.css" rel="stylesheet">
   <style>
     .hidden { display: none !important; }
 
@@ -233,6 +235,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
         ホームに戻る
       </a>
+      <button id="dark-toggle" type="button" class="dark-toggle" onclick="toggleDark()" aria-label="ダークモード切替"></button>
     </div>
   </header>
 
@@ -585,5 +588,6 @@
     function escapeHtml(text) { return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     function escapeJs(text) { return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
   </script>
+  <script src="dark.js"></script>
 </body>
 </html>

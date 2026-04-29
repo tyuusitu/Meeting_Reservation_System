@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script>
+  <link href="dark.css" rel="stylesheet">
   <style>
     *, *::before, *::after {
       box-sizing: border-box; margin: 0; padding: 0;
@@ -235,6 +237,7 @@
         ホームに戻る
       </a>
       <a href="status.html" class="app-bar-btn app-bar-btn-primary">利用状況 →</a>
+      <button id="dark-toggle" type="button" class="dark-toggle" onclick="toggleDark()" aria-label="ダークモード切替"></button>
     </div>
   </header>
 
@@ -752,5 +755,6 @@
 
     function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   </script>
+  <script src="dark.js"></script>
 </body>
 </html>

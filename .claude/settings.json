@@ -5,7 +5,8 @@
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_take_screenshot",
       "mcp__playwright__browser_snapshot",
-      "mcp__playwright__browser_tabs"
+      "mcp__playwright__browser_tabs",
+      "WebFetch(domain:api.anthropic.com)"
     ]
   }
 }

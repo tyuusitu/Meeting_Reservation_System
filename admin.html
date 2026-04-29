@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script>
+  <link href="dark.css" rel="stylesheet">
   <style>
     .hidden { display: none !important; }
     *, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -151,6 +153,7 @@
           <a href="index.html" class="header-btn header-btn-ghost">← ホームに戻る</a>
           <button type="button" onclick="reloadAll(true, true)" class="header-btn header-btn-outline">最新化</button>
           <button type="button" onclick="logout()" class="header-btn header-btn-ghost">ログアウト</button>
+          <button id="dark-toggle" type="button" class="dark-toggle" onclick="toggleDark()" aria-label="ダークモード切替"></button>
         </div>
       </div>
       <!-- タブナビ -->
@@ -1426,6 +1429,7 @@
       return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
   </script>
+  <script src="dark.js"></script>
 </body>
 
 </html>
