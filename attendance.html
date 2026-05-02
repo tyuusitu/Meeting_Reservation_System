@@ -525,12 +525,12 @@
       try {
         const res = await fetch(CONFIG.GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'submitAttendance', payload: { meetingId, memberId: selectedMemberId, attendance, absenceReason, absenceDetail } }) });
         const data = await res.json();
-        if (!data.ok) { showMessage(data.error || '登録に失敗しました。', 'error'); hideLoading(); return; }
+        if (!data.ok) { showMessage(data.error || '登録に失敗しました。', 'error'); return; }
         upsertAttendanceResponse({ answerId: data.answerId, meetingId: data.meetingId, memberId: data.memberId, name: member.name, department: member.department, grade: member.grade, role: member.role, attendance: data.attendance, absenceReason: data.absenceReason, absenceDetail: data.absenceDetail, answeredAt: data.answeredAt, updatedAt: data.updatedAt, updateCount: data.updateCount });
         renderMeetings();
         showMessage(`${member.name} さんの回答を保存しました。`, 'success');
       } catch (_) { showMessage('通信エラーが発生しました。', 'error'); }
-      hideLoading();
+      finally { hideLoading(); }
     }
 
     function upsertAttendanceResponse(response) {

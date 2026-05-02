@@ -342,7 +342,7 @@
       applyConfig(defaultConfig());
       document.getElementById('loading-msg').classList.add('hidden');
       document.getElementById('screen-reserve').classList.remove('hidden');
-      Promise.allSettled([loadConfig(), loadReservations()]);
+      Promise.allSettled([loadConfig(), loadReservations()]).then(() => refreshAvailableRooms());
     });
 
     function todayStr() { return new Date().toISOString().slice(0, 10); }
@@ -392,6 +392,7 @@
       if (!s.fieldConfig.userName) document.getElementById('field-name-wrap').classList.add('hidden');
       if (reserveCards.length === 0) addReserveCard();
       else renderReserveCards();
+      refreshAvailableRooms();
     }
 
     // CSV
@@ -404,9 +405,11 @@
           r.reservation_id && (r.status === '有効' || r.status === 'キャンセル依頼')
         );
         reservationsLoaded = true;
+        refreshAvailableRooms();
       } catch (e) {
         allReservations = [];
         reservationsLoaded = true;
+        refreshAvailableRooms();
       }
     }
 
@@ -520,10 +523,12 @@
     }
     function restoreCardData(saved) {
       saved.forEach(({ id, date, start, end, meeting }) => {
-        if (date)    { const el = document.getElementById(`card-date-${id}`);    if (el) { el.value = date;    searchAvailable(id); } }
+        if (date)    { const el = document.getElementById(`card-date-${id}`);    if (el) el.value = date; }
         if (start)   { const el = document.getElementById(`card-start-${id}`);   if (el) el.value = start; }
+        if (start) updateEndTimeOptions(id);
         if (end)     { const el = document.getElementById(`card-end-${id}`);     if (el) el.value = end; }
         if (meeting) { const el = document.getElementById(`card-meeting-${id}`); if (el) el.value = meeting; }
+        searchAvailable(id);
       });
     }
 
@@ -583,7 +588,7 @@
 
       const busyIds = new Set(
         allReservations.filter(r =>
-          r.usage_date === date && r.status === '有効' &&
+          r.usage_date === date && isBlockingReservationStatus(r.status) &&
           timeOverlap(r.start_time, r.end_time, start, end)
         ).map(r => r.room_id)
       );
@@ -602,6 +607,10 @@
           <span>${esc(r.room_name)}</span>
         </label>`;
       }).join('');
+    }
+
+    function refreshAvailableRooms() {
+      reserveCards.forEach((id) => searchAvailable(id));
     }
 
     // Confirm & Submit
@@ -661,9 +670,10 @@
       } catch (e) {
         closeConfirm();
         showGlobalError('通信エラーが発生しました。');
+      } finally {
+        btn.disabled = false;
+        hideLoading();
       }
-      btn.disabled = false;
-      hideLoading();
     }
 
     function showGlobalError(msg) {
@@ -738,7 +748,7 @@
     function checkDuplicates(reservations) {
       return reservations.flatMap((r, idx) => {
         const dup = allReservations.find(e =>
-          e.room_id === r.room_id && e.usage_date === r.usage_date && e.status === '有効' &&
+          e.room_id === r.room_id && e.usage_date === r.usage_date && isBlockingReservationStatus(e.status) &&
           timeOverlap(e.start_time, e.end_time, r.start_time, r.end_time)
         );
         return dup ? [{ index: idx, field: `room-${reserveCards[idx]}`, message: `${r.room_name}は${r.start_time}〜${r.end_time}に予約が入っています。` }] : [];
@@ -800,6 +810,7 @@
     function minToTime(m) { return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
     function toMin(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
     function timeOverlap(s1, e1, s2, e2) { return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1); }
+    function isBlockingReservationStatus(status) { return status === '有効' || status === 'キャンセル依頼'; }
 
     const _DAYS = ['日', '月', '火', '水', '木', '金', '土'];
     const _fmtCache = Object.create(null);

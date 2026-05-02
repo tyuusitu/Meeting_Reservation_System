@@ -1206,16 +1206,16 @@
         const data = await res.json();
         if (!data.ok) {
           showGlobal(data.error || '会議を保存できません。', 'error');
-          hideLoading();
           return;
         }
-        reloadAll(false, true, false);
+        await reloadAll(false, true, false);
         clearMeetingForm();
         showGlobal('会議を保存しました。', 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
+      } finally {
+        hideLoading();
       }
-      hideLoading();
     }
 
     async function refreshAggregations() {
@@ -1229,15 +1229,15 @@
         const data = await res.json();
         if (!data.ok) {
           showGlobal(data.error || '集計更新に失敗しました。', 'error');
-          hideLoading();
           return;
         }
-        reloadAll(false, true, false);
+        await reloadAll(false, true, false);
         showGlobal('集計を更新しました。', 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
+      } finally {
+        hideLoading();
       }
-      hideLoading();
     }
 
     async function saveSetting(settingKey) {
@@ -1259,19 +1259,19 @@
         const data = await res.json();
         if (!data.ok) {
           showGlobal(data.error || '設定更新に失敗しました。', 'error');
-          hideLoading();
           return;
         }
         if (CONFIG.invalidateSheetCsvCache) {
           ['settings', 'rooms'].forEach((key) => CONFIG.invalidateSheetCsvCache(key));
         }
         await loadPublicSettings();
-        reloadAll(false, true, false);
+        await reloadAll(false, true, false);
         showGlobal(`${settingKey} を更新しました。`, 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
+      } finally {
+        hideLoading();
       }
-      hideLoading();
     }
 
     // ============================================================
@@ -1320,16 +1320,16 @@
         const data = await res.json();
         if (!data.ok) {
           showGlobal(data.error || '予約削除に失敗しました。', 'error');
-          hideLoading();
           return;
         }
         state.selectedReservationIds = new Set();
-        reloadAll(false, true, false);
+        await reloadAll(false, true, false);
         showGlobal(`${data.deleted.length}件の予約を取消に更新しました。`, 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
+      } finally {
+        hideLoading();
       }
-      hideLoading();
     }
 
     function getAdminPassword() {

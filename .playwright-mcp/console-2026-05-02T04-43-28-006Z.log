@@ -1,0 +1,12 @@
+[     204ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:8087/favicon.ico:0
+[   24513ms] [WARNING] 設定取得失敗、デフォルト使用 TypeError: Failed to fetch
+    at loadConfig (http://127.0.0.1:8087/reserve.html:362:27)
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8087/reserve.html:345:27) @ http://127.0.0.1:8087/reserve.html:365
+[   27562ms] [WARNING] 設定取得失敗 TypeError: Failed to fetch
+    at loadConfig (http://127.0.0.1:8087/status.html:319:27)
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8087/status.html:298:33) @ http://127.0.0.1:8087/status.html:327
+[   60671ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   60716ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:8087/admin.html:0
+[   99367ms] [WARNING] 設定取得失敗 TypeError: Failed to fetch
+    at loadConfig (http://127.0.0.1:8087/status.html:319:27)
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8087/status.html:298:33) @ http://127.0.0.1:8087/status.html:327
