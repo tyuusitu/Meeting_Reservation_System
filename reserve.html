@@ -586,16 +586,20 @@
         return;
       }
 
-      const busyIds = new Set(
-        allReservations.filter(r =>
+      const roomMap = createRoomMap(rooms);
+      const busyIds = new Set();
+      allReservations
+        .filter(r =>
           r.usage_date === date && isBlockingReservationStatus(r.status) &&
           timeOverlap(r.start_time, r.end_time, start, end)
-        ).map(r => r.room_id)
-      );
+        )
+        .forEach((reservation) => {
+          getEffectiveRoomIds(reservation.room_id, roomMap).forEach((roomId) => busyIds.add(roomId));
+        });
 
       container.className = 'room-grid';
       container.innerHTML = rooms.map(r => {
-        const busy = busyIds.has(r.room_id);
+        const busy = getEffectiveRoomIds(r.room_id, roomMap).some((roomId) => busyIds.has(roomId));
         if (busy) {
           return `<div class="room-busy">
             <div class="room-busy-name">${esc(r.room_name)}</div>
@@ -746,13 +750,27 @@
     }
 
     function checkDuplicates(reservations) {
-      return reservations.flatMap((r, idx) => {
+      const rooms = appConfig ? appConfig.rooms : [];
+      const roomMap = createRoomMap(rooms);
+      const errors = [];
+      reservations.forEach((r, idx) => {
         const dup = allReservations.find(e =>
-          e.room_id === r.room_id && e.usage_date === r.usage_date && isBlockingReservationStatus(e.status) &&
+          hasRoomConflict(e.room_id, r.room_id, roomMap) && e.usage_date === r.usage_date && isBlockingReservationStatus(e.status) &&
           timeOverlap(e.start_time, e.end_time, r.start_time, r.end_time)
         );
-        return dup ? [{ index: idx, field: `room-${reserveCards[idx]}`, message: `${r.room_name}は${r.start_time}〜${r.end_time}に予約が入っています。` }] : [];
+        if (dup) {
+          errors.push({ index: idx, field: `room-${reserveCards[idx]}`, message: `${r.room_name}は${r.start_time}〜${r.end_time}に予約が入っています。` });
+        }
+        reservations.forEach((other, otherIndex) => {
+          if (idx >= otherIndex) return;
+          if (r.usage_date === other.usage_date && hasRoomConflict(r.room_id, other.room_id, roomMap) && timeOverlap(r.start_time, r.end_time, other.start_time, other.end_time)) {
+            const message = `${idx + 1}件目と${otherIndex + 1}件目の予約時間が会議室構成上重複しています。`;
+            errors.push({ index: idx, field: `room-${reserveCards[idx]}`, message });
+            errors.push({ index: otherIndex, field: `room-${reserveCards[otherIndex]}`, message });
+          }
+        });
       });
+      return errors;
     }
 
     function clearErrors() {
@@ -811,6 +829,18 @@
     function toMin(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
     function timeOverlap(s1, e1, s2, e2) { return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1); }
     function isBlockingReservationStatus(status) { return status === '有効' || status === 'キャンセル依頼'; }
+    function createRoomMap(rooms) { return Object.fromEntries((rooms || []).map((room) => [room.room_id, room])); }
+    function getEffectiveRoomIds(roomId, roomMap) {
+      const room = roomMap[roomId];
+      if (!room) return roomId ? [roomId] : [];
+      const componentIds = Array.isArray(room.component_room_ids) ? room.component_room_ids : [];
+      return room.room_type === '大会議室' && componentIds.length ? componentIds : [room.room_id];
+    }
+    function hasRoomConflict(leftRoomId, rightRoomId, roomMap) {
+      const leftIds = getEffectiveRoomIds(leftRoomId, roomMap);
+      const rightIds = getEffectiveRoomIds(rightRoomId, roomMap);
+      return leftIds.some((roomId) => rightIds.includes(roomId));
+    }
 
     const _DAYS = ['日', '月', '火', '水', '木', '金', '土'];
     const _fmtCache = Object.create(null);

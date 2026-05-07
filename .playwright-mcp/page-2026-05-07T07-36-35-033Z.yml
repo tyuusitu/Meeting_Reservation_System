@@ -1,0 +1,14 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e6]
+      - generic [ref=e8]: 管理画面
+      - generic [ref=e9]: 管理者パスワードでサインイン
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - text: 管理者パスワード
+        - textbox "管理者パスワード" [ref=e12]:
+          - /placeholder: パスワードを入力
+      - button "ログイン" [ref=e13] [cursor=pointer]
+    - link "← ホームに戻る" [ref=e14] [cursor=pointer]:
+      - /url: index.html

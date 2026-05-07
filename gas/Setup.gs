@@ -57,6 +57,8 @@ const SHEET_HEADERS = {
     'カレンダーID',
     '利用可能',
     '表示順',
+    '会議室種別',
+    '構成会議室ID',
   ],
   settings: [
     '設定キー',
@@ -195,6 +197,8 @@ const SHEET_COLUMN_KEYS = {
     'calendar_id',
     'is_active',
     'display_order',
+    'room_type',
+    'component_room_ids',
   ],
   settings: [
     'setting_key',
@@ -380,9 +384,9 @@ const DEFAULT_SETTING_DESCRIPTIONS = {
 };
 
 const DEFAULT_ROOM_ROWS = [
-  ['room-1', '中執内応接室', '', '有効', 1],
-  ['room-2', '階段下会議室', '', '有効', 2],
-  ['room-3', '中執前会議室', '', '有効', 3],
+  ['room-1', '中執内応接室', '', '有効', 1, '単体', ''],
+  ['room-2', '階段下会議室', '', '有効', 2, '単体', ''],
+  ['room-3', '中執前会議室', '', '有効', 3, '単体', ''],
 ];
 
 const DEFAULT_MEMBER_ROWS = [
@@ -540,6 +544,7 @@ function createRoomCalendarsAndUpdateRooms() {
       timeZone: getScriptTimeZone_(),
     });
     sheet.getRange(rowNumber, calendarIdColumn).setValue(calendar.getId());
+    publishCalendar_(calendar.getId());
     createdCalendars.push({ room_name: roomName, calendar_id: calendar.getId() });
   }
 

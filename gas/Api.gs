@@ -60,6 +60,12 @@ function doPost(e) {
     if (action === 'saveMeeting') {
       return jsonResponse_(handleSaveMeeting_(payload));
     }
+    if (action === 'saveRoom') {
+      return jsonResponse_(handleSaveRoom_(payload));
+    }
+    if (action === 'publishRoomCalendars') {
+      return jsonResponse_(handlePublishRoomCalendars_(payload));
+    }
     if (action === 'updateSetting') {
       return jsonResponse_(handleUpdateSetting_(payload));
     }
@@ -198,7 +204,7 @@ function handleAdminDelete_(payload) {
     }
     const row = rows[index];
     if (calendarEventIdColumn && roomIdColumn) {
-      deleteCalendarEvent_(normalizeString_(row.room_id), normalizeString_(row.calendar_event_id));
+      deleteCalendarEvents_(normalizeString_(row.room_id), normalizeString_(row.calendar_event_id));
     }
     sheet.getRange(index + 2, statusColumn).setValue(RESERVATION_STATUS.cancelled);
     deleted.push(reservationId);
@@ -341,6 +347,114 @@ function handleSaveMeeting_(payload) {
 }
 
 /**
+ * 管理者画面から会議室を新規登録または更新します。
+ *
+ * <p>カレンダーIDが未指定の場合は Google カレンダーを作成します。
+ * 大会議室の場合は構成する単体会議室IDも保存します。</p>
+ *
+ * @param {Object} payload 会議室情報と管理者パスワード。
+ * @return {Object} 保存した会議室IDとカレンダーID。
+ */
+function handleSaveRoom_(payload) {
+  validateAdminPassword_(payload.adminPassword || payload.admin_password);
+  ensureRoomSheetColumns_();
+
+  const normalized = normalizeRoomPayload_(payload);
+  validateRoomPayload_(normalized);
+
+  const sheet = getSheet_(SHEET_NAMES.rooms);
+  const rows = selectSheetObjects_(SHEET_NAMES.rooms).map(normalizeRoomRow_);
+  const now = formatDate_(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
+  const roomId = normalized.roomId || createSequentialIdGenerator_('ROOM', now, SHEET_NAMES.rooms, 'room_id')();
+  const existingIndex = rows.findIndex((row) => row.room_id === roomId);
+  let calendarId = normalized.calendarId;
+
+  if (!calendarId) {
+    const calendar = CalendarApp.createCalendar(`${normalized.roomName} 予約`, {
+      timeZone: getScriptTimeZone_(),
+    });
+    calendarId = calendar.getId();
+    publishCalendar_(calendarId);
+  }
+
+  const row = [
+    roomId,
+    normalized.roomName,
+    calendarId,
+    normalized.isActive ? '有効' : '無効',
+    normalized.displayOrder,
+    normalized.roomType,
+    normalized.componentRoomIds.join(','),
+  ];
+
+  if (existingIndex === -1) {
+    appendSheetRows_(SHEET_NAMES.rooms, [row]);
+    writeOperationLog_('会議室登録', '管理者', roomId, `${normalized.roomName} を登録しました。`, '成功', '');
+  } else {
+    sheet.getRange(existingIndex + 2, 1, 1, row.length).setValues([row]);
+    writeOperationLog_('会議室更新', '管理者', roomId, `${normalized.roomName} を更新しました。`, '成功', '');
+  }
+
+  return { ok: true, roomId, calendarId };
+}
+
+/**
+ * 会議室シートに登録されているカレンダーを公開閲覧できる状態にします。
+ *
+ * @param {Object} payload 管理者パスワード。
+ * @return {Object} 公開設定結果。
+ */
+function handlePublishRoomCalendars_(payload) {
+  validateAdminPassword_(payload.adminPassword || payload.admin_password);
+  const rooms = selectActiveRooms_();
+  const published = [];
+  const failed = [];
+  rooms.forEach((room) => {
+    if (!room.calendar_id) {
+      return;
+    }
+    try {
+      publishCalendar_(room.calendar_id);
+      published.push(room.room_id);
+    } catch (error) {
+      failed.push({ room_id: room.room_id, error: error.message });
+    }
+  });
+  writeOperationLog_('会議室カレンダー公開', '管理者', '', `${published.length}件のカレンダー公開設定を更新しました。`, failed.length ? '一部失敗' : '成功', failed.map((item) => `${item.room_id}: ${item.error}`).join('\n'));
+  return { ok: failed.length === 0, published, failed };
+}
+
+/**
+ * スクリプト実行画面から会議室カレンダーを公開設定へ更新します。
+ *
+ * @return {Object} 公開設定結果。
+ */
+function publishRoomCalendars() {
+  return handlePublishRoomCalendars_({ adminPassword: getSettings_().ADMIN_PASSWORD || DEFAULT_SETTINGS.ADMIN_PASSWORD });
+}
+
+/**
+ * 会議室シートへ新列が存在しない場合に補完します。
+ *
+ * @return {void}
+ */
+function ensureRoomSheetColumns_() {
+  const sheet = getSheet_(SHEET_NAMES.rooms);
+  const headers = getHeaderRow_(sheet);
+  const missingHeaders = SHEET_HEADERS.rooms.filter((header) => headers.indexOf(header) === -1);
+  if (missingHeaders.length === 0) {
+    return;
+  }
+  const startColumn = sheet.getLastColumn() + 1;
+  sheet.insertColumnsAfter(sheet.getLastColumn(), missingHeaders.length);
+  sheet.getRange(1, startColumn, 1, missingHeaders.length).setValues([missingHeaders]);
+  sheet.getRange(1, startColumn, 1, missingHeaders.length).setFontWeight('bold').setBackground('#EAF2FF');
+  if (sheet.getMaxRows() > 1) {
+    sheet.getRange(2, startColumn, sheet.getMaxRows() - 1, missingHeaders.length).setNumberFormat('@');
+  }
+}
+
+/**
  * 管理者画面から設定シートの値を更新します。
  *
  * @param {Object} payload 設定キー、設定値、管理者パスワード。
@@ -412,7 +526,8 @@ function insertReservations(payload) {
     }
 
     const common = validation.common;
-    const roomMap = createRoomMap_(selectActiveRooms_());
+    const activeRooms = selectActiveRooms_();
+    const roomMap = createRoomMap_(activeRooms);
     const createdAt = formatDate_(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
     const nextReservationId = createSequentialIdGenerator_('R', createdAt, SHEET_NAMES.reservations, 'reservation_id');
     const reservationRows = [];
@@ -427,11 +542,6 @@ function insertReservations(payload) {
       const reservationId = nextReservationId();
       const startDate = createDateTime_(reservation.usage_date, reservation.start_time);
       const endDate = createDateTime_(reservation.usage_date, reservation.end_time);
-      const calendar = CalendarApp.getCalendarById(room.calendar_id);
-      if (!calendar) {
-        throw new Error(`会議室「${room.room_name}」の Google カレンダーが見つかりません。`);
-      }
-
       const eventTitle = common.organization_name ? `【${common.organization_name}】${reservation.meeting_name}` : reservation.meeting_name;
       const eventDescription = [
         common.organization_name ? `団体名：${common.organization_name}` : null,
@@ -440,8 +550,8 @@ function insertReservations(payload) {
         `会議室：${room.room_name}`,
         `予約ID：${reservationId}`,
       ].filter(Boolean).join('\n');
-      const calendarEvent = calendar.createEvent(eventTitle, startDate, endDate, { description: eventDescription });
-      createdEvents.push(calendarEvent);
+      const calendarEvents = createCalendarEventsForReservation_(room, roomMap, eventTitle, startDate, endDate, eventDescription);
+      calendarEvents.forEach((calendarEvent) => createdEvents.push(calendarEvent.event));
 
       reservationRows.push([
         reservationId,
@@ -455,7 +565,7 @@ function insertReservations(payload) {
         reservation.usage_date,
         reservation.start_time,
         reservation.end_time,
-        calendarEvent.getId(),
+        serializeCalendarEventRefs_(calendarEvents),
         RESERVATION_STATUS.active,
         createdAt,
       ]);
@@ -517,7 +627,8 @@ function validateReservationsInternal_(payload) {
     errors.push({ index: null, field: 'reservations', message: `一度に登録できる予約は${maxReservationCount}件までです。` });
   }
 
-  const roomMap = createRoomMap_(selectActiveRooms_());
+  const activeRooms = selectActiveRooms_();
+  const roomMap = createRoomMap_(activeRooms);
   const existingReservations = selectActiveReservations_();
   reservations.forEach((reservation, index) => {
     validateSingleReservationInput_(reservation, index, roomMap, settings).forEach((error) => errors.push(error));
@@ -527,7 +638,7 @@ function validateReservationsInternal_(payload) {
     if (!reservation.usage_date || !reservation.start_time || !reservation.end_time || !reservation.room_id) {
       return;
     }
-    const duplicateExisting = existingReservations.find((existing) => existing.room_id === reservation.room_id && existing.usage_date === reservation.usage_date && existing.status === RESERVATION_STATUS.active && hasTimeOverlap_(existing.start_time, existing.end_time, reservation.start_time, reservation.end_time));
+    const duplicateExisting = existingReservations.find((existing) => hasReservationRoomConflict_(existing.room_id, reservation.room_id, roomMap) && existing.usage_date === reservation.usage_date && existing.status === RESERVATION_STATUS.active && hasTimeOverlap_(existing.start_time, existing.end_time, reservation.start_time, reservation.end_time));
     if (duplicateExisting) {
       errors.push({ index, field: 'room_id', message: `${duplicateExisting.room_name}は${reservation.start_time}-${reservation.end_time}に既存予約があります。` });
     }
@@ -535,8 +646,8 @@ function validateReservationsInternal_(payload) {
       if (index >= otherIndex) {
         return;
       }
-      if (reservation.room_id === otherReservation.room_id && reservation.usage_date === otherReservation.usage_date && hasTimeOverlap_(reservation.start_time, reservation.end_time, otherReservation.start_time, otherReservation.end_time)) {
-        const message = `${index + 1}件目と${otherIndex + 1}件目の予約時間が同じ会議室で重複しています。`;
+      if (hasReservationRoomConflict_(reservation.room_id, otherReservation.room_id, roomMap) && reservation.usage_date === otherReservation.usage_date && hasTimeOverlap_(reservation.start_time, reservation.end_time, otherReservation.start_time, otherReservation.end_time)) {
+        const message = `${index + 1}件目と${otherIndex + 1}件目の予約時間が会議室構成上重複しています。`;
         errors.push({ index, field: 'room_id', message });
         errors.push({ index: otherIndex, field: 'room_id', message });
       }
@@ -592,6 +703,75 @@ function validateSingleReservationInput_(reservation, index, roomMap, settings) 
     errors.push({ index, field: 'room_id', message: `会議室「${roomMap[reservation.room_id].room_name}」のカレンダーIDが未設定です。` });
   }
   return errors;
+}
+
+/**
+ * 管理者画面から送信された会議室情報を正規化します。
+ *
+ * @param {Object} payload 会議室保存リクエスト。
+ * @return {Object} 正規化済み会議室情報。
+ */
+function normalizeRoomPayload_(payload) {
+  const componentRoomIds = Array.isArray(payload.componentRoomIds || payload.component_room_ids)
+    ? (payload.componentRoomIds || payload.component_room_ids)
+    : normalizeString_(payload.componentRoomIds || payload.component_room_ids).split(',');
+  return {
+    roomId: normalizeString_(payload.roomId || payload.room_id),
+    roomName: normalizeString_(payload.roomName || payload.room_name),
+    calendarId: normalizeString_(payload.calendarId || payload.calendar_id),
+    isActive: normalizeBoolean_(payload.isActive || payload.is_active || '有効'),
+    displayOrder: Number(payload.displayOrder || payload.display_order || 0),
+    roomType: normalizeRoomType_(payload.roomType || payload.room_type),
+    componentRoomIds: componentRoomIds.map((roomId) => normalizeString_(roomId)).filter(Boolean),
+  };
+}
+
+/**
+ * 会議室保存リクエストを検証します。
+ *
+ * @param {Object} room 正規化済み会議室情報。
+ * @return {void}
+ */
+function validateRoomPayload_(room) {
+  if (!room.roomName) {
+    throw new Error('会議室名を入力してください。');
+  }
+  if (room.displayOrder < 0 || Number.isNaN(room.displayOrder)) {
+    throw new Error('表示順は0以上の数値で入力してください。');
+  }
+  const existingRooms = selectActiveRooms_();
+  if (room.roomType === '大会議室') {
+    const uniqueComponentIds = Array.from(new Set(room.componentRoomIds));
+    if (uniqueComponentIds.length < 2) {
+      throw new Error('大会議室は構成会議室を2件以上選択してください。');
+    }
+    if (room.roomId && uniqueComponentIds.indexOf(room.roomId) !== -1) {
+      throw new Error('大会議室自身を構成会議室には選択できません。');
+    }
+    const roomMap = createRoomMap_(existingRooms);
+    const invalidId = uniqueComponentIds.find((roomId) => !roomMap[roomId] || roomMap[roomId].room_type !== '単体');
+    if (invalidId) {
+      throw new Error(`構成会議室「${invalidId}」が見つからないか、単体会議室ではありません。`);
+    }
+    room.componentRoomIds = uniqueComponentIds;
+  } else {
+    room.roomType = '単体';
+    room.componentRoomIds = [];
+  }
+}
+
+/**
+ * 会議室種別を保存値へ正規化します。
+ *
+ * @param {*} value 会議室種別。
+ * @return {string} 単体または大会議室。
+ */
+function normalizeRoomType_(value) {
+  const text = normalizeString_(value);
+  if (text === '大会議室' || text.toLowerCase() === 'combined') {
+    return '大会議室';
+  }
+  return '単体';
 }
 
 /**
@@ -1013,6 +1193,21 @@ function deleteCalendarEvent_(roomId, calendarEventId) {
 }
 
 /**
+ * 予約に紐づく1件または複数件の Google カレンダー予定を削除します。
+ *
+ * <p>通常会議室は従来どおり予定IDのみ、大会議室は
+ * roomId:eventId をセミコロン区切りで保存します。</p>
+ *
+ * @param {string} roomId 予約に保存された会議室ID。
+ * @param {string} calendarEventRefs 保存されたカレンダー予定参照。
+ * @return {void}
+ */
+function deleteCalendarEvents_(roomId, calendarEventRefs) {
+  const eventRefs = parseCalendarEventRefs_(roomId, calendarEventRefs);
+  eventRefs.forEach((eventRef) => deleteCalendarEvent_(eventRef.roomId, eventRef.eventId));
+}
+
+/**
  * 有効状態の予約だけを取得します。
  *
  * @return {Array<Object>} 正規化済み予約一覧。
@@ -1045,6 +1240,27 @@ function normalizeReservationRow_(row) {
     calendar_event_id: normalizeString_(row.calendar_event_id),
     status: normalizeReservationStatus_(row.status),
     created_at: normalizeDateTimeString_(row.created_at),
+  };
+}
+
+/**
+ * 会議室シートの行を内部処理用オブジェクトに正規化します。
+ *
+ * @param {Object} row シート行。
+ * @return {Object} 正規化済み会議室。
+ */
+function normalizeRoomRow_(row) {
+  const calendarId = normalizeString_(row.calendar_id);
+  const roomType = normalizeRoomType_(row.room_type);
+  return {
+    room_id: normalizeString_(row.room_id),
+    room_name: normalizeString_(row.room_name),
+    calendar_id: calendarId,
+    calendar_url: createCalendarUrl_(calendarId),
+    is_active: normalizeBoolean_(row.is_active),
+    display_order: Number(row.display_order || 0),
+    room_type: roomType,
+    component_room_ids: roomType === '大会議室' ? parseComponentRoomIds_(row.component_room_ids) : [],
   };
 }
 
@@ -1102,17 +1318,7 @@ function normalizeAttendanceRow_(row) {
  */
 function selectActiveRooms_() {
   return selectSheetObjects_(SHEET_NAMES.rooms)
-    .map((row) => {
-      const calendarId = normalizeString_(row.calendar_id);
-      return {
-        room_id: normalizeString_(row.room_id),
-        room_name: normalizeString_(row.room_name),
-        calendar_id: calendarId,
-        calendar_url: createCalendarUrl_(calendarId),
-        is_active: normalizeBoolean_(row.is_active),
-        display_order: Number(row.display_order || 0),
-      };
-    })
+    .map(normalizeRoomRow_)
     .filter((room) => room.room_id && room.room_name && room.is_active)
     .sort((left, right) => Number(left.display_order) - Number(right.display_order) || compareValues_(left.room_name, right.room_name));
 }
@@ -1129,6 +1335,119 @@ function createRoomMap_(rooms) {
     roomMap[room.room_id] = room;
   });
   return roomMap;
+}
+
+/**
+ * 構成会議室IDの保存文字列を配列に変換します。
+ *
+ * @param {*} value カンマ区切りの会議室ID。
+ * @return {Array<string>} 会議室ID配列。
+ */
+function parseComponentRoomIds_(value) {
+  return normalizeString_(value)
+    .split(',')
+    .map((roomId) => normalizeString_(roomId))
+    .filter(Boolean);
+}
+
+/**
+ * 予約時に占有される単体会議室ID一覧を取得します。
+ *
+ * @param {string} roomId 選択会議室ID。
+ * @param {Object} roomMap 会議室マップ。
+ * @return {Array<string>} 占有される会議室ID一覧。
+ */
+function getEffectiveRoomIds_(roomId, roomMap) {
+  const room = roomMap[roomId];
+  if (!room) {
+    return [roomId].filter(Boolean);
+  }
+  if (room.room_type === '大会議室' && room.component_room_ids.length > 0) {
+    return room.component_room_ids.slice();
+  }
+  return [room.room_id];
+}
+
+/**
+ * 2つの予約会議室が構成会議室上で衝突するか判定します。
+ *
+ * @param {string} leftRoomId 左側の会議室ID。
+ * @param {string} rightRoomId 右側の会議室ID。
+ * @param {Object} roomMap 会議室マップ。
+ * @return {boolean} 衝突する場合 true。
+ */
+function hasReservationRoomConflict_(leftRoomId, rightRoomId, roomMap) {
+  const leftIds = getEffectiveRoomIds_(leftRoomId, roomMap);
+  const rightIds = getEffectiveRoomIds_(rightRoomId, roomMap);
+  return leftIds.some((roomId) => rightIds.indexOf(roomId) !== -1);
+}
+
+/**
+ * 予約対象会議室と必要な構成会議室カレンダーへ予定を作成します。
+ *
+ * @param {Object} room 予約対象会議室。
+ * @param {Object} roomMap 会議室マップ。
+ * @param {string} eventTitle 予定タイトル。
+ * @param {Date} startDate 開始日時。
+ * @param {Date} endDate 終了日時。
+ * @param {string} eventDescription 予定説明。
+ * @return {Array<Object>} 作成した予定参照。
+ */
+function createCalendarEventsForReservation_(room, roomMap, eventTitle, startDate, endDate, eventDescription) {
+  const eventRoomIds = room.room_type === '大会議室'
+    ? [room.room_id].concat(room.component_room_ids)
+    : [room.room_id];
+  return eventRoomIds.map((eventRoomId) => {
+    const eventRoom = roomMap[eventRoomId];
+    if (!eventRoom || !eventRoom.calendar_id) {
+      throw new Error(`会議室「${eventRoom ? eventRoom.room_name : eventRoomId}」のカレンダーIDが未設定です。`);
+    }
+    const calendar = CalendarApp.getCalendarById(eventRoom.calendar_id);
+    if (!calendar) {
+      throw new Error(`会議室「${eventRoom.room_name}」の Google カレンダーが見つかりません。`);
+    }
+    return {
+      roomId: eventRoom.room_id,
+      event: calendar.createEvent(eventTitle, startDate, endDate, { description: eventDescription }),
+    };
+  });
+}
+
+/**
+ * カレンダー予定参照を保存用文字列に変換します。
+ *
+ * @param {Array<Object>} calendarEvents 作成済み予定参照。
+ * @return {string} 保存用文字列。
+ */
+function serializeCalendarEventRefs_(calendarEvents) {
+  if (calendarEvents.length === 1) {
+    return calendarEvents[0].event.getId();
+  }
+  return calendarEvents.map((calendarEvent) => `${calendarEvent.roomId}:${calendarEvent.event.getId()}`).join(';');
+}
+
+/**
+ * 保存済みカレンダー予定参照を配列に戻します。
+ *
+ * @param {string} fallbackRoomId 旧形式予定IDに使う会議室ID。
+ * @param {string} calendarEventRefs 保存済み予定参照。
+ * @return {Array<Object>} 会議室IDと予定IDの配列。
+ */
+function parseCalendarEventRefs_(fallbackRoomId, calendarEventRefs) {
+  const text = normalizeString_(calendarEventRefs);
+  if (!text) {
+    return [];
+  }
+  if (text.indexOf(':') === -1) {
+    return [{ roomId: fallbackRoomId, eventId: text }];
+  }
+  return text.split(';').map((entry) => {
+    const separatorIndex = entry.indexOf(':');
+    return {
+      roomId: normalizeString_(entry.slice(0, separatorIndex)),
+      eventId: normalizeString_(entry.slice(separatorIndex + 1)),
+    };
+  }).filter((entry) => entry.roomId && entry.eventId);
 }
 
 /**
@@ -1630,6 +1949,43 @@ function createCalendarUrl_(calendarId) {
     return '';
   }
   return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(normalizedCalendarId)}`;
+}
+
+/**
+ * Google Calendar API を使ってカレンダーを公開閲覧可能にします。
+ *
+ * <p>CalendarApp には公開範囲を変更する直接メソッドがないため、
+ * Apps Script の OAuth トークンで Calendar API v3 の ACL を更新します。</p>
+ *
+ * @param {string} calendarId 公開するカレンダーID。
+ * @return {void}
+ */
+function publishCalendar_(calendarId) {
+  const normalizedCalendarId = normalizeString_(calendarId);
+  if (!normalizedCalendarId) {
+    return;
+  }
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(normalizedCalendarId)}/acl`;
+  const response = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: `Bearer ${ScriptApp.getOAuthToken()}`,
+    },
+    payload: JSON.stringify({
+      role: 'reader',
+      scope: { type: 'default' },
+    }),
+    muteHttpExceptions: true,
+  });
+  const code = response.getResponseCode();
+  if (code >= 200 && code < 300) {
+    return;
+  }
+  if (code === 409) {
+    return;
+  }
+  throw new Error(`カレンダー公開設定に失敗しました。HTTP ${code}: ${response.getContentText()}`);
 }
 
 /**

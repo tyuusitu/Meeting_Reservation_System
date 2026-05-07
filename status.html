@@ -446,9 +446,10 @@
       const end = document.getElementById('filter-end').value;
       const sm = start ? toMin(start) : 0;
       const em = end   ? toMin(end)   : Infinity;
+      const roomMap = createRoomMap(appConfig ? appConfig.rooms : []);
       filteredReservations = allReservations.filter(r => {
         if (date && r.usage_date !== date) return false;
-        if (room && r.room_id !== room) return false;
+        if (room && !hasRoomConflict(r.room_id, room, roomMap)) return false;
         if (start && end   && !(r._sm < em && sm < r._em)) return false;
         if (start && !end  && r._em <= sm) return false;
         if (!start && end  && r._sm >= em) return false;
@@ -537,10 +538,14 @@
       }
 
       const days = {};
+      const roomMap = createRoomMap(appConfig ? appConfig.rooms : []);
       filteredReservations.forEach(r => {
         if (!days[r.usage_date]) days[r.usage_date] = {};
-        if (!days[r.usage_date][r.room_id]) days[r.usage_date][r.room_id] = { room_name: r.room_name, reservations: [] };
-        days[r.usage_date][r.room_id].reservations.push(r);
+        getEffectiveRoomIds(r.room_id, roomMap).forEach((roomId) => {
+          const room = roomMap[roomId] || { room_id: r.room_id, room_name: r.room_name };
+          if (!days[r.usage_date][roomId]) days[r.usage_date][roomId] = { room_name: room.room_name, reservations: [] };
+          days[r.usage_date][roomId].reservations.push(r);
+        });
       });
 
       const rooms = appConfig ? appConfig.rooms : [];
@@ -596,6 +601,18 @@
     function minToTime(m) { return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
     function toMin(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
     function timeOverlap(s1, e1, s2, e2) { return toMin(s1) < toMin(e2) && toMin(s2) < toMin(e1); }
+    function createRoomMap(rooms) { return Object.fromEntries((rooms || []).map((room) => [room.room_id, room])); }
+    function getEffectiveRoomIds(roomId, roomMap) {
+      const room = roomMap[roomId];
+      if (!room) return roomId ? [roomId] : [];
+      const componentIds = Array.isArray(room.component_room_ids) ? room.component_room_ids : [];
+      return room.room_type === '大会議室' && componentIds.length ? componentIds : [room.room_id];
+    }
+    function hasRoomConflict(leftRoomId, rightRoomId, roomMap) {
+      const leftIds = getEffectiveRoomIds(leftRoomId, roomMap);
+      const rightIds = getEffectiveRoomIds(rightRoomId, roomMap);
+      return leftIds.some((roomId) => rightIds.includes(roomId));
+    }
 
     const _DAYS = ['日', '月', '火', '水', '木', '金', '土'];
     const _fmtCache = Object.create(null);

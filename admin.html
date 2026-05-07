@@ -45,7 +45,9 @@
     .admin-header { padding: 14px 20px; border-bottom: 1px solid #e8eaed; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
     .admin-header-icon { width: 36px; height: 36px; background: #1a73e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .admin-header-title { font-size: 16px; font-weight: 700; color: #202124; line-height: 1.3; }
-    .admin-tab-nav { display: flex; overflow-x: auto; padding: 0 20px; border-bottom: 1px solid #e8eaed; gap: 0; }
+    .admin-tab-nav { display: flex; overflow-x: auto; padding: 0 20px; border-bottom: 1px solid #e8eaed; gap: 10px; }
+    .tab-group { display: flex; align-items: stretch; gap: 0; flex-shrink: 0; }
+    .tab-group-label { display: inline-flex; align-items: center; padding: 0 10px 0 0; font-size: 11px; font-weight: 700; color: #9aa0a6; white-space: nowrap; }
     .admin-content { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
     .header-btn { height: 36px; padding: 0 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; }
     .header-btn-ghost { background: #fff; border: 1px solid #dadce0; color: #5f6368; }
@@ -104,6 +106,27 @@
     .badge-gray   { background: #f1f3f4; color: #5f6368; border-color: #dadce0; }
     .badge-red    { background: #fce8e6; color: #c5221f; border-color: #f5c6c4; }
     .badge-yellow { background: #fef7e0; color: #7c4b00; border-color: #fde68a; }
+    @media (max-width: 640px) {
+      main { padding-left: 8px !important; padding-right: 8px !important; padding-top: 12px !important; }
+      .admin-card { border-radius: 10px; }
+      .admin-header { padding: 12px; align-items: flex-start; }
+      .admin-header > div:first-child { width: 100%; align-items: flex-start; }
+      .admin-header-title { font-size: 15px; overflow-wrap: anywhere; }
+      .admin-header .header-btn { height: 34px; padding: 0 12px; font-size: 12px; }
+      .admin-tab-nav { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px; overflow-x: visible; }
+      .tab-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 10px; border: 1px solid #e8eaed; border-radius: 10px; background: #f8f9fa; }
+      .tab-group-label { grid-column: 1 / -1; padding: 0 0 2px; font-size: 12px; color: #5f6368; }
+      .tab-btn { border: 1px solid #dadce0; border-radius: 8px; background: #fff; padding: 10px 8px; font-size: 12px; text-align: center; border-bottom-width: 1px; white-space: normal; min-height: 40px; }
+      .tab-btn.active { border-color: #1a73e8; background: #e8f0fe; box-shadow: inset 0 -3px 0 #1a73e8; }
+      .admin-content { padding: 12px; gap: 12px; }
+      .g-panel { padding: 14px; border-radius: 10px; gap: 12px; }
+      .g-filter-bar { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; }
+      .g-filter-input, .g-filter-select { width: 100%; }
+      .g-btn-primary, .g-btn-secondary, .g-btn-ghost, .g-btn-danger { width: 100%; justify-content: center; }
+      .g-calendar-iframe { height: 320px; }
+      .data-table { min-width: 560px; }
+      .data-table th, .data-table td { padding: 9px 10px; font-size: 12px; }
+    }
   </style>
 </head>
 
@@ -168,6 +191,7 @@
         <div id="tab-departments" class="tab-content hidden"></div>
         <div id="tab-streaks" class="tab-content hidden"></div>
         <div id="tab-reasons" class="tab-content hidden"></div>
+        <div id="tab-rooms" class="tab-content hidden"></div>
         <div id="tab-settings" class="tab-content hidden"></div>
         <div id="tab-reservations" class="tab-content hidden"></div>
       </div>
@@ -178,16 +202,37 @@
   <script src="config.js"></script>
   <script>
     const CONFIG = window.APP_CONFIG;
-    const TABS = [
-      ['dashboard', 'ダッシュボード'],
-      ['meetings', '会議管理'],
-      ['attendance', '出欠一覧'],
-      ['members', '個人別集計'],
-      ['departments', '部局別集計'],
-      ['streaks', '連続欠席'],
-      ['reasons', '欠席理由'],
-      ['settings', '設定'],
-      ['reservations', '予約管理'],
+    const TAB_GROUPS = [
+      {
+        label: '全体',
+        tabs: [
+          ['dashboard', 'ダッシュボード'],
+        ],
+      },
+      {
+        label: '会議室',
+        tabs: [
+          ['rooms', '会議室管理'],
+          ['reservations', '予約管理'],
+        ],
+      },
+      {
+        label: '会議・出欠',
+        tabs: [
+          ['meetings', '会議管理'],
+          ['attendance', '出欠一覧'],
+          ['members', '個人別集計'],
+          ['departments', '部局別集計'],
+          ['streaks', '連続欠席'],
+          ['reasons', '欠席理由'],
+        ],
+      },
+      {
+        label: 'システム',
+        tabs: [
+          ['settings', '設定'],
+        ],
+      },
     ];
     const AUTH_KEY = 'meeting-system-admin-auth';
     const PASSWORD_KEY = 'meeting-system-admin-password';
@@ -215,6 +260,7 @@
         departments:  { meetingId: '' },
         streaks:      { keyword: '', minLevel: '' },
         reasons:      { keyword: '' },
+        rooms:        { keyword: '', type: '' },
         reservations: { keyword: '', roomId: '', status: '' },
       },
     };
@@ -314,10 +360,15 @@
     // ============================================================
     function renderTabs() {
       const nav = document.getElementById('tab-nav');
-      nav.innerHTML = TABS.map(([key, label]) => {
-        const active = state.activeTab === key;
-        return `<button type="button" class="tab-btn${active ? ' active' : ''}" onclick="switchTab('${key}')">${label}</button>`;
-      }).join('');
+      nav.innerHTML = TAB_GROUPS.map((group) => `
+        <div class="tab-group">
+          <span class="tab-group-label">${escapeHtml(group.label)}</span>
+          ${group.tabs.map(([key, label]) => {
+            const active = state.activeTab === key;
+            return `<button type="button" class="tab-btn${active ? ' active' : ''}" onclick="switchTab('${key}')">${label}</button>`;
+          }).join('')}
+        </div>
+      `).join('');
     }
 
     function switchTab(tabKey) {
@@ -453,7 +504,15 @@
 
     function roomMapper(row) {
       if (!row['会議室ID']) return null;
-      return { roomId: row['会議室ID'], roomName: row['会議室名'] };
+      return {
+        roomId: row['会議室ID'],
+        roomName: row['会議室名'],
+        calendarId: row['カレンダーID'],
+        isActive: row['利用可能'] || '有効',
+        displayOrder: Number(row['表示順'] || 0),
+        roomType: row['会議室種別'] || '単体',
+        componentRoomIds: String(row['構成会議室ID'] || '').split(',').map((roomId) => roomId.trim()).filter(Boolean),
+      };
     }
 
     function settingMapper(row) {
@@ -589,6 +648,7 @@
       renderDepartmentsTab();
       renderStreaksTab();
       renderReasonsTab();
+      renderRoomsTab();
       renderSettingsTab();
       renderReservationsTab();
       switchTab(state.activeTab);
@@ -627,6 +687,7 @@
         departments: renderDepartmentsTab,
         streaks: renderStreaksTab,
         reasons: renderReasonsTab,
+        rooms: renderRoomsTab,
         reservations: renderReservationsTab,
       };
       if (renderMap[tab]) renderMap[tab]();
@@ -637,7 +698,7 @@
       const renderMap = {
         meetings: renderMeetingsTab, attendance: renderAttendanceTab, members: renderMembersTab,
         departments: renderDepartmentsTab, streaks: renderStreaksTab, reasons: renderReasonsTab,
-        reservations: renderReservationsTab,
+        rooms: renderRoomsTab, reservations: renderReservationsTab,
       };
       if (renderMap[tab]) renderMap[tab]();
     }
@@ -970,6 +1031,92 @@
       `;
     }
 
+    function renderRoomsTab() {
+      const f = state.filters.rooms;
+      const roomTypeOptions = ['単体', '大会議室'];
+      const baseRooms = state.rooms
+        .filter((room) => room.roomType !== '大会議室' && room.isActive !== '無効')
+        .sort((a, b) => a.displayOrder - b.displayOrder || a.roomName.localeCompare(b.roomName, 'ja'));
+      const filtered = state.rooms
+        .filter((room) =>
+          matchesKeyword(f.keyword, room.roomName, room.roomId, room.calendarId) &&
+          (!f.type || room.roomType === f.type)
+        )
+        .sort((a, b) => a.displayOrder - b.displayOrder || a.roomName.localeCompare(b.roomName, 'ja'));
+      const componentOptions = baseRooms.map((room) => `
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" value="${escapeAttr(room.roomId)}" class="room-component-checkbox w-4 h-4 accent-blue-600">
+          <span>${escapeHtml(room.roomName)}</span>
+        </label>
+      `).join('');
+      document.getElementById('tab-rooms').innerHTML = `
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">会議室追加・大会議室作成</div>
+          <div class="${noticeCls}">会議室を保存すると、カレンダーIDが空の場合はGoogleカレンダーも作成します。大会議室は、複数の単体会議室を組み合わせて作成します。</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="${labelCls}">会議室ID<input id="room-id" class="${inputCls}" placeholder="空欄なら自動採番"></label>
+            <label class="${labelCls}">会議室名<input id="room-name" class="${inputCls}" placeholder="例: 第4会議室"></label>
+            <label class="${labelCls}">会議室種別
+              <select id="room-type" class="${inputCls}" onchange="handleRoomTypeChange()">
+                <option value="単体">単体</option>
+                <option value="大会議室">大会議室</option>
+              </select>
+            </label>
+            <label class="${labelCls}">表示順<input id="room-display-order" type="number" min="0" class="${inputCls}" value="${state.rooms.length + 1}"></label>
+            <label class="${labelCls}">利用可能
+              <select id="room-active" class="${inputCls}">
+                <option value="有効">有効</option>
+                <option value="無効">無効</option>
+              </select>
+            </label>
+            <label class="${labelCls}">カレンダーID<input id="room-calendar-id" class="${inputCls}" placeholder="空欄なら保存時に作成"></label>
+          </div>
+          <div id="room-components-wrap" class="hidden">
+            <div class="${labelCls}">構成会議室</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-2">${componentOptions || '<span class="g-muted text-sm">単体会議室がありません。</span>'}</div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="saveRoom()" class="${btnPrimary}">会議室を保存</button>
+            <button type="button" onclick="clearRoomForm()" class="${btnSecondary}">入力をクリア</button>
+          </div>
+        </div>
+        <div class="${panelCls}">
+          <div class="${panelTitleCls}">会議室一覧</div>
+          ${renderFilterBar('rooms',
+            renderSearchInput('rooms', 'keyword', 'キーワード検索', '会議室名・IDで検索', f.keyword) +
+            renderSearchSelect('rooms', 'type', '種別', roomTypeOptions, f.type),
+            filtered.length, state.rooms.length
+          )}
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['会議室ID', '会議室名', '種別', '構成会議室', 'カレンダー', '利用可能', '表示順', '操作'],
+            filtered.map((room) => [
+              escapeHtml(room.roomId),
+              escapeHtml(room.roomName),
+              renderRoomTypeBadge(room.roomType),
+              escapeHtml(formatComponentRoomNames(room.componentRoomIds)),
+              room.calendarId ? '設定済み' : '未設定',
+              renderStatusBadge(room.isActive),
+              room.displayOrder,
+              `<button type="button" class="${btnSmPrimary}" onclick="fillRoomForm('${escapeJs(room.roomId)}')">編集</button>`,
+            ])
+          )}</div>
+        </div>
+      `;
+      handleRoomTypeChange();
+    }
+
+    function renderRoomTypeBadge(roomType) {
+      const cls = roomType === '大会議室' ? 'badge-yellow' : 'badge-blue';
+      return `<span class="badge ${cls}">${escapeHtml(roomType || '単体')}</span>`;
+    }
+
+    function formatComponentRoomNames(componentRoomIds) {
+      return (componentRoomIds || []).map((roomId) => {
+        const room = state.rooms.find((item) => item.roomId === roomId);
+        return room ? room.roomName : roomId;
+      }).join('、');
+    }
+
     function renderSettingsTab() {
       const rows = state.settings;
       document.getElementById('tab-settings').innerHTML = `
@@ -1146,6 +1293,80 @@
     function renderAnswerBadge(answerState) {
       const cls = { '出席': 'badge-green', '欠席': 'badge-red', '未提出': 'badge-gray' }[answerState] || 'badge-gray';
       return `<span class="badge ${cls}">${escapeHtml(answerState || '')}</span>`;
+    }
+
+    // ============================================================
+    // 会議室フォーム操作
+    // ============================================================
+    function handleRoomTypeChange() {
+      const typeSelect = document.getElementById('room-type');
+      const componentsWrap = document.getElementById('room-components-wrap');
+      if (!typeSelect || !componentsWrap) return;
+      componentsWrap.classList.toggle('hidden', typeSelect.value !== '大会議室');
+    }
+
+    function fillRoomForm(roomId) {
+      const room = state.rooms.find((item) => item.roomId === roomId);
+      if (!room) return;
+      document.getElementById('room-id').value = room.roomId;
+      document.getElementById('room-name').value = room.roomName;
+      document.getElementById('room-type').value = room.roomType || '単体';
+      document.getElementById('room-display-order').value = room.displayOrder || 0;
+      document.getElementById('room-active').value = room.isActive || '有効';
+      document.getElementById('room-calendar-id').value = room.calendarId || '';
+      document.querySelectorAll('.room-component-checkbox').forEach((checkbox) => {
+        checkbox.checked = (room.componentRoomIds || []).includes(checkbox.value);
+      });
+      handleRoomTypeChange();
+      switchTab('rooms');
+    }
+
+    function clearRoomForm() {
+      ['room-id', 'room-name', 'room-calendar-id'].forEach((id) => { document.getElementById(id).value = ''; });
+      document.getElementById('room-type').value = '単体';
+      document.getElementById('room-display-order').value = state.rooms.length + 1;
+      document.getElementById('room-active').value = '有効';
+      document.querySelectorAll('.room-component-checkbox').forEach((checkbox) => { checkbox.checked = false; });
+      handleRoomTypeChange();
+    }
+
+    async function saveRoom() {
+      const componentRoomIds = Array.from(document.querySelectorAll('.room-component-checkbox:checked')).map((checkbox) => checkbox.value);
+      showLoading('会議室を保存中...');
+      try {
+        const res = await fetch(CONFIG.GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'saveRoom',
+            payload: {
+              adminPassword: getAdminPassword(),
+              roomId: document.getElementById('room-id').value.trim(),
+              roomName: document.getElementById('room-name').value.trim(),
+              calendarId: document.getElementById('room-calendar-id').value.trim(),
+              isActive: document.getElementById('room-active').value,
+              displayOrder: document.getElementById('room-display-order').value,
+              roomType: document.getElementById('room-type').value,
+              componentRoomIds,
+            },
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showGlobal(data.error || '会議室を保存できません。', 'error');
+          return;
+        }
+        if (CONFIG.invalidateSheetCsvCache) {
+          CONFIG.invalidateSheetCsvCache('rooms');
+        }
+        await reloadAll(false, true, false);
+        clearRoomForm();
+        showGlobal('会議室を保存しました。', 'success');
+      } catch (_) {
+        showGlobal('通信エラーが発生しました。', 'error');
+      } finally {
+        hideLoading();
+      }
     }
 
     // ============================================================
