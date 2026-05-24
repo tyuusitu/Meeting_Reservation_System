@@ -202,6 +202,13 @@
   <script src="config.js"></script>
   <script>
     const CONFIG = window.APP_CONFIG;
+    const ATTENDANCE_HIDDEN_SETTING_KEYS = new Set([
+      'システム名',
+      'その他理由詳細必須',
+      '欠席詳細常時必須',
+      '注意連続欠席回数',
+      '要確認連続欠席回数',
+    ]);
     const TAB_GROUPS = [
       {
         label: '全体',
@@ -217,17 +224,6 @@
         ],
       },
       {
-        label: '会議・出欠',
-        tabs: [
-          ['meetings', '会議管理'],
-          ['attendance', '出欠一覧'],
-          ['members', '個人別集計'],
-          ['departments', '部局別集計'],
-          ['streaks', '連続欠席'],
-          ['reasons', '欠席理由'],
-        ],
-      },
-      {
         label: 'システム',
         tabs: [
           ['settings', '設定'],
@@ -238,7 +234,7 @@
     const PASSWORD_KEY = 'meeting-system-admin-password';
 
     let state = {
-      systemName: '会議室予約・出欠管理システム',
+      systemName: '会議室予約システム',
       reservations: [],
       rooms: [],
       calendarRooms: [],
@@ -263,6 +259,7 @@
         rooms:        { keyword: '', type: '' },
         reservations: { keyword: '', roomId: '', status: '' },
       },
+      loadErrors: {},
     };
 
     // ============================================================
@@ -303,9 +300,14 @@
         }
       } catch (_) {
       }
-      document.title = `${state.systemName} - 管理画面`;
-      document.getElementById('system-name').textContent = `${state.systemName} - 管理画面`;
-      document.getElementById('login-title').textContent = `${state.systemName} - 管理画面`;
+      const displaySystemName = getDisplaySystemName();
+      document.title = `${displaySystemName} - 管理画面`;
+      document.getElementById('system-name').textContent = `${displaySystemName} - 管理画面`;
+      document.getElementById('login-title').textContent = `${displaySystemName} - 管理画面`;
+    }
+
+    function getDisplaySystemName() {
+      return String(state.systemName || '会議室予約システム').replace('・出欠管理', '');
     }
 
     // ============================================================
@@ -372,6 +374,10 @@
     }
 
     function switchTab(tabKey) {
+      const canShowTab = TAB_GROUPS.some((group) => group.tabs.some(([key]) => key === tabKey));
+      if (!canShowTab) {
+        tabKey = 'dashboard';
+      }
       state.activeTab = tabKey;
       renderTabs();
       document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
@@ -425,8 +431,10 @@
       if (!url) return [];
       try {
         const text = CONFIG.fetchSheetCsvText ? await CONFIG.fetchSheetCsvText(key, bustCache) : await fetch(url).then((res) => res.text());
+        delete state.loadErrors[key];
         return parseCsv(text, mapper);
-      } catch (_) {
+      } catch (error) {
+        state.loadErrors[key] = error && error.message ? error.message : 'CSVを読み込めませんでした。';
         return [];
       }
     }
@@ -483,22 +491,48 @@
       return obj;
     }
 
+    /**
+     * CSV行から日本語ヘッダーまたは内部キーに対応する値を取得します。
+     *
+     * @param {Object} row CSVの1行オブジェクト。
+     * @param {...string} keys 探索する列キー。
+     * @return {string} 見つかった値。
+     */
+    function pickRowValue(row, ...keys) {
+      const normalizedMap = {};
+      Object.keys(row).forEach((key) => {
+        normalizedMap[String(key || '').trim().toLowerCase()] = row[key];
+      });
+      for (const key of keys) {
+        const directValue = row[key];
+        if (directValue !== undefined) {
+          return directValue;
+        }
+        const normalizedValue = normalizedMap[String(key || '').trim().toLowerCase()];
+        if (normalizedValue !== undefined) {
+          return normalizedValue;
+        }
+      }
+      return '';
+    }
+
     // ============================================================
     // マッパー
     // ============================================================
     function reservationMapper(row) {
-      if (!row['予約ID']) return null;
+      const reservationId = pickRowValue(row, '予約ID', 'reservation_id');
+      if (!reservationId) return null;
       return {
-        reservationId: row['予約ID'],
-        organizationName: row['団体名'],
-        meetingName: row['会議名'],
-        userName: row['お名前'],
-        roomId: row['会議室ID'],
-        roomName: row['会議室名'],
-        usageDate: normalizeDate(row['利用日']),
-        startTime: normalizeTime(row['開始時間']),
-        endTime: normalizeTime(row['終了時間']),
-        status: row['ステータス'],
+        reservationId,
+        organizationName: pickRowValue(row, '団体名', 'organization_name'),
+        meetingName: pickRowValue(row, '会議名', 'meeting_name'),
+        userName: pickRowValue(row, 'お名前', 'user_name'),
+        roomId: pickRowValue(row, '会議室ID', 'room_id'),
+        roomName: pickRowValue(row, '会議室名', 'room_name'),
+        usageDate: normalizeDate(pickRowValue(row, '利用日', 'usage_date')),
+        startTime: normalizeTime(pickRowValue(row, '開始時間', 'start_time')),
+        endTime: normalizeTime(pickRowValue(row, '終了時間', 'end_time')),
+        status: pickRowValue(row, 'ステータス', 'status') || '有効',
       };
     }
 
@@ -755,47 +789,43 @@
     }
 
     function renderDashboard() {
-      const openMeetings = state.meetings.filter((m) => m.status === '有効' && isRecruiting(m));
-      const upcomingMeetings = state.meetings
-        .filter((m) => m.status === '有効')
-        .sort((a, b) => `${a.meetingDate}${a.startTime}`.localeCompare(`${b.meetingDate}${b.startTime}`))
-        .slice(0, 5);
-      const overallRate = state.meetingAggregations.length
-        ? state.meetingAggregations.reduce((sum, item) => sum + item.attendanceRate, 0) / state.meetingAggregations.length
-        : 0;
-      const warnings = state.streaks.filter((item) => item.alertLevel === '注意' || item.alertLevel === '要確認');
-      const topDepartments = state.departmentAggregations.slice().sort((a, b) => b.attendanceRate - a.attendanceRate).slice(0, 4);
+      const activeRooms = state.rooms.filter((room) => room.isActive !== '無効');
+      const activeReservations = state.reservations
+        .filter((reservation) => reservation.status !== '取消')
+        .sort((a, b) => `${a.usageDate}${a.startTime}${a.roomName}`.localeCompare(`${b.usageDate}${b.startTime}${b.roomName}`));
+      const todayText = new Date().toISOString().slice(0, 10);
+      const todayReservations = activeReservations.filter((reservation) => reservation.usageDate === todayText);
+      const upcomingReservations = activeReservations
+        .filter((reservation) => reservation.usageDate >= todayText)
+        .slice(0, 8);
 
       document.getElementById('tab-dashboard').innerHTML = `
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           ${[
-            ['現在募集中の会議', openMeetings.length],
-            ['有効メンバー', state.members.filter((m) => m.status === '有効').length],
-            ['全体参加率', formatPercent(overallRate)],
-            ['注意が必要なメンバー', warnings.length],
+            ['有効会議室', activeRooms.length],
+            ['有効予約', activeReservations.length],
+            ['今日の予約', todayReservations.length],
+            ['カレンダー設定済み', state.calendarRooms.length],
           ].map(([label, val]) => `
             <div class="g-stat-card">
               <div class="g-stat-label">${label}</div>
               <div class="g-stat-value">${val}</div>
             </div>`).join('')}
         </div>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div class="${panelCls}">
-            <div class="${panelTitleCls}">直近の会議</div>
-            ${upcomingMeetings.length
-              ? upcomingMeetings.map((m) => `<div class="text-sm" class="g-body-text">${escapeHtml(m.meetingName)} / ${escapeHtml(formatDateLabel(m.meetingDate))} ${escapeHtml(m.startTime)}〜${escapeHtml(m.endTime)}</div>`).join('')
-              : '<div class="text-sm" class="g-muted">会議データがありません。</div>'}
-          </div>
-          <div class="${panelCls}">
-            <div class="${panelTitleCls}">部局別参加率</div>
-            ${topDepartments.length
-              ? topDepartments.map((item) => `<div class="text-sm" class="g-body-text">${escapeHtml(item.department)}: ${formatPercent(item.attendanceRate)}</div>`).join('')
-              : '<div class="text-sm" class="g-muted">集計データがありません。</div>'}
-          </div>
-        </div>
         <div class="${panelCls}">
-          <div class="${panelTitleCls}">会議ごとの出欠状況</div>
-          <div class="${tableWrapCls}">${renderSimpleTable(['会議名', '会議日', '出席', '欠席', '未提出', '参加率'], state.meetingAggregations.map((item) => [item.meetingName, formatDateLabel(item.meetingDate), item.attendCount, item.absenceCount, item.unansweredCount, formatPercent(item.attendanceRate)]))}</div>
+          <div class="${panelTitleCls}">直近の会議室予約</div>
+          <div class="${tableWrapCls}">${renderSimpleTable(
+            ['会議名', '利用日', '時間', '会議室', '団体名', '状態'],
+            upcomingReservations.map((item) => [
+              item.meetingName,
+              formatDateLabel(item.usageDate),
+              `${item.startTime}〜${item.endTime}`,
+              item.roomName,
+              item.organizationName,
+              renderStatusBadge(item.status),
+            ]),
+            '表示する予約がありません。'
+          )}</div>
         </div>
       `;
     }
@@ -1119,11 +1149,11 @@
     }
 
     function renderSettingsTab() {
-      const rows = state.settings;
+      const rows = state.settings.filter((item) => !ATTENDANCE_HIDDEN_SETTING_KEYS.has(item.settingKey));
       document.getElementById('tab-settings').innerHTML = `
         <div class="${panelCls}">
           <div class="${panelTitleCls}">設定確認・更新</div>
-          <div class="${noticeCls}">スプレッドシートの設定シートにある全項目を表示しています。保存すると即時反映されます。</div>
+          <div class="${noticeCls}">会議室予約で使用する設定だけを表示しています。保存すると即時反映されます。</div>
           <div class="${tableWrapCls}">${renderSimpleTable(
             ['設定キー', '現在値', '説明', '更新日時', '操作'],
             rows.map((item) => [
@@ -1208,10 +1238,15 @@
         (!f.roomId || item.roomName === f.roomId) &&
         (!f.status || item.status === f.status)
       );
+      const reservationLoadError = state.loadErrors.reservations;
+      const emptyMessage = reservationLoadError
+        ? `予約データを読み込めませんでした。${reservationLoadError}`
+        : (allRows.length && !filtered.length ? '条件に一致する予約がありません。フィルタをクリアしてください。' : '予約データがありません。');
       document.getElementById('tab-reservations').innerHTML = `
         ${renderAdminCalendarViewer()}
         <div class="${panelCls}">
           <div class="${panelTitleCls}">会議室予約管理</div>
+          ${reservationLoadError ? `<div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">${escapeHtml(emptyMessage)}</div>` : ''}
           ${renderFilterBar('reservations',
             renderSearchInput('reservations', 'keyword', 'キーワード検索', '会議名・団体名・申請者で検索', f.keyword) +
             renderSearchSelect('reservations', 'roomId', '会議室', roomOptions, f.roomId) +
@@ -1234,7 +1269,8 @@
               item.organizationName,
               item.userName,
               renderStatusBadge(item.status),
-            ])
+            ]),
+            emptyMessage
           )}</div>
         </div>
       `;
@@ -1273,11 +1309,19 @@
     // ============================================================
     // テーブル・バッジ
     // ============================================================
-    function renderSimpleTable(headers, rows) {
+    /**
+     * 管理画面用の簡易テーブルHTMLを返します。
+     *
+     * @param {Array<string>} headers ヘッダー文字列一覧。
+     * @param {Array<Array<*>>} rows 表示行一覧。
+     * @param {string} emptyMessage 空行時の表示メッセージ。
+     * @return {string} テーブルHTML。
+     */
+    function renderSimpleTable(headers, rows, emptyMessage = 'データがありません。') {
       const thead = headers.map((h) => `<th>${h}</th>`).join('');
       const tbody = rows.length
         ? rows.map((row) => `<tr>${row.map((cell) => `<td>${cell === 0 ? '0' : (cell || '')}</td>`).join('')}</tr>`).join('')
-        : `<tr><td colspan="${headers.length}" class="g-empty-cell">データがありません。</td></tr>`;
+        : `<tr><td colspan="${headers.length}" class="g-empty-cell">${escapeHtml(emptyMessage)}</td></tr>`;
       return `<table class="data-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
     }
 
@@ -1393,7 +1437,10 @@
           const failedText = Array.isArray(data.failed)
             ? data.failed.map((item) => `${item.room_id}: ${item.error}`).join(' / ')
             : '';
-          showGlobal(failedText || data.error || 'カレンダー公開設定を更新できません。', 'error');
+          const scopeMessage = failedText.includes('script.external_request')
+            ? 'GASの権限が未承認です。gas/appsscript.jsonを反映して再デプロイ後、GASエディタで publishRoomCalendars() を実行して権限を承認してください。'
+            : '';
+          showGlobal(scopeMessage || failedText || data.error || 'カレンダー公開設定を更新できません。', 'error');
           return;
         }
         await reloadAll(false, true, false);

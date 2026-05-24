@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>会議室予約・出欠管理システム</title>
+  <title>会議室予約システム</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -136,7 +136,6 @@
     .nav-card:nth-child(1) { animation-delay: .05s; }
     .nav-card:nth-child(2) { animation-delay: .10s; }
     .nav-card:nth-child(3) { animation-delay: .15s; }
-    .nav-card:nth-child(4) { animation-delay: .20s; }
 
     .card-icon {
       width: 40px; height: 40px;
@@ -193,7 +192,7 @@
         <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
       </svg>
     </div>
-    <span class="app-bar-title">会議室予約・出欠管理システム</span>
+    <span class="app-bar-title">会議室予約システム</span>
     <button id="dark-toggle" type="button" class="dark-toggle" onclick="toggleDark()" aria-label="ダークモード切替"></button>
   </header>
 
@@ -203,8 +202,8 @@
         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
         システムトップ
       </div>
-      <h1>会議室予約・出欠管理システム</h1>
-      <p>会議室予約と会議出欠管理を、静的フロントと Google スプレッドシートでまとめて運用できます。</p>
+      <h1>会議室予約システム</h1>
+      <p>会議室の予約、利用状況、Googleカレンダーをまとめて確認できます。</p>
     </section>
 
     <nav class="nav-grid">
@@ -228,23 +227,13 @@
         <div class="card-arrow">開く <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></div>
       </a>
 
-      <a href="attendance.html" class="nav-card">
-        <div class="card-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="#1a73e8"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-        </div>
-        <div class="card-label">Attendance</div>
-        <div class="card-title">出欠登録画面</div>
-        <div class="card-desc">名前を選び、募集中の会議に対して出席・欠席を登録できます。</div>
-        <div class="card-arrow">開く <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></div>
-      </a>
-
       <a href="admin.html" class="nav-card">
         <div class="card-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="#1a73e8"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
         </div>
         <div class="card-label">Admin</div>
         <div class="card-title">管理画面</div>
-        <div class="card-desc">会議管理、出欠集計、設定更新、会議室予約管理をまとめて行います。</div>
+        <div class="card-desc">会議室、予約、設定をまとめて管理します。</div>
         <div class="card-arrow">開く <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></div>
       </a>
     </nav>

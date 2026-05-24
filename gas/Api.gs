@@ -1965,6 +1965,9 @@ function publishCalendar_(calendarId) {
   if (!normalizedCalendarId) {
     return;
   }
+  if (publishCalendarWithAdvancedService_(normalizedCalendarId)) {
+    return;
+  }
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(normalizedCalendarId)}/acl`;
   const response = fetchCalendarAcl_(url, 'post');
   const code = response.getResponseCode();
@@ -1981,6 +1984,33 @@ function publishCalendar_(calendarId) {
     throw new Error(`カレンダー公開設定の更新に失敗しました。HTTP ${updateCode}: ${updateResponse.getContentText()}`);
   }
   throw new Error(`カレンダー公開設定に失敗しました。HTTP ${code}: ${response.getContentText()}`);
+}
+
+/**
+ * Calendar Advanced Service でカレンダーを公開閲覧可能にします。
+ *
+ * @param {string} calendarId 公開するカレンダーID。
+ * @return {boolean} Advanced Service で処理できた場合は true。
+ */
+function publishCalendarWithAdvancedService_(calendarId) {
+  if (typeof Calendar === 'undefined' || !Calendar.Acl) {
+    return false;
+  }
+  const aclRule = {
+    role: 'reader',
+    scope: { type: 'default' },
+  };
+  try {
+    Calendar.Acl.insert(aclRule, calendarId);
+    return true;
+  } catch (error) {
+    if (normalizeString_(error.message).indexOf('already exists') === -1
+      && normalizeString_(error.message).indexOf('409') === -1) {
+      throw error;
+    }
+    Calendar.Acl.update(aclRule, calendarId, 'default');
+    return true;
+  }
 }
 
 /**

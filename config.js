@@ -10,6 +10,7 @@
 window.APP_CONFIG = {
   SPREADSHEET_ID: '1IRmvnXSuP_A44rOM4m1B4RTWcSQzzW1cZuxtizgJx_M',
   GAS_API_URL: 'https://script.google.com/macros/s/AKfycbzB2ptx6YqusRHObSDoMqrOd4Q-FhCEs3sDZKuWjRtpg3cNbq7Q_pXvDYKcY9plk2dr/exec',
+  RESERVATIONS_SHEET_GID: '306719953',
   SHEET_GID: {
     reservations: '306719953',
     rooms: '801840598',
@@ -48,7 +49,9 @@ window.APP_CONFIG = {
  * @return {string} CSV 取得 URL。設定不足の場合は空文字。
  */
 window.APP_CONFIG.buildSheetCsvUrl = function buildSheetCsvUrl(sheetKey, bustCache) {
-  const gid = this.SHEET_GID && this.SHEET_GID[sheetKey];
+  const gid = sheetKey === 'reservations'
+    ? this.RESERVATIONS_SHEET_GID
+    : this.SHEET_GID && this.SHEET_GID[sheetKey];
   const sheetName = this.SHEET_NAME && this.SHEET_NAME[sheetKey];
   if (gid) {
     return `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/export?format=csv&gid=${encodeURIComponent(gid)}${bustCache ? `&t=${Date.now()}` : ''}`;
@@ -57,6 +60,16 @@ window.APP_CONFIG.buildSheetCsvUrl = function buildSheetCsvUrl(sheetKey, bustCac
     return `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}${bustCache ? `&t=${Date.now()}` : ''}`;
   }
   return '';
+};
+
+window.APP_CONFIG.buildSheetCsvFallbackUrl = function buildSheetCsvFallbackUrl(sheetKey, bustCache) {
+  const gid = sheetKey === 'reservations'
+    ? this.RESERVATIONS_SHEET_GID
+    : this.SHEET_GID && this.SHEET_GID[sheetKey];
+  if (!gid) {
+    return '';
+  }
+  return `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${encodeURIComponent(gid)}${bustCache ? `&t=${Date.now()}` : ''}`;
 };
 
 window.APP_CONFIG._csvTextCache = {};
@@ -73,7 +86,18 @@ window.APP_CONFIG.fetchSheetCsvText = async function fetchSheetCsvText(sheetKey,
   }
 
   const res = await fetch(url, { cache: bustCache ? 'no-store' : 'default' });
-  const text = await res.text();
+  let response = res;
+  if (!response.ok && typeof this.buildSheetCsvFallbackUrl === 'function') {
+    const fallbackUrl = this.buildSheetCsvFallbackUrl(sheetKey, bustCache);
+    if (fallbackUrl && fallbackUrl !== url) {
+      response = await fetch(fallbackUrl, { cache: bustCache ? 'no-store' : 'default' });
+    }
+  }
+  if (!response.ok) {
+    throw new Error(`CSVを取得できませんでした。HTTP ${response.status}`);
+  }
+  const buffer = await response.arrayBuffer();
+  const text = new TextDecoder('utf-8').decode(buffer);
   this._csvTextCache[cacheKey] = {
     text,
     expiresAt: now + Number(this.CSV_CACHE_TTL_MS || 30000),
