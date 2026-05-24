@@ -333,8 +333,10 @@
     function openNativePicker(id) {
       const input = document.getElementById(id);
       if (!input) return;
-      input.focus();
-      if (typeof input.showPicker === 'function') input.showPicker();
+      try { input.focus({ preventScroll: true }); } catch (_) { input.focus(); }
+      if (typeof input.showPicker === 'function') {
+        try { input.showPicker(); } catch (_) {}
+      }
     }
 
     // Init
@@ -463,9 +465,7 @@
           </div>
           <div>
             <label class="form-label">利用日 <span class="req">*</span></label>
-            <div onclick="openNativePicker('card-date-${id}')">
-              <input type="date" id="card-date-${id}" onchange="searchAvailable(${id})" class="form-input date-input">
-            </div>
+            <input type="date" id="card-date-${id}" oninput="searchAvailable(${id})" onchange="searchAvailable(${id})" onblur="searchAvailable(${id})" autocomplete="off" inputmode="numeric" class="form-input date-input">
             <p class="error-msg" id="card-err-date-${id}"></p>
           </div>
           <div class="form-grid">
@@ -518,17 +518,18 @@
         date:    document.getElementById(`card-date-${id}`)?.value ?? '',
         start:   document.getElementById(`card-start-${id}`)?.value ?? '',
         end:     document.getElementById(`card-end-${id}`)?.value ?? '',
+        roomId:  document.querySelector(`input[name="room-${id}"]:checked`)?.value ?? '',
         meeting: document.getElementById(`card-meeting-${id}`)?.value ?? '',
       }));
     }
     function restoreCardData(saved) {
-      saved.forEach(({ id, date, start, end, meeting }) => {
+      saved.forEach(({ id, date, start, end, roomId, meeting }) => {
         if (date)    { const el = document.getElementById(`card-date-${id}`);    if (el) el.value = date; }
         if (start)   { const el = document.getElementById(`card-start-${id}`);   if (el) el.value = start; }
         if (start) updateEndTimeOptions(id);
         if (end)     { const el = document.getElementById(`card-end-${id}`);     if (el) el.value = end; }
         if (meeting) { const el = document.getElementById(`card-meeting-${id}`); if (el) el.value = meeting; }
-        searchAvailable(id);
+        searchAvailable(id, roomId);
       });
     }
 
@@ -562,11 +563,17 @@
       restoreCardData(saved);
     }
 
-    function searchAvailable(id) {
-      const date = document.getElementById(`card-date-${id}`).value;
-      const start = document.getElementById(`card-start-${id}`).value;
-      const end = document.getElementById(`card-end-${id}`).value;
+    function searchAvailable(id, preferredRoomId = '') {
+      const dateEl = document.getElementById(`card-date-${id}`);
+      const startEl = document.getElementById(`card-start-${id}`);
+      const endEl = document.getElementById(`card-end-${id}`);
       const container = document.getElementById(`card-rooms-${id}`);
+      if (!dateEl || !startEl || !endEl || !container) return;
+
+      const date = dateEl.value;
+      const start = startEl.value;
+      const end = endEl.value;
+      const selectedRoomId = preferredRoomId || document.querySelector(`input[name="room-${id}"]:checked`)?.value || '';
 
       if (!date || !start || !end || toMin(start) >= toMin(end)) {
         container.className = 'room-placeholder';
@@ -607,7 +614,7 @@
           </div>`;
         }
         return `<label class="room-radio">
-          <input type="radio" name="room-${id}" value="${esc(r.room_id)}" class="room-radio-input">
+          <input type="radio" name="room-${id}" value="${esc(r.room_id)}" class="room-radio-input"${selectedRoomId === r.room_id ? ' checked' : ''}>
           <span>${esc(r.room_name)}</span>
         </label>`;
       }).join('');
@@ -709,11 +716,16 @@
     function resetReserveForm() {
       document.getElementById('screen-done').classList.add('hidden');
       document.getElementById('screen-reserve').classList.remove('hidden');
+      clearErrors();
       document.getElementById('input-org').value = '';
       document.getElementById('input-name').value = '';
+      document.getElementById('reserve-cards').innerHTML = '';
+      document.getElementById('done-list').innerHTML = '';
       reserveCards = [];
       cardIdCounter = 0;
       addReserveCard();
+      refreshAvailableRooms();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Validation
