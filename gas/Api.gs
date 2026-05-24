@@ -1966,8 +1966,33 @@ function publishCalendar_(calendarId) {
     return;
   }
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(normalizedCalendarId)}/acl`;
-  const response = UrlFetchApp.fetch(url, {
-    method: 'post',
+  const response = fetchCalendarAcl_(url, 'post');
+  const code = response.getResponseCode();
+  if (code >= 200 && code < 300) {
+    return;
+  }
+  if (code === 409) {
+    const updateUrl = `${url}/default`;
+    const updateResponse = fetchCalendarAcl_(updateUrl, 'put');
+    const updateCode = updateResponse.getResponseCode();
+    if (updateCode >= 200 && updateCode < 300) {
+      return;
+    }
+    throw new Error(`カレンダー公開設定の更新に失敗しました。HTTP ${updateCode}: ${updateResponse.getContentText()}`);
+  }
+  throw new Error(`カレンダー公開設定に失敗しました。HTTP ${code}: ${response.getContentText()}`);
+}
+
+/**
+ * Google Calendar API の ACL 更新リクエストを送信します。
+ *
+ * @param {string} url Calendar API の ACL URL。
+ * @param {string} method HTTP メソッド。
+ * @return {HTTPResponse} Calendar API のレスポンス。
+ */
+function fetchCalendarAcl_(url, method) {
+  return UrlFetchApp.fetch(url, {
+    method: method,
     contentType: 'application/json',
     headers: {
       Authorization: `Bearer ${ScriptApp.getOAuthToken()}`,
@@ -1978,14 +2003,6 @@ function publishCalendar_(calendarId) {
     }),
     muteHttpExceptions: true,
   });
-  const code = response.getResponseCode();
-  if (code >= 200 && code < 300) {
-    return;
-  }
-  if (code === 409) {
-    return;
-  }
-  throw new Error(`カレンダー公開設定に失敗しました。HTTP ${code}: ${response.getContentText()}`);
 }
 
 /**

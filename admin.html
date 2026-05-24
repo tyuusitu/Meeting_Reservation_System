@@ -1077,6 +1077,7 @@
           </div>
           <div class="flex flex-wrap gap-2">
             <button type="button" onclick="saveRoom()" class="${btnPrimary}">会議室を保存</button>
+            <button type="button" onclick="publishRoomCalendars()" class="${btnSecondary}">カレンダー公開設定を更新</button>
             <button type="button" onclick="clearRoomForm()" class="${btnSecondary}">入力をクリア</button>
           </div>
         </div>
@@ -1362,6 +1363,41 @@
         await reloadAll(false, true, false);
         clearRoomForm();
         showGlobal('会議室を保存しました。', 'success');
+      } catch (_) {
+        showGlobal('通信エラーが発生しました。', 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    /**
+     * 会議室カレンダーの公開閲覧設定を一括更新します。
+     *
+     * @return {Promise<void>} 更新処理の完了。
+     */
+    async function publishRoomCalendars() {
+      showLoading('カレンダー公開設定を更新中...');
+      try {
+        /** @type {Response} GAS API のレスポンス。 */
+        const res = await fetch(CONFIG.GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'publishRoomCalendars',
+            payload: { adminPassword: getAdminPassword() },
+          }),
+        });
+        /** @type {Object} 公開設定APIの結果。 */
+        const data = await res.json();
+        if (!data.ok) {
+          const failedText = Array.isArray(data.failed)
+            ? data.failed.map((item) => `${item.room_id}: ${item.error}`).join(' / ')
+            : '';
+          showGlobal(failedText || data.error || 'カレンダー公開設定を更新できません。', 'error');
+          return;
+        }
+        await reloadAll(false, true, false);
+        showGlobal(`${(data.published || []).length}件のカレンダー公開設定を更新しました。`, 'success');
       } catch (_) {
         showGlobal('通信エラーが発生しました。', 'error');
       } finally {
