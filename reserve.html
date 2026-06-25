@@ -320,6 +320,8 @@
     let reserveCards = [];
     let cardIdCounter = 0;
     let reservationsLoaded = false;
+    /** 予約送信後、完了画面へフォールバック遷移するまでの待機時間。 */
+    const RESERVATION_DONE_FALLBACK_MS = 3000;
 
     // Loading
     function showLoading(text) {
@@ -663,6 +665,19 @@
         showErrors(dupErrors);
         return;
       }
+      /** GAS 応答より先に完了画面へ遷移したかどうか。 */
+      let hasFallbackDone = false;
+      /** 送信した予約内容を画面表示用に保持した配列。 */
+      const submittedReservations = reservations.map((reservation) => ({ ...reservation }));
+      /** 3秒以上応答がない場合に予約完了画面へ進めるタイマー。 */
+      const fallbackTimer = window.setTimeout(() => {
+        hasFallbackDone = true;
+        closeConfirm();
+        mergeReservations(createPendingReservations(submittedReservations));
+        showDone(submittedReservations);
+        btn.disabled = false;
+        hideLoading();
+      }, RESERVATION_DONE_FALLBACK_MS);
       try {
         const res = await fetch(CONFIG.GAS_API_URL, {
           method: 'POST',
@@ -670,20 +685,28 @@
           body: JSON.stringify({ action: 'insert_reservations', payload: { common, reservations } }),
         });
         const data = await res.json();
+        window.clearTimeout(fallbackTimer);
         if (data.ok) {
-          closeConfirm();
           mergeReservations(data.reservations || []);
-          showDone(data.reservations);
-        } else {
+          if (!hasFallbackDone) {
+            closeConfirm();
+            showDone(data.reservations);
+          }
+        } else if (!hasFallbackDone) {
           closeConfirm();
           showGlobalError(data.error || '登録に失敗しました。');
         }
       } catch (e) {
-        closeConfirm();
-        showGlobalError('通信エラーが発生しました。');
+        window.clearTimeout(fallbackTimer);
+        if (!hasFallbackDone) {
+          closeConfirm();
+          showGlobalError('通信エラーが発生しました。');
+        }
       } finally {
-        btn.disabled = false;
-        hideLoading();
+        if (!hasFallbackDone) {
+          btn.disabled = false;
+          hideLoading();
+        }
       }
     }
 
@@ -711,6 +734,27 @@
         }
       });
       reservationsLoaded = true;
+    }
+
+    /**
+     * GAS 応答待ち中に完了画面へ進めるため、一時的な予約データを生成します。
+     *
+     * @param {Array<Object>} reservations 送信済みの予約一覧。
+     * @return {Array<Object>} 空き室判定にも使える一時予約一覧。
+     */
+    function createPendingReservations(reservations) {
+      /** 一時予約IDの重複を避けるための作成時刻。 */
+      const createdAt = Date.now();
+      return reservations.map((reservation, index) => ({
+        reservation_id: `pending-${createdAt}-${index}`,
+        meeting_name: reservation.meeting_name,
+        room_id: reservation.room_id,
+        room_name: reservation.room_name,
+        usage_date: reservation.usage_date,
+        start_time: reservation.start_time,
+        end_time: reservation.end_time,
+        status: '有効',
+      }));
     }
 
     function resetReserveForm() {
