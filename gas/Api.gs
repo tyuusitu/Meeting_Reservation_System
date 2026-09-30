@@ -15,6 +15,12 @@ function doGet(e) {
     if (action === 'get_public_settings') {
       return jsonResponse_(handleGetPublicSettings_());
     }
+    if (action === 'get_reservation_status') {
+      return jsonResponse_(handleGetReservationStatusV2_(params));
+    }
+    if (action === 'get_reservation_test_summary') {
+      return jsonResponse_(handleGetReservationV2TestSummary_(params));
+    }
     return jsonResponse_({ ok: false, error: 'Unknown action' });
   } catch (error) {
     return jsonResponse_({ ok: false, error: error.message });
@@ -86,10 +92,13 @@ function doPost(e) {
  */
 function handleGetConfig_() {
   const settings = getSettings_();
+  const reservationMode = getReservationV2Mode_();
   return {
     ok: true,
     today: formatDate_(new Date(), 'yyyy-MM-dd'),
     systemName: settings.SYSTEM_NAME || DEFAULT_SETTINGS.SYSTEM_NAME,
+    reservationApiVersion: reservationMode === RESERVATION_V2_MODES.v2 && isReservationV2IndexReady_() ? 2 : 1,
+    reservationApiMode: reservationMode,
     settings: {
       systemName: settings.SYSTEM_NAME || DEFAULT_SETTINGS.SYSTEM_NAME,
       businessStartTime: settings.BUSINESS_START_TIME || DEFAULT_SETTINGS.BUSINESS_START_TIME,
@@ -142,6 +151,24 @@ function handleGetPublicSettings_() {
  * @return {Object} 登録結果。
  */
 function handleInsertReservations_(payload) {
+  const mode = getReservationV2Mode_();
+  if (mode === RESERVATION_V2_MODES.preparing) {
+    return createReservationV2MaintenanceResult_(payload && (payload.request_id || payload.requestId));
+  }
+  if (mode === RESERVATION_V2_MODES.v2) {
+    if (!isReservationV2IndexReady_()) {
+      return createReservationV2MaintenanceResult_(payload && (payload.request_id || payload.requestId));
+    }
+    return insertReservationsV2_(payload);
+  }
+  if (normalizeString_(payload && (payload.request_id || payload.requestId))) {
+    return {
+      ok: false,
+      state: 'mode_changed',
+      code: 'RESERVATION_MODE_CHANGED',
+      error: '予約方式が旧方式へ切り替わりました。画面を再読み込みしてから予約してください。',
+    };
+  }
   return insertReservations(payload);
 }
 
@@ -195,6 +222,8 @@ function handleAdminDelete_(payload) {
   const roomIdColumn = getColumnIndex_(SHEET_NAMES.reservations, 'room_id');
   const deleted = [];
   const notFound = [];
+  const processing = [];
+  const cancelledRows = [];
 
   reservationIds.forEach((reservationId) => {
     const index = rows.findIndex((row) => normalizeString_(row.reservation_id) === reservationId);
@@ -203,15 +232,31 @@ function handleAdminDelete_(payload) {
       return;
     }
     const row = rows[index];
+    if (normalizeReservationStatus_(row.status) === RESERVATION_STATUS.processing) {
+      processing.push(reservationId);
+      return;
+    }
     if (calendarEventIdColumn && roomIdColumn) {
       deleteCalendarEvents_(normalizeString_(row.room_id), normalizeString_(row.calendar_event_id));
     }
     sheet.getRange(index + 2, statusColumn).setValue(RESERVATION_STATUS.cancelled);
+    cancelledRows.push(Object.assign({}, row, { status: RESERVATION_STATUS.cancelled }));
     deleted.push(reservationId);
     writeOperationLog_('予約削除', '管理者', reservationId, '予約を取消に更新しました。', '成功', '');
   });
 
-  return { ok: true, deleted, notFound };
+  SpreadsheetApp.flush();
+  const indexSynchronized = synchronizeCancelledReservationsV2_(cancelledRows);
+  return {
+    ok: true,
+    deleted,
+    notFound,
+    processing,
+    reservation_index_synchronized: indexSynchronized,
+    warning: !indexSynchronized
+      ? '予約索引を安全停止しました。rebuildReservationV2Indexes() を実行してください。'
+      : (processing.length > 0 ? '処理中の予約は取消していません。完了後に再実行してください。' : ''),
+  };
 }
 
 /**
@@ -361,6 +406,10 @@ function handleSaveRoom_(payload) {
 
   const normalized = normalizeRoomPayload_(payload);
   validateRoomPayload_(normalized);
+  const wasReservationV2Enabled = isReservationV2Enabled_();
+  if (wasReservationV2Enabled) {
+    markReservationV2IndexStale_('会議室構成を更新中のため索引を再構築する必要があります。');
+  }
 
   const sheet = getSheet_(SHEET_NAMES.rooms);
   const rows = selectSheetObjects_(SHEET_NAMES.rooms).map(normalizeRoomRow_);
@@ -395,7 +444,17 @@ function handleSaveRoom_(payload) {
     writeOperationLog_('会議室更新', '管理者', roomId, `${normalized.roomName} を更新しました。`, '成功', '');
   }
 
-  return { ok: true, roomId, calendarId };
+  invalidateReservationStaticCacheV2_();
+  let reservationIndexReady = wasReservationV2Enabled && isReservationV2IndexReady_();
+  return {
+    ok: true,
+    roomId,
+    calendarId,
+    reservation_index_ready: reservationIndexReady,
+    warning: wasReservationV2Enabled && !reservationIndexReady
+      ? '会議室変更を予約索引へ反映するため rebuildReservationV2Indexes() を実行してください。'
+      : '',
+  };
 }
 
 /**
@@ -486,6 +545,7 @@ function handleUpdateSetting_(payload) {
   }
 
   refreshAttendanceAggregations_();
+  invalidateReservationStaticCacheV2_();
   writeOperationLog_('設定更新', '管理者', settingKey, `${SETTING_KEYS[settingKey] || settingKey} を更新しました。`, '成功', '');
   return { ok: true, settingKey, settingValue };
 }
@@ -518,8 +578,18 @@ function insertReservations(payload) {
     throw new Error('他の予約処理が実行中です。少し待ってからもう一度お試しください。');
   }
 
+  let hasLock = true;
   const createdEvents = [];
   try {
+    const currentMode = getReservationV2Mode_();
+    if (currentMode !== RESERVATION_V2_MODES.legacy) {
+      lock.releaseLock();
+      hasLock = false;
+      if (currentMode === RESERVATION_V2_MODES.v2 && isReservationV2IndexReady_()) {
+        return insertReservationsV2_(payload);
+      }
+      return createReservationV2MaintenanceResult_(payload && (payload.request_id || payload.requestId));
+    }
     const validation = validateReservationsInternal_(payload);
     if (!validation.ok) {
       return validation;
@@ -595,7 +665,7 @@ function insertReservations(payload) {
     writeOperationLog_('予約登録', '利用者', '', '予約登録に失敗しました。', '失敗', error.message);
     throw error;
   } finally {
-    lock.releaseLock();
+    if (hasLock) lock.releaseLock();
   }
 }
 
@@ -638,7 +708,13 @@ function validateReservationsInternal_(payload) {
     if (!reservation.usage_date || !reservation.start_time || !reservation.end_time || !reservation.room_id) {
       return;
     }
-    const duplicateExisting = existingReservations.find((existing) => hasReservationRoomConflict_(existing.room_id, reservation.room_id, roomMap) && existing.usage_date === reservation.usage_date && existing.status === RESERVATION_STATUS.active && hasTimeOverlap_(existing.start_time, existing.end_time, reservation.start_time, reservation.end_time));
+    const duplicateExisting = existingReservations.find((existing) =>
+      hasReservationRoomConflict_(existing.room_id, reservation.room_id, roomMap)
+      && existing.usage_date === reservation.usage_date
+      && (existing.status === RESERVATION_STATUS.active
+        || existing.status === RESERVATION_STATUS.cancelRequested
+        || existing.status === RESERVATION_STATUS.processing)
+      && hasTimeOverlap_(existing.start_time, existing.end_time, reservation.start_time, reservation.end_time));
     if (duplicateExisting) {
       errors.push({ index, field: 'room_id', message: `${duplicateExisting.room_name}は${reservation.start_time}-${reservation.end_time}に既存予約があります。` });
     }
@@ -1215,7 +1291,11 @@ function deleteCalendarEvents_(roomId, calendarEventRefs) {
 function selectActiveReservations_() {
   return selectSheetObjects_(SHEET_NAMES.reservations)
     .map(normalizeReservationRow_)
-    .filter((reservation) => reservation.reservation_id && reservation.status === RESERVATION_STATUS.active);
+    .filter((reservation) => reservation.reservation_id && (
+      reservation.status === RESERVATION_STATUS.active
+      || reservation.status === RESERVATION_STATUS.cancelRequested
+      || reservation.status === RESERVATION_STATUS.processing
+    ));
 }
 
 /**
@@ -1240,6 +1320,11 @@ function normalizeReservationRow_(row) {
     calendar_event_id: normalizeString_(row.calendar_event_id),
     status: normalizeReservationStatus_(row.status),
     created_at: normalizeDateTimeString_(row.created_at),
+    request_id: normalizeString_(row.request_id),
+    request_hash: normalizeString_(row.request_hash),
+    processing_started_at: normalizeDateTimeString_(row.processing_started_at),
+    updated_at: normalizeDateTimeString_(row.updated_at),
+    error_message: normalizeString_(row.error_message),
   };
 }
 
@@ -1397,20 +1482,32 @@ function createCalendarEventsForReservation_(room, roomMap, eventTitle, startDat
   const eventRoomIds = room.room_type === '大会議室'
     ? [room.room_id].concat(room.component_room_ids)
     : [room.room_id];
-  return eventRoomIds.map((eventRoomId) => {
-    const eventRoom = roomMap[eventRoomId];
-    if (!eventRoom || !eventRoom.calendar_id) {
-      throw new Error(`会議室「${eventRoom ? eventRoom.room_name : eventRoomId}」のカレンダーIDが未設定です。`);
-    }
-    const calendar = CalendarApp.getCalendarById(eventRoom.calendar_id);
-    if (!calendar) {
-      throw new Error(`会議室「${eventRoom.room_name}」の Google カレンダーが見つかりません。`);
-    }
-    return {
-      roomId: eventRoom.room_id,
-      event: calendar.createEvent(eventTitle, startDate, endDate, { description: eventDescription }),
-    };
-  });
+  const createdEvents = [];
+  try {
+    eventRoomIds.forEach((eventRoomId) => {
+      const eventRoom = roomMap[eventRoomId];
+      if (!eventRoom || !eventRoom.calendar_id) {
+        throw new Error(`会議室「${eventRoom ? eventRoom.room_name : eventRoomId}」のカレンダーIDが未設定です。`);
+      }
+      const calendar = CalendarApp.getCalendarById(eventRoom.calendar_id);
+      if (!calendar) {
+        throw new Error(`会議室「${eventRoom.room_name}」の Google カレンダーが見つかりません。`);
+      }
+      createdEvents.push({
+        roomId: eventRoom.room_id,
+        event: calendar.createEvent(eventTitle, startDate, endDate, { description: eventDescription }),
+      });
+    });
+    return createdEvents;
+  } catch (error) {
+    createdEvents.forEach((calendarEvent) => {
+      try {
+        calendarEvent.event.deleteEvent();
+      } catch (_) {
+      }
+    });
+    throw error;
+  }
 }
 
 /**
@@ -1733,15 +1830,13 @@ function toMinutes_(time) {
 function selectSheetObjects_(sheetName) {
   const sheet = getSheet_(sheetName);
   const schemaKey = getSchemaKeyBySheetName_(sheetName);
-  const lastRow = sheet.getLastRow();
-  const lastColumn = sheet.getLastColumn();
-  if (lastRow < 2 || lastColumn === 0) {
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2 || values[0].length === 0) {
     return [];
   }
-  const headers = getHeaderRow_(sheet);
+  const headers = values[0].map((header) => normalizeString_(header));
   const columnKeys = getColumnKeysForHeaders_(schemaKey, headers);
-  const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-  return values
+  return values.slice(1)
     .filter((row) => row.some((cell) => normalizeString_(cell) !== ''))
     .map((row) => {
       const rowObject = {};
@@ -1845,14 +1940,21 @@ function getSheet_(sheetName) {
  *
  * @return {Spreadsheet} 対象スプレッドシート。
  */
+let spreadsheetExecutionCache_ = null;
+
 function getSpreadsheet_() {
+  if (spreadsheetExecutionCache_) {
+    return spreadsheetExecutionCache_;
+  }
   const spreadsheetId = PropertiesService.getScriptProperties().getProperty(SPREADSHEET_ID_PROPERTY_KEY);
   if (spreadsheetId) {
-    return SpreadsheetApp.openById(spreadsheetId);
+    spreadsheetExecutionCache_ = SpreadsheetApp.openById(spreadsheetId);
+    return spreadsheetExecutionCache_;
   }
   const activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   if (activeSpreadsheet) {
-    return activeSpreadsheet;
+    spreadsheetExecutionCache_ = activeSpreadsheet;
+    return spreadsheetExecutionCache_;
   }
   throw new Error(`スプレッドシートが見つかりません。スクリプトプロパティ ${SPREADSHEET_ID_PROPERTY_KEY} を設定してください。`);
 }
@@ -2159,6 +2261,12 @@ function normalizeReservationStatus_(value) {
   }
   if (stringValue === 'cancelled' || stringValue === 'canceled' || stringValue === '取消' || stringValue === 'キャンセル') {
     return RESERVATION_STATUS.cancelled;
+  }
+  if (stringValue === 'processing' || stringValue === '処理中') {
+    return RESERVATION_STATUS.processing;
+  }
+  if (stringValue === 'failed' || stringValue === '登録失敗') {
+    return RESERVATION_STATUS.failed;
   }
   return normalizeString_(value);
 }

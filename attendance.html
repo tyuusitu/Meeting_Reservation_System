@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>出欠登録</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script>
-  <link href="dark.css" rel="stylesheet">
+  <link href="dark.css?v=20260930-ui" rel="stylesheet">
   <style>
     .hidden { display: none !important; }
 
@@ -210,9 +210,10 @@
       .app-bar-title { font-size: 14px; }
     }
   </style>
+  <link href="responsive.css" rel="stylesheet">
 </head>
 
-<body>
+<body class="page-attendance">
 
   <!-- ローディングオーバーレイ -->
   <div id="loading-overlay" class="loading-overlay">

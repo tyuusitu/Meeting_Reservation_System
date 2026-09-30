@@ -3,14 +3,14 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>管理画面</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script>
-  <link href="dark.css" rel="stylesheet">
+  <link href="dark.css?v=20260930-ui" rel="stylesheet">
   <style>
     .hidden { display: none !important; }
     *, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -128,9 +128,10 @@
       .data-table th, .data-table td { padding: 9px 10px; font-size: 12px; }
     }
   </style>
+  <link href="responsive.css" rel="stylesheet">
 </head>
 
-<body class="min-h-screen">
+<body class="page-admin min-h-screen">
 
   <!-- ローディングオーバーレイ -->
   <div id="loading-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center g-overlay-bg">

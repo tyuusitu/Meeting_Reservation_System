@@ -58,6 +58,12 @@ html.dark .timeline-room-label {
 html.dark .timeline-track {
   background: var(--surface-var) !important;
 }
+html.dark .calendar-placeholder,
+html.dark .room-busy {
+  background: #202124 !important;
+  border-color: #3c4043 !important;
+  color: #9aa0a6 !important;
+}
 
 /* Fix hardcoded colors in attendance.html .notice-info */
 html.dark .notice-info {
@@ -98,6 +104,8 @@ html.dark .admin-card { background: #2d2e31 !important; }
 html.dark .admin-header { border-color: #3c4043 !important; }
 html.dark .admin-header-title { color: #e8eaed !important; }
 html.dark .admin-tab-nav { border-color: #3c4043 !important; }
+html.dark .tab-group { background: #35363a !important; border-color: #3c4043 !important; }
+html.dark .tab-group-label { color: #9aa0a6 !important; }
 html.dark .header-btn-ghost { background: #2d2e31 !important; border-color: #3c4043 !important; color: #9aa0a6 !important; }
 html.dark .header-btn-ghost:hover { background: #35363a !important; }
 html.dark .header-btn-outline { background: #2d2e31 !important; }

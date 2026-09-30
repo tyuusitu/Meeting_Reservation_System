@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>会議室予約</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script>
-  <link href="dark.css" rel="stylesheet">
+  <link href="dark.css?v=20260930-ui" rel="stylesheet">
   <style>
     *, *::before, *::after {
       box-sizing: border-box; margin: 0; padding: 0;
@@ -212,8 +212,9 @@
       .card, .reserve-card { padding: 16px; }
     }
   </style>
+  <link href="responsive.css" rel="stylesheet">
 </head>
-<body>
+<body class="page-reserve">
 
   <!-- Loading -->
   <div id="loading-overlay" class="loading-overlay">
@@ -320,8 +321,9 @@
     let reserveCards = [];
     let cardIdCounter = 0;
     let reservationsLoaded = false;
-    /** 予約送信後、完了画面へフォールバック遷移するまでの待機時間。 */
-    const RESERVATION_DONE_FALLBACK_MS = 3000;
+    const PENDING_RESERVATION_STORAGE_KEY = 'meeting-reservation-pending-v2';
+    const RESERVATION_REQUEST_TIMEOUT_MS = 15000;
+    const RESERVATION_RESULT_WAIT_MS = 90000;
 
     // Loading
     function showLoading(text) {
@@ -346,7 +348,10 @@
       applyConfig(defaultConfig());
       document.getElementById('loading-msg').classList.add('hidden');
       document.getElementById('screen-reserve').classList.remove('hidden');
-      Promise.allSettled([loadConfig(), loadReservations()]).then(() => refreshAvailableRooms());
+      Promise.allSettled([loadConfig(), loadReservations()]).then(async () => {
+        refreshAvailableRooms();
+        await resumePendingReservation();
+      });
     });
 
     function todayStr() { return new Date().toISOString().slice(0, 10); }
@@ -363,7 +368,8 @@
 
     async function loadConfig() {
       try {
-        const res = await fetch(CONFIG.GAS_API_URL + '?action=get_config');
+        const separator = CONFIG.GAS_API_URL.includes('?') ? '&' : '?';
+        const res = await fetch(`${CONFIG.GAS_API_URL}${separator}action=get_config&_=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         if (data.ok) { appConfig = data; applyConfig(data); }
       } catch (e) {
@@ -654,6 +660,7 @@
 
     async function submitReservations() {
       const btn = document.getElementById('btn-submit');
+      if (btn.disabled) return;
       btn.disabled = true;
       showLoading('予約を送信中...');
       const { common, reservations } = collectFormData();
@@ -665,49 +672,186 @@
         showErrors(dupErrors);
         return;
       }
-      /** GAS 応答より先に完了画面へ遷移したかどうか。 */
-      let hasFallbackDone = false;
-      /** 送信した予約内容を画面表示用に保持した配列。 */
-      const submittedReservations = reservations.map((reservation) => ({ ...reservation }));
-      /** 3秒以上応答がない場合に予約完了画面へ進めるタイマー。 */
-      const fallbackTimer = window.setTimeout(() => {
-        hasFallbackDone = true;
+      const payload = { common, reservations };
+      const useReservationV2 = Number(appConfig && appConfig.reservationApiVersion) >= 2;
+      const pending = useReservationV2
+        ? getOrCreatePendingReservation(payload)
+        : { requestId: '', payload, createdAt: Date.now() };
+      try {
+        const data = useReservationV2
+          ? await submitReservationV2AndWait(pending)
+          : await postReservationRequest(pending, false);
+        handleReservationSubmissionResult(data, pending, useReservationV2);
+      } catch (e) {
         closeConfirm();
-        mergeReservations(createPendingReservations(submittedReservations));
-        showDone(submittedReservations);
+        const message = useReservationV2
+          ? '予約結果を確認できませんでした。同じ内容で「予約確定」を押すと、同じリクエストIDで安全に再確認します。'
+          : '通信エラーで予約結果を確認できませんでした。二重予約を避けるため、利用状況を確認してから操作してください。';
+        showGlobalError(message);
+      } finally {
         btn.disabled = false;
         hideLoading();
-      }, RESERVATION_DONE_FALLBACK_MS);
-      try {
-        const res = await fetch(CONFIG.GAS_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'insert_reservations', payload: { common, reservations } }),
-        });
-        const data = await res.json();
-        window.clearTimeout(fallbackTimer);
-        if (data.ok) {
-          mergeReservations(data.reservations || []);
-          if (!hasFallbackDone) {
-            closeConfirm();
-            showDone(data.reservations);
-          }
-        } else if (!hasFallbackDone) {
-          closeConfirm();
-          showGlobalError(data.error || '登録に失敗しました。');
-        }
-      } catch (e) {
-        window.clearTimeout(fallbackTimer);
-        if (!hasFallbackDone) {
-          closeConfirm();
-          showGlobalError('通信エラーが発生しました。');
-        }
-      } finally {
-        if (!hasFallbackDone) {
-          btn.disabled = false;
-          hideLoading();
-        }
       }
+    }
+
+    /** v2 の同一リクエストIDを保ったまま、確定状態になるまで再確認します。 */
+    async function submitReservationV2AndWait(pending) {
+      const deadline = Date.now() + RESERVATION_RESULT_WAIT_MS;
+      let lastResult = { ok: false, state: 'unknown', error: '予約結果を確認できませんでした。' };
+      let attempt = 0;
+      while (Date.now() < deadline) {
+        attempt += 1;
+        showLoading(attempt === 1 ? '予約を登録中...' : '予約結果を再確認中...');
+        try {
+          lastResult = await postReservationRequest(pending, true);
+          if (isReservationTerminalState(lastResult)) return lastResult;
+        } catch (error) {
+          lastResult = { ok: false, state: 'network_error', error: error.message };
+        }
+
+        showLoading('スプレッドシートへの登録結果を確認中...');
+        const checked = await pollReservationStatus(pending.requestId, deadline, 6);
+        if (checked && isReservationTerminalState(checked)) return checked;
+        if (checked && checked.state !== 'not_found') lastResult = checked;
+        const retryAfter = Math.max(500, Number(lastResult.retry_after_ms || 800));
+        await wait(Math.min(retryAfter * Math.min(attempt, 3), 3000));
+      }
+
+      const finalCheck = await getReservationStatus(pending.requestId).catch(() => null);
+      if (finalCheck && isReservationTerminalState(finalCheck)) return finalCheck;
+      return {
+        ok: false,
+        state: 'unknown',
+        request_id: pending.requestId,
+        error: '90秒以内に予約結果を確認できませんでした。',
+      };
+    }
+
+    /** 予約登録 API を呼びます。v2 では離脱時にも送信を継続しやすい keepalive を使います。 */
+    async function postReservationRequest(pending, useReservationV2) {
+      const payload = Object.assign({}, pending.payload);
+      if (useReservationV2) payload.request_id = pending.requestId;
+      return fetchJsonWithTimeout(CONFIG.GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'insert_reservations', payload }),
+        keepalive: useReservationV2,
+      }, useReservationV2 ? RESERVATION_REQUEST_TIMEOUT_MS : 0);
+    }
+
+    /** request_id の状態を GAS へ問い合わせます。 */
+    function getReservationStatus(requestId) {
+      const url = new URL(CONFIG.GAS_API_URL);
+      url.searchParams.set('action', 'get_reservation_status');
+      url.searchParams.set('request_id', requestId);
+      url.searchParams.set('_', String(Date.now()));
+      return fetchJsonWithTimeout(url.toString(), { cache: 'no-store' }, 8000);
+    }
+
+    async function pollReservationStatus(requestId, deadline, maxChecks) {
+      let lastResult = null;
+      for (let check = 0; check < maxChecks && Date.now() < deadline; check += 1) {
+        try {
+          lastResult = await getReservationStatus(requestId);
+          if (isReservationTerminalState(lastResult)) return lastResult;
+        } catch (_) {
+        }
+        await wait(600 + check * 250);
+      }
+      return lastResult;
+    }
+
+    function isReservationTerminalState(result) {
+      if (!result) return false;
+      return ['active', 'failed', 'conflict', 'invalid', 'cancelled', 'mode_changed'].includes(result.state);
+    }
+
+    function handleReservationSubmissionResult(data, pending, useReservationV2) {
+      const isLegacySuccess = !useReservationV2 && data && data.ok === true;
+      const isActive = data && data.ok === true && data.state === 'active';
+      if (isActive || isLegacySuccess) {
+        if (useReservationV2) clearPendingReservation();
+        const registered = Array.isArray(data.reservations) && data.reservations.length
+          ? data.reservations
+          : pending.payload.reservations;
+        mergeReservations(registered);
+        closeConfirm();
+        showDone(registered);
+        return;
+      }
+      if (useReservationV2 && data && ['failed', 'conflict', 'invalid', 'cancelled', 'mode_changed'].includes(data.state)) {
+        clearPendingReservation();
+      }
+      closeConfirm();
+      const message = data && data.state === 'unknown'
+        ? `${data.error || '予約結果を確認できませんでした。'} 同じ内容で再度「予約確定」を押すと安全に再確認します。`
+        : ((data && data.error) || '予約登録に失敗しました。');
+      showGlobalError(message);
+    }
+
+    /** 通信タイムアウト後も GAS 側処理は同じ request_id で照合できるようにします。 */
+    async function fetchJsonWithTimeout(url, options, timeoutMs) {
+      const controller = timeoutMs > 0 && typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timer = controller ? window.setTimeout(() => controller.abort(), timeoutMs) : null;
+      try {
+        const response = await fetch(url, Object.assign({}, options, controller ? { signal: controller.signal } : {}));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      } finally {
+        if (timer) window.clearTimeout(timer);
+      }
+    }
+
+    function getOrCreatePendingReservation(payload) {
+      const existing = loadPendingReservation();
+      if (existing && JSON.stringify(existing.payload) === JSON.stringify(payload)) return existing;
+      const pending = { requestId: createRequestId(), payload, createdAt: Date.now() };
+      try { sessionStorage.setItem(PENDING_RESERVATION_STORAGE_KEY, JSON.stringify(pending)); } catch (_) {}
+      return pending;
+    }
+
+    function loadPendingReservation() {
+      try {
+        const pending = JSON.parse(sessionStorage.getItem(PENDING_RESERVATION_STORAGE_KEY) || 'null');
+        if (!pending || !pending.requestId || !pending.payload) return null;
+        if (Date.now() - Number(pending.createdAt || 0) > 24 * 60 * 60 * 1000) {
+          clearPendingReservation();
+          return null;
+        }
+        return pending;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function clearPendingReservation() {
+      try { sessionStorage.removeItem(PENDING_RESERVATION_STORAGE_KEY); } catch (_) {}
+    }
+
+    function createRequestId() {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+      return `request-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    async function resumePendingReservation() {
+      const pending = loadPendingReservation();
+      if (!pending || Number(appConfig && appConfig.reservationApiVersion) < 2) return;
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      showLoading('前回の予約結果を確認中...');
+      try {
+        const data = await submitReservationV2AndWait(pending);
+        handleReservationSubmissionResult(data, pending, true);
+      } catch (_) {
+        showGlobalError('前回の予約結果を確認できませんでした。利用状況を確認してから再度お試しください。');
+      } finally {
+        btn.disabled = false;
+        hideLoading();
+      }
+    }
+
+    function wait(milliseconds) {
+      return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
     }
 
     function showGlobalError(msg) {
@@ -734,27 +878,6 @@
         }
       });
       reservationsLoaded = true;
-    }
-
-    /**
-     * GAS 応答待ち中に完了画面へ進めるため、一時的な予約データを生成します。
-     *
-     * @param {Array<Object>} reservations 送信済みの予約一覧。
-     * @return {Array<Object>} 空き室判定にも使える一時予約一覧。
-     */
-    function createPendingReservations(reservations) {
-      /** 一時予約IDの重複を避けるための作成時刻。 */
-      const createdAt = Date.now();
-      return reservations.map((reservation, index) => ({
-        reservation_id: `pending-${createdAt}-${index}`,
-        meeting_name: reservation.meeting_name,
-        room_id: reservation.room_id,
-        room_name: reservation.room_name,
-        usage_date: reservation.usage_date,
-        start_time: reservation.start_time,
-        end_time: reservation.end_time,
-        status: '有効',
-      }));
     }
 
     function resetReserveForm() {

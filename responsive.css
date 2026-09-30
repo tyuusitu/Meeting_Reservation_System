@@ -1,0 +1,461 @@
+/* Shared responsive layout improvements for phones and small tablets. */
+
+html {
+  overflow-x: clip;
+}
+
+body {
+  min-width: 0;
+}
+
+.app-bar-title,
+.card,
+.reserve-card,
+.meeting-card,
+.g-panel,
+.admin-card {
+  min-width: 0;
+}
+
+.page-reserve #screen-reserve:not(.hidden) {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  /* Keep the utility bar readable instead of squeezing its title to zero. */
+  .page-reserve .app-bar,
+  .page-status .app-bar,
+  .page-attendance .app-bar {
+    height: auto;
+    min-height: 56px;
+    padding: 8px max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    column-gap: 10px;
+    row-gap: 8px;
+  }
+
+  .page-reserve .app-bar-title,
+  .page-status .app-bar-title,
+  .page-attendance .app-bar-title {
+    min-width: 0;
+    font-size: 15px;
+  }
+
+  .page-reserve .app-bar-actions,
+  .page-status .app-bar-actions,
+  .page-attendance .app-bar-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    display: grid;
+    gap: 8px;
+  }
+
+  .page-reserve .app-bar-actions,
+  .page-status .app-bar-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+  }
+
+  .page-attendance .app-bar-actions {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .page-reserve .app-bar-btn,
+  .page-status .app-bar-btn,
+  .page-attendance .app-bar-btn {
+    min-width: 0;
+    height: 44px;
+    padding: 0 10px;
+    justify-content: center;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .page-reserve .app-bar-actions .dark-toggle,
+  .page-status .app-bar-actions .dark-toggle,
+  .page-attendance .app-bar-actions .dark-toggle {
+    width: 44px;
+    height: 44px;
+    margin-left: 0;
+    padding: 8px;
+  }
+
+  .page-index .app-bar {
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+    gap: 10px;
+  }
+
+  .page-index .app-bar-title {
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .page-index .dark-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .page-index main {
+    padding: 20px 14px calc(44px + env(safe-area-inset-bottom));
+  }
+
+  .page-index .hero {
+    margin-bottom: 20px;
+    padding: 20px 18px;
+  }
+
+  .page-index .nav-grid {
+    gap: 18px;
+  }
+
+  .page-index .nav-card {
+    gap: 11px;
+    padding: 18px;
+  }
+
+  .page-reserve .page,
+  .page-status .page,
+  .page-attendance .page {
+    padding: 18px 14px calc(48px + env(safe-area-inset-bottom));
+    gap: 20px;
+  }
+
+  .page-reserve #screen-reserve:not(.hidden) {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .page-reserve .reserve-cards-wrap {
+    gap: 18px;
+  }
+
+  .page-reserve .card,
+  .page-reserve .reserve-card,
+  .page-status .card,
+  .page-attendance .card {
+    padding: 18px;
+  }
+
+  .page-reserve .card,
+  .page-reserve .reserve-card,
+  .page-status .card,
+  .page-status .res-card,
+  .page-status .timeline-day,
+  .page-attendance .card,
+  .page-attendance .meeting-card {
+    border-radius: 12px;
+  }
+
+  .page-reserve .form-input,
+  .page-reserve .form-select,
+  .page-status .filter-input,
+  .page-status .filter-select,
+  .page-attendance .form-select,
+  .page-attendance .form-input,
+  .page-attendance .form-textarea,
+  .page-admin .login-input,
+  .page-admin .g-input,
+  .page-admin .g-filter-input,
+  .page-admin .g-filter-select,
+  .page-admin .g-textarea,
+  .page-admin .data-table input {
+    font-size: 16px;
+  }
+
+  .page-reserve .reserve-card-remove {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .page-reserve .room-radio,
+  .page-reserve .room-busy {
+    min-height: 48px;
+  }
+
+  .page-reserve .btn-stack {
+    gap: 12px;
+  }
+
+  .page-reserve .btn-add,
+  .page-reserve .btn-confirm {
+    min-height: 48px;
+  }
+
+  .page-reserve .done-actions {
+    flex-direction: column;
+  }
+
+  .page-reserve .btn-done-primary,
+  .page-reserve .btn-done-ghost {
+    flex: none;
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .page-reserve .modal-sheet {
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .page-reserve .modal-row-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .page-status .filter-input,
+  .page-status .filter-select {
+    height: 44px;
+  }
+
+  .page-status .filter-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .page-status .view-toggle {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .page-status .view-btn {
+    flex: 1;
+    min-height: 44px;
+  }
+
+  .page-status .btn-sm {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .page-status .calendar-header {
+    flex-direction: column;
+  }
+
+  .page-status .calendar-open-btn {
+    align-self: stretch;
+    min-height: 40px;
+    justify-content: center;
+  }
+
+  .page-status .calendar-placeholder {
+    min-height: 160px;
+  }
+
+  .page-status .calendar-iframe {
+    height: 260px;
+  }
+
+  .page-status .res-list {
+    gap: 14px;
+    padding-bottom: 0;
+  }
+
+  .page-status .res-card {
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .page-status .res-card-top {
+    align-items: center;
+  }
+
+  .page-status .res-card-name,
+  .page-status .res-card-meta,
+  .page-status .res-card-sub {
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+  }
+
+  .page-status .timeline-day {
+    margin-bottom: 14px;
+    padding: 16px;
+  }
+
+  .page-attendance .info-chips {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .page-attendance .info-chip {
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .page-attendance .info-chip-label,
+  .page-attendance .info-chip-value {
+    overflow-wrap: anywhere;
+  }
+
+  .page-attendance .meeting-list {
+    gap: 16px;
+  }
+
+  .page-attendance .meeting-card {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .page-attendance .meeting-meta-row {
+    align-items: flex-start;
+  }
+
+  .page-attendance .btn-primary {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .page-attendance .submit-hint {
+    width: 100%;
+    line-height: 1.5;
+  }
+
+  .page-admin main {
+    padding: 16px 14px calc(48px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .page-admin #login-screen {
+    margin-top: 32px;
+  }
+
+  .page-admin .login-card {
+    padding: 20px;
+  }
+
+  .page-admin .login-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .page-admin .admin-card {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .page-admin .admin-header {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .page-admin .admin-header > div:last-child {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .page-admin .admin-header .header-btn {
+    min-width: 0;
+    height: 42px;
+    padding: 0 8px;
+    justify-content: center;
+  }
+
+  .page-admin .admin-header .dark-toggle {
+    width: 100%;
+    height: 42px;
+    margin-left: 0;
+    border: 1px solid var(--border, #dadce0);
+    border-radius: 6px;
+  }
+
+  .page-admin .admin-tab-nav {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .page-admin .tab-group {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .page-admin .tab-btn {
+    min-height: 44px;
+  }
+
+  .page-admin .admin-content {
+    padding: 14px;
+    gap: 16px;
+  }
+
+  .page-admin .tab-content {
+    min-width: 0;
+  }
+
+  .page-admin .g-panel {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .page-admin .g-filter-input,
+  .page-admin .g-filter-select,
+  .page-admin .g-filter-clear,
+  .page-admin .g-input {
+    min-height: 44px;
+  }
+
+  .page-admin .g-btn-primary,
+  .page-admin .g-btn-secondary,
+  .page-admin .g-btn-ghost,
+  .page-admin .g-btn-danger,
+  .page-admin .g-btn-sm-primary,
+  .page-admin .g-btn-sm-secondary,
+  .page-admin .g-btn-sm-ghost,
+  .page-admin .g-btn-sm-danger {
+    min-height: 44px;
+  }
+
+  .page-admin .g-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .page-admin .g-calendar-iframe {
+    height: 280px;
+  }
+}
+
+@media (max-width: 360px) {
+  .page-index main,
+  .page-reserve .page,
+  .page-status .page,
+  .page-attendance .page,
+  .page-admin main {
+    padding-right: 12px !important;
+    padding-left: 12px !important;
+  }
+
+  .page-reserve .app-bar-btn,
+  .page-status .app-bar-btn,
+  .page-attendance .app-bar-btn {
+    font-size: 11px;
+  }
+
+  .page-reserve .app-bar-btn svg,
+  .page-status .app-bar-btn svg,
+  .page-attendance .app-bar-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .page-attendance .info-chip {
+    padding: 9px 7px;
+  }
+
+  .page-admin .login-card,
+  .page-admin .g-panel {
+    padding: 14px;
+  }
+}
+
+@supports not (overflow: clip) {
+  html {
+    overflow-x: hidden;
+  }
+}

@@ -16,12 +16,12 @@ Google スプレッドシートをデータベースとして使う、会議室�
 
 ## GAS 構成
 
-ユーザー要望に合わせて、GAS はほぼ 2 ファイルに寄せています。
-
 | ファイル | 内容 |
 |---|---|
 | `gas/Setup.gs` | シート作成、初期データ投入、書式設定 |
 | `gas/Api.gs` | Web API、予約処理、出欠処理、集計更新 |
+| `gas/ReservationV2.gs` | 高速・冪等な予約処理、競合索引、安全な本番切替 |
+| `gas/TestEnvironment.gs` | 本番と分離した予約負荷テスト環境 |
 | `gas/appsscript.json` | GAS マニフェスト |
 
 ## スプレッドシート構成
@@ -46,7 +46,7 @@ Google スプレッドシートをデータベースとして使う、会議室�
 
 1. Google スプレッドシートを新規作成する
 2. スプレッドシートから Apps Script を開く
-3. `gas/Setup.gs` `gas/Api.gs` `gas/appsscript.json` を貼り付ける
+3. `gas/Setup.gs` `gas/Api.gs` `gas/ReservationV2.gs` `gas/TestEnvironment.gs` `gas/appsscript.json` を貼り付ける
 4. `setupSpreadsheet()` を手動実行する
 5. 必要なら `createRoomCalendarsAndUpdateRooms()` を実行して会議室ごとの Google カレンダーを作る
 
@@ -114,3 +114,7 @@ window.APP_CONFIG = {
 - 読み込み高速化のため一覧系は CSV 直 fetch です
 - 静的公開なので、管理者パスワードは強固な秘匿にはなりません
 - 画面反映は `config.js` の変更だけで足ります
+
+## 予約 v2 の本番切替
+
+予約 v2 はコードを配置しただけでは有効になりません。適用・確認・ロールバックは [予約v2本番切替手順](docs/予約v2本番切替手順.md) に従ってください。

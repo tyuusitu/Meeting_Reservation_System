@@ -50,6 +50,11 @@ const SHEET_HEADERS = {
     'カレンダー予定ID',
     'ステータス',
     '作成日時',
+    'リクエストID',
+    'リクエストハッシュ',
+    '処理開始日時',
+    '更新日時',
+    'エラー内容',
   ],
   rooms: [
     '会議室ID',
@@ -190,6 +195,11 @@ const SHEET_COLUMN_KEYS = {
     'calendar_event_id',
     'status',
     'created_at',
+    'request_id',
+    'request_hash',
+    'processing_started_at',
+    'updated_at',
+    'error_message',
   ],
   rooms: [
     'room_id',
@@ -451,7 +461,13 @@ const DEFAULT_MEETING_ROWS = [
 const SPREADSHEET_ID_PROPERTY_KEY = 'SPREADSHEET_ID';
 const ATTENDANCE_OPTIONS = { attend: '出席', absence: '欠席' };
 const ABSENCE_REASONS = ['授業', 'アルバイト', '体調不良', '家庭の都合', 'その他'];
-const RESERVATION_STATUS = { active: '有効', cancelRequested: 'キャンセル依頼', cancelled: '取消' };
+const RESERVATION_STATUS = {
+  processing: '処理中',
+  active: '有効',
+  failed: '登録失敗',
+  cancelRequested: 'キャンセル依頼',
+  cancelled: '取消',
+};
 
 /**
  * セットアップ関数の短い別名です。
@@ -710,7 +726,7 @@ function applySheetFormatting_() {
   applyFormattingForSheet_(SHEET_NAMES.departmentAggregations, [], ['updated_at'], ['attendance_rate', 'absence_rate']);
   applyFormattingForSheet_(SHEET_NAMES.streaks, [], ['updated_at']);
   applyFormattingForSheet_(SHEET_NAMES.logs, [], ['acted_at']);
-  applyFormattingForSheet_(SHEET_NAMES.reservations, ['usage_date'], ['created_at']);
+  applyFormattingForSheet_(SHEET_NAMES.reservations, ['usage_date'], ['created_at', 'processing_started_at', 'updated_at']);
 }
 
 /**
